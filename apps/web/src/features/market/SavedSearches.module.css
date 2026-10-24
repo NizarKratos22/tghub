@@ -1,0 +1,206 @@
+.saveWrap {
+  display: inline-grid;
+  gap: 4px;
+}
+
+.saveButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.saveButton:hover {
+  border-color: var(--text);
+}
+
+.saveDone,
+.saveDone:hover {
+  border-color: var(--success-text);
+  color: var(--success-text);
+}
+
+.saveError {
+  font-size: 12px;
+  color: var(--danger-text);
+}
+
+.list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.open {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.searchIcon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--primary-wash);
+  color: var(--primary-text);
+}
+
+.newBadge {
+  position: absolute;
+  top: -4px;
+  inset-inline-end: -6px;
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border: 2px solid var(--surface);
+  border-radius: var(--radius-pill);
+  background: var(--brand);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.body {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+  text-align: start;
+  overflow-wrap: anywhere;
+}
+
+.name:hover {
+  color: var(--primary-text);
+}
+
+.meta {
+  font-size: 12.5px;
+  color: var(--text-3);
+}
+
+.meta strong {
+  color: var(--brand);
+}
+
+.rename {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.rename input {
+  flex: 1;
+  min-width: 160px;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--field);
+  color: var(--text);
+  font: inherit;
+}
+
+.rename button {
+  height: 34px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--surface-3);
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.rename button[type='submit'] {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.tools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.alertToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--text-3);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.alertOn {
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--line));
+  background: var(--primary-wash);
+  color: var(--primary-text);
+}
+
+.iconButton {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--text-3);
+}
+
+.iconButton:hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+@media (max-width: 560px) {
+  .row {
+    flex-wrap: wrap;
+  }
+
+  .tools {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

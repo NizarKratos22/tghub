@@ -1,0 +1,170 @@
+.wrap {
+  position: relative;
+}
+
+.panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  inset-inline-end: -60px;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  width: 380px;
+  max-height: min(78vh, 680px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-pop);
+  overflow: hidden;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 4px;
+}
+
+.head h2 {
+  font-size: 21px;
+}
+
+.headIcon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: var(--text-3);
+}
+
+.headIcon:hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 16px 6px;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.tab {
+  height: 34px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-2);
+  font-family: var(--font-display);
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.tab:hover {
+  background: var(--surface-3);
+}
+
+.tabOn,
+.tabOn:hover {
+  background: var(--primary-wash);
+  color: var(--primary-text);
+}
+
+.markAll {
+  padding: 4px 6px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--primary-text);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.markAll:hover {
+  background: var(--surface-3);
+}
+
+.scroll {
+  flex: 1;
+  padding: 0 6px 6px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.groupTitle {
+  padding: 10px 10px 4px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.loading {
+  display: grid;
+  gap: 8px;
+  padding: 8px 10px;
+}
+
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 32px 24px;
+  text-align: center;
+}
+
+.empty p {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.empty span {
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+.emptyIcon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 4px;
+  border-radius: 50%;
+  background: var(--primary-wash);
+  color: var(--primary-text);
+}
+
+.seeAll {
+  display: block;
+  padding: 12px;
+  border-top: 1px solid var(--line);
+  font-family: var(--font-display);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--primary-text);
+  text-align: center;
+}
+
+.seeAll:hover {
+  background: var(--surface-2);
+}
+
+/* Phones: a sheet under the header, full width. */
+@media (max-width: 560px) {
+  .panel {
+    position: fixed;
+    top: calc(var(--menu-top, var(--header-h)) + 8px);
+    inset-inline-start: 8px;
+    inset-inline-end: 8px;
+    width: auto;
+    max-height: calc(100dvh - var(--menu-top, var(--header-h)) - 24px);
+  }
+}

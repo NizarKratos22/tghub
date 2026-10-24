@@ -1,0 +1,39 @@
+.wrap {
+  display: grid;
+  justify-items: start;
+  gap: 14px;
+  padding-block: clamp(56px, 10vw, 120px);
+}
+
+.code {
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--primary-wash);
+  color: var(--primary-text);
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.title {
+  font-size: clamp(36px, 6vw, 64px);
+  line-height: 1.05;
+}
+
+.text {
+  max-width: 52ch;
+  color: var(--text-3);
+  font-size: 16px;
+}
+
+.digest {
+  font-size: 12px;
+  color: var(--text-4);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}

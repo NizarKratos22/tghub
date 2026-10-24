@@ -1,0 +1,24 @@
+{
+  "name": "tunisian-gaming-hub",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web -c red,white \"npm run dev -w @tgh/api\" \"npm run dev -w @tgh/web\"",
+    "dev:api": "npm run dev -w @tgh/api",
+    "dev:web": "npm run dev -w @tgh/web",
+    "seed": "npm run seed -w @tgh/api",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "build": "npm run build -w @tgh/api && npm run build -w @tgh/web",
+    "test": "npm run test --workspaces --if-present"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "typescript": "5.9.3"
+  },
+  "engines": {
+    "node": ">=20.19"
+  }
+}

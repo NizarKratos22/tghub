@@ -1,0 +1,264 @@
+/*
+ * TG Hub design tokens.
+ * Clean tournament-platform UI: white or charcoal surfaces, one bright blue for
+ * everything you can press, gold for prizes and XP, green for good news and the
+ * Tunisian red reserved for the brand mark, live states and destructive actions.
+ * Light and dark are full themes — components only ever read the role tokens below.
+ */
+:root {
+  --font-display: var(--font-montserrat), 'Segoe UI', system-ui, sans-serif;
+  --font-body: var(--font-roboto), 'Segoe UI', system-ui, sans-serif;
+  /* Scoreboard numerals: prize pools, levels, XP. */
+  --font-num: var(--font-teko), var(--font-montserrat), sans-serif;
+
+  --radius-sm: 4px;
+  --radius: 6px;
+  --radius-lg: 10px;
+  --radius-pill: 999px;
+
+  --container: 1600px;
+  --gutter: clamp(16px, 3vw, 40px);
+  --header-h: 60px;
+  --ticker-h: 34px;
+  --ease: cubic-bezier(0.2, 0.7, 0.1, 1);
+
+  /* Fixed brand colours — identical in both themes. */
+  --brand: #e10600;
+  --brand-hi: #ff2b1c;
+  --on-primary: #fff;
+  --on-brand: #fff;
+  --on-gold: #1f2123;
+
+  /* ── Light theme (default) ── */
+  color-scheme: light;
+  --bg: #f3f4f6;
+  --surface: #ffffff;
+  --surface-2: #f7f8fa;
+  --surface-3: #eef0f3;
+  --field: #f3f4f6;
+  --line: #e5e7eb;
+  --line-strong: #d1d5db;
+  --text: #1f2123;
+  --text-2: #44484d;
+  --text-3: #62686d;
+  --text-4: #868b91;
+  --inverse: #1f2123;
+  --on-inverse: #ffffff;
+  --overlay: rgb(17 19 22 / 0.55);
+  --shadow-1: 0 1px 2px rgb(16 24 40 / 0.05), 0 1px 3px rgb(16 24 40 / 0.05);
+  --shadow-2: 0 10px 28px rgb(16 24 40 / 0.12), 0 2px 6px rgb(16 24 40 / 0.06);
+  --shadow-pop: 0 18px 48px rgb(16 24 40 / 0.18);
+
+  --primary: #0a96e8;
+  --primary-hover: #0884cf;
+  --primary-press: #0672b4;
+  --primary-wash: rgb(10 150 232 / 0.1);
+  --primary-text: #0b74b8;
+
+  --gold: #ffb400;
+  --gold-wash: rgb(255 180 0 / 0.14);
+  --gold-text: #a86f00;
+
+  --success: #01b876;
+  --success-wash: rgb(1 184 118 / 0.12);
+  --success-text: #00875a;
+
+  --danger: #e5372c;
+  --danger-hover: #c92b21;
+  --danger-wash: rgb(229 55 44 / 0.1);
+  --danger-text: #c62a20;
+
+  --purple: #a63de6;
+  --purple-wash: rgb(166 61 230 / 0.1);
+  --purple-text: #8a2cc4;
+
+  --live: #e10600;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #141517;
+  --surface: #1f2123;
+  --surface-2: #25282b;
+  --surface-3: #2e3134;
+  --field: #2a2d30;
+  --line: #303336;
+  --line-strong: #43474a;
+  --text: #f4f5f6;
+  --text-2: #cacccf;
+  --text-3: #a0a4a8;
+  --text-4: #7d8288;
+  --inverse: #f4f5f6;
+  --on-inverse: #1f2123;
+  --overlay: rgb(0 0 0 / 0.65);
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 0.35);
+  --shadow-2: 0 12px 32px rgb(0 0 0 / 0.45), 0 2px 6px rgb(0 0 0 / 0.3);
+  --shadow-pop: 0 20px 56px rgb(0 0 0 / 0.6);
+
+  --primary: #12a3f2;
+  --primary-hover: #36b3f7;
+  --primary-press: #0b8fd8;
+  --primary-wash: rgb(18 163 242 / 0.16);
+  --primary-text: #5cc4ff;
+
+  --gold-wash: rgb(255 180 0 / 0.16);
+  --gold-text: #ffc53d;
+
+  --success: #01d387;
+  --success-wash: rgb(1 211 135 / 0.14);
+  --success-text: #2ee39f;
+
+  --danger: #ff5a50;
+  --danger-hover: #ff7068;
+  --danger-wash: rgb(255 90 80 / 0.14);
+  --danger-text: #ff7d75;
+
+  --purple: #c345ff;
+  --purple-wash: rgb(195 69 255 / 0.16);
+  --purple-text: #d68bff;
+
+  --live: #ff3b30;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-padding-top: calc(var(--header-h) + 16px);
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+p {
+  margin: 0;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+::selection {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* ── Utilities kept deliberately small; components own their styles. ── */
+
+.container {
+  width: 100%;
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Tabular figures for counts and times that sit in columns. */
+.mono {
+  font-variant-numeric: tabular-nums;
+}
+
+.label {
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-2);
+}
+
+.page {
+  padding-block: clamp(24px, 4vw, 40px) clamp(48px, 7vw, 80px);
+}
+
+.stack > * + * {
+  margin-top: clamp(32px, 5vw, 56px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Arabic & right-to-left ── */
+
+:root[lang='ar'] {
+  --font-display: var(--font-cairo), 'Segoe UI', Tahoma, sans-serif;
+  --font-body: var(--font-cairo), 'Segoe UI', Tahoma, sans-serif;
+}
+
+/* Arabic letters join; spacing them out breaks the words. */
+:root[lang='ar'] body * {
+  letter-spacing: normal !important;
+}
+
+/* Direction-bearing icons (arrows, chevrons, send) point the other way in RTL. */
+[dir='rtl'] .dir-flip {
+  transform: scaleX(-1);
+}

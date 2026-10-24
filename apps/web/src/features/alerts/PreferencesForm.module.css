@@ -1,0 +1,160 @@
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(16px, 2.4vw, 24px);
+}
+
+.section {
+  display: grid;
+  align-content: start;
+  padding: 6px 20px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+}
+
+.heading {
+  margin: 12px 0 2px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+  font-size: 16px;
+}
+
+.heading:not(:first-child) {
+  margin-top: 24px;
+}
+
+.subLabel {
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-2);
+}
+
+.games {
+  display: grid;
+  gap: 10px;
+  padding: 14px 0;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.chip:hover {
+  border-color: var(--danger);
+}
+
+.chip svg {
+  color: var(--text-4);
+}
+
+.chipDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.add {
+  height: 42px;
+  padding: 0 12px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-2);
+}
+
+.add option {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.muted {
+  font-size: 13.5px;
+  color: var(--text-4);
+}
+
+.cap {
+  display: grid;
+  gap: 10px;
+  padding: 14px 0;
+}
+
+.capLabel {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.capValue {
+  font-family: var(--font-num);
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--primary-text);
+}
+
+.cap input[type='range'] {
+  width: 100%;
+  accent-color: var(--primary);
+}
+
+.channels {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  font-size: 13.5px;
+  color: var(--text-3);
+}
+
+.channels strong {
+  color: var(--text);
+}
+
+.bar {
+  position: sticky;
+  bottom: 0;
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.saved {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-3);
+}
+
+@media (max-width: 860px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

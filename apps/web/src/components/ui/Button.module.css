@@ -1,0 +1,124 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  transition:
+    background-color 140ms var(--ease),
+    border-color 140ms var(--ease),
+    color 140ms var(--ease),
+    box-shadow 140ms var(--ease);
+  user-select: none;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.sm {
+  height: 34px;
+  padding-inline: 14px;
+  font-size: 12.5px;
+}
+
+.md {
+  height: 42px;
+  padding-inline: 22px;
+  font-size: 13.5px;
+}
+
+.lg {
+  height: 50px;
+  padding-inline: 32px;
+  font-size: 14.5px;
+}
+
+.block {
+  width: 100%;
+}
+
+.primary {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.primary:active:not(:disabled) {
+  background: var(--primary-press);
+}
+
+/* Neutral filled — the "on" state of follow / favourite style buttons. */
+.secondary {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+.secondary:hover:not(:disabled) {
+  background: var(--line);
+}
+
+.outline {
+  background: transparent;
+  border-color: var(--line-strong);
+  color: var(--text-2);
+}
+
+.outline:hover:not(:disabled) {
+  border-color: var(--text-4);
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+.ghost {
+  background: transparent;
+  color: var(--text-2);
+}
+
+.ghost:hover:not(:disabled) {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+.danger {
+  background: transparent;
+  border-color: color-mix(in srgb, var(--danger) 50%, transparent);
+  color: var(--danger-text);
+}
+
+.danger:hover:not(:disabled) {
+  background: var(--danger-wash);
+}
+
+.gold {
+  background: var(--gold);
+  color: var(--on-gold);
+}
+
+.gold:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--gold) 88%, #000);
+}
+
+.spinner {
+  width: 13px;
+  height: 13px;
+  border: 2px solid currentColor;
+  border-inline-end-color: transparent;
+  border-radius: 50%;
+  animation: spin 600ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

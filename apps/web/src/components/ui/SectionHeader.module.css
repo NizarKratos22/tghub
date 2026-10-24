@@ -1,0 +1,39 @@
+.head {
+  margin-bottom: 16px;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.title {
+  font-size: clamp(18px, 2vw, 22px);
+  font-weight: 800;
+}
+
+.action {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-inline-start: auto;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary-text);
+  white-space: nowrap;
+}
+
+.action:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.kicker {
+  margin-top: 4px;
+  max-width: 68ch;
+  color: var(--text-3);
+  font-size: 14px;
+}

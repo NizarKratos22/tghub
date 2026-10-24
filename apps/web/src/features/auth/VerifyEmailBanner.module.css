@@ -1,0 +1,56 @@
+.banner {
+  border-bottom: 1px solid color-mix(in srgb, var(--gold) 40%, transparent);
+  background: var(--gold-wash);
+  color: var(--text-2);
+  font-size: 13.5px;
+}
+
+.inner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  min-height: 44px;
+  padding-block: 8px;
+}
+
+.inner > svg {
+  color: var(--gold-text);
+}
+
+.inner strong {
+  color: var(--text);
+}
+
+.action {
+  margin-inline-start: auto;
+  padding: 5px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--inverse);
+  color: var(--on-inverse);
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.action:hover {
+  opacity: 0.9;
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--gold) 40%, transparent);
+  border-radius: var(--radius-lg);
+  background: var(--gold-wash);
+  font-size: 14px;
+  color: var(--text-2);
+}
+
+.notice > svg {
+  color: var(--gold-text);
+}

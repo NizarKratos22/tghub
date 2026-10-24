@@ -1,0 +1,221 @@
+.chartBox {
+  position: relative;
+  width: 100%;
+  border-radius: var(--radius);
+  outline-offset: 4px;
+}
+
+.svg {
+  display: block;
+  overflow: visible;
+}
+
+/* Recessive chrome: hairline, solid, one step off the surface. */
+.grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.axisY,
+.axisX {
+  fill: var(--text-4);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.axisY {
+  text-anchor: end;
+  dominant-baseline: middle;
+}
+
+.line {
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* End markers wear a 2px surface ring so they stay legible where lines cross. */
+.dot {
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+
+.crosshair {
+  stroke: var(--text-4);
+  stroke-width: 1;
+}
+
+.hit {
+  fill: transparent;
+  cursor: crosshair;
+}
+
+.endLabel {
+  fill: var(--text-3);
+  font-size: 12px;
+  dominant-baseline: middle;
+}
+
+.endValue {
+  fill: var(--text);
+  font-weight: 700;
+}
+
+.column {
+  transition: opacity 120ms var(--ease);
+}
+
+.columnDim {
+  opacity: 0.4;
+}
+
+.capLabel {
+  fill: var(--text-2);
+  font-size: 11px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+/* Tooltip */
+
+.tooltip {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  gap: 4px;
+  min-width: 150px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-2);
+  pointer-events: none;
+}
+
+.tipTitle {
+  font-family: var(--font-display);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-3);
+}
+
+.tipRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--text-3);
+}
+
+.tipRow strong {
+  min-width: 34px;
+  font-size: 13.5px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.tipKey {
+  width: 12px;
+  height: 2px;
+  border-radius: 1px;
+}
+
+/* Sparkline */
+
+.spark {
+  display: block;
+  width: 100%;
+  height: 34px;
+  overflow: visible;
+}
+
+.sparkLine {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.sparkDot {
+  fill: var(--series-1);
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+
+/* Horizontal bars */
+
+.bars {
+  display: grid;
+  gap: 6px;
+}
+
+.barRow {
+  display: grid;
+  grid-template-columns: minmax(0, 150px) minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+}
+
+a.barRow:hover {
+  background: var(--surface-2);
+}
+
+a.barRow:hover .bar {
+  filter: brightness(1.08);
+}
+
+.barLabel {
+  overflow: hidden;
+  font-size: 13px;
+  color: var(--text-2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.barTrack {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* Rounded data-end, square at the baseline; capped thickness. */
+.bar {
+  height: 14px;
+  border-radius: 0 4px 4px 0;
+}
+
+.barValue {
+  flex-shrink: 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Legend */
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+
+.legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.legendKey {
+  width: 16px;
+  height: 2px;
+  border-radius: 1px;
+}

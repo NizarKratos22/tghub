@@ -1,0 +1,406 @@
+.shell {
+  display: grid;
+  grid-template-columns: 252px minmax(0, 1fr);
+  min-height: 100dvh;
+  background: var(--bg);
+}
+
+/* Sidebar — always the dark charcoal, like a control room, in both themes. */
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  background: #17191c;
+  color: #cacccf;
+  border-inline-end: 1px solid #25282b;
+}
+
+.sidebarInner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px 12px 12px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px 18px;
+  color: #fff;
+  font-family: var(--font-display);
+}
+
+.mark {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius);
+  background: var(--brand);
+  color: var(--on-brand);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.brandText {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.brandTag {
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  background: rgb(18 163 242 / 0.18);
+  color: #5cc4ff;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.nav {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  flex: 1;
+}
+
+.group {
+  display: grid;
+  gap: 2px;
+}
+
+.groupTitle {
+  padding: 0 10px 4px;
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6f747a;
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  height: 38px;
+  padding: 0 10px;
+  border-radius: var(--radius);
+  color: #a0a4a8;
+  font-family: var(--font-display);
+  font-size: 13.5px;
+  font-weight: 600;
+  transition:
+    background-color 120ms var(--ease),
+    color 120ms var(--ease);
+}
+
+.link:hover {
+  background: #23262a;
+  color: #fff;
+}
+
+.linkOn,
+.linkOn:hover {
+  background: #0a96e8;
+  color: #fff;
+}
+
+.linkText {
+  flex: 1;
+  min-width: 0;
+}
+
+.count {
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  background: var(--brand);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.linkOn .count {
+  background: #fff;
+  color: #0a96e8;
+}
+
+.foot {
+  display: grid;
+  gap: 8px;
+  padding-top: 12px;
+  margin-top: 12px;
+  border-top: 1px solid #25282b;
+}
+
+.me {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: var(--radius);
+  background: #1f2226;
+}
+
+.meText {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.meName {
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meRole {
+  font-size: 11.5px;
+  color: #85898d;
+}
+
+.iconButton {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: inherit;
+}
+
+.me .iconButton:hover {
+  background: #2b2f34;
+  color: #fff;
+}
+
+/* Main column */
+
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 60px;
+  padding: 0 clamp(16px, 2.4vw, 28px);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.menuButton {
+  display: none;
+  color: var(--text-2);
+}
+
+.menuButton:hover {
+  background: var(--surface-3);
+}
+
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-family: var(--font-display);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.crumbs a {
+  color: var(--text-3);
+}
+
+.crumbs a:hover {
+  color: var(--primary-text);
+}
+
+.crumbs svg {
+  color: var(--text-4);
+}
+
+.tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-inline-start: auto;
+}
+
+.alertPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  background: var(--danger-wash);
+  color: var(--danger-text);
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.alertPill:hover {
+  background: var(--danger);
+  color: #fff;
+}
+
+.content {
+  width: 100%;
+  max-width: 1440px;
+  padding: clamp(18px, 2.6vw, 32px) clamp(16px, 2.4vw, 28px) 56px;
+}
+
+/* Page heading */
+
+.pageHead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  margin-bottom: 20px;
+}
+
+.pageTitle {
+  font-size: clamp(22px, 2.4vw, 28px);
+}
+
+.pageText {
+  margin-top: 4px;
+  max-width: 70ch;
+  font-size: 14px;
+  color: var(--text-3);
+}
+
+.pageActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Loading + gates */
+
+.loading {
+  display: grid;
+  gap: 16px;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 48px 24px;
+}
+
+.gate {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: 24px;
+  background: var(--bg);
+}
+
+.gateCard {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  width: min(100%, 420px);
+  padding: 32px 28px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-2);
+  text-align: center;
+}
+
+.gateCard h1 {
+  font-size: 22px;
+}
+
+.gateCard p {
+  font-size: 14px;
+  color: var(--text-3);
+}
+
+.gateIcon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--primary-wash);
+  color: var(--primary-text);
+}
+
+.gateActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.scrim {
+  display: none;
+}
+
+/* Narrow screens: the sidebar slides in over the page. */
+@media (max-width: 1024px) {
+  .shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 50;
+    width: min(84vw, 280px);
+    transform: translateX(-100%);
+    transition: transform 220ms var(--ease);
+  }
+
+  .sidebarOpen {
+    transform: none;
+    box-shadow: var(--shadow-pop);
+  }
+
+  .scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: block;
+    border: 0;
+    background: var(--overlay);
+  }
+
+  .menuButton {
+    display: grid;
+  }
+}
+
+@media (max-width: 560px) {
+  .viewSite {
+    display: none;
+  }
+}

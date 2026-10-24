@@ -1,0 +1,326 @@
+.primary {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+  gap: 2px;
+}
+
+.link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  font-family: var(--font-display);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-3);
+  transition: color 120ms var(--ease);
+}
+
+.link:hover {
+  color: var(--text);
+}
+
+.active {
+  color: var(--text);
+}
+
+.active::after {
+  content: '';
+  position: absolute;
+  inset-inline-start: 12px;
+  inset-inline-end: 12px;
+  bottom: -1px;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: var(--primary);
+}
+
+.tools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-inline-start: auto;
+}
+
+.iconButton {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-3);
+  transition:
+    color 120ms var(--ease),
+    background-color 120ms var(--ease);
+}
+
+.iconButton:hover,
+.iconActive {
+  color: var(--text);
+  background: var(--surface-3);
+}
+
+.badge {
+  position: absolute;
+  top: 3px;
+  inset-inline-end: 1px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 5px;
+  border: 2px solid var(--surface);
+  border-radius: var(--radius-pill);
+  background: var(--brand);
+  color: var(--on-brand);
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  font-weight: 800;
+  line-height: 13px;
+  text-align: center;
+  box-sizing: content-box;
+}
+
+.placeholder {
+  width: 132px;
+  height: 34px;
+  border-radius: var(--radius);
+  background: var(--surface-3);
+}
+
+.guest {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-inline-start: 6px;
+}
+
+/* Account */
+
+.account {
+  position: relative;
+  margin-inline-start: 6px;
+}
+
+.accountButton {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 8px 0 4px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-3);
+  text-align: start;
+}
+
+.accountButton:hover {
+  background: var(--surface-3);
+}
+
+.accountText {
+  display: grid;
+  line-height: 1.2;
+}
+
+.accountName {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.accountLevel {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gold-text);
+}
+
+.menu {
+  position: absolute;
+  inset-inline-end: 0;
+  top: calc(100% + 8px);
+  z-index: 60;
+  width: 248px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-pop);
+}
+
+.menuHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 10px 12px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--line);
+}
+
+.menuName {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.menuMeta {
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.menuRule {
+  height: 1px;
+  margin: 4px 0;
+  background: var(--line);
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-2);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: start;
+}
+
+.menuItem svg {
+  color: var(--text-4);
+}
+
+.menuItem:hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+.menuToggle {
+  display: none;
+}
+
+/* Drawer — portalled to <body>; `top` is set from the header's position. */
+
+.drawer {
+  position: fixed;
+  inset: var(--header-h) 0 0;
+  z-index: 39;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 12px var(--gutter) 28px;
+  background: var(--surface);
+  overflow-y: auto;
+}
+
+.drawerNav {
+  display: grid;
+  gap: 2px;
+}
+
+.drawerLink {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 8px;
+  border-radius: var(--radius);
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.drawerLink:hover {
+  background: var(--surface-2);
+}
+
+.drawerIcon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius);
+  background: var(--surface-3);
+  color: var(--text-3);
+}
+
+.drawerChevron {
+  margin-inline-start: auto;
+  color: var(--text-4);
+}
+
+.drawerActive {
+  color: var(--primary-text);
+}
+
+.drawerActive .drawerIcon {
+  background: var(--primary-wash);
+  color: var(--primary-text);
+}
+
+.drawerCount {
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--brand);
+  color: var(--on-brand);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.drawerActions {
+  display: grid;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+@media (max-width: 1180px) {
+  .primary {
+    display: none;
+  }
+
+  .menuToggle {
+    display: grid;
+  }
+
+  .accountText,
+  .accountButton > svg {
+    display: none;
+  }
+}
+
+.drawerTheme {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding: 10px 8px;
+  border-top: 1px solid var(--line);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+@media (max-width: 520px) {
+  /* Phones: search and the theme switch move into the menu drawer. */
+  .wideOnly {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .guest .signIn {
+    display: none;
+  }
+}

@@ -1,0 +1,151 @@
+.row {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-3);
+  text-align: start;
+  transition: background-color 120ms var(--ease);
+}
+
+.row:hover {
+  background: var(--surface-2);
+}
+
+.unread .title {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.unread .time {
+  color: var(--primary-text);
+  font-weight: 600;
+}
+
+/* Badge: game monogram or category icon, with a small category chip in the corner. */
+.badgeWrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.gameBadge,
+.iconBadge {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+}
+
+.compact .gameBadge,
+.compact .iconBadge {
+  width: 46px;
+  height: 46px;
+}
+
+.gameBadge {
+  --accent: var(--primary);
+  background: linear-gradient(150deg, var(--accent), color-mix(in srgb, var(--accent) 55%, #0d0e10));
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.corner {
+  position: absolute;
+  inset-inline-end: -3px;
+  bottom: -3px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  color: #fff;
+}
+
+.iconBadge + .corner {
+  display: none;
+}
+
+.cat_game_update {
+  background: var(--primary);
+}
+
+.cat_deal {
+  background: var(--gold);
+}
+
+.cat_tournament {
+  background: var(--success);
+}
+
+.cat_social {
+  background: var(--purple);
+}
+
+.cat_announcement {
+  background: var(--brand);
+}
+
+.iconBadge {
+  color: #fff;
+}
+
+.body {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--text-2);
+}
+
+.summary {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text-3);
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.compact .summary {
+  -webkit-line-clamp: 1;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-top: 1px;
+  font-size: 12px;
+  color: var(--text-4);
+}
+
+.dotSep {
+  opacity: 0.7;
+}
+
+.unreadDot {
+  flex-shrink: 0;
+  align-self: center;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--primary);
+}

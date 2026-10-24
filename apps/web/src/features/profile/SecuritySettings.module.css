@@ -1,0 +1,147 @@
+.stack {
+  display: grid;
+  gap: 14px;
+}
+
+.card {
+  display: grid;
+  gap: 14px;
+  padding: clamp(16px, 2.4vw, 22px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.head > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.head h3 {
+  font-size: 15px;
+}
+
+.head p {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  color: var(--text-3);
+  overflow-wrap: anywhere;
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--primary-wash);
+  color: var(--primary-text);
+}
+
+.form {
+  display: grid;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px 12px;
+}
+
+.text {
+  font-size: 14px;
+  color: var(--text-3);
+}
+
+.text strong,
+.dev strong {
+  color: var(--text);
+}
+
+.dev {
+  padding: 8px 12px;
+  border: 1px dashed color-mix(in srgb, var(--purple) 45%, transparent);
+  border-radius: var(--radius);
+  background: var(--purple-wash);
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.error {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--danger-text);
+}
+
+.ok {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--success-text);
+}
+
+.devices {
+  display: grid;
+  gap: 2px;
+}
+
+.devices li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 4px;
+  border-top: 1px solid var(--line);
+}
+
+.deviceIcon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius);
+  background: var(--surface-3);
+  color: var(--text-3);
+}
+
+.deviceText {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 2px;
+}
+
+.deviceText strong {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-size: 13.5px;
+}
+
+.deviceText span {
+  font-size: 12.5px;
+  color: var(--text-4);
+}

@@ -1,0 +1,87 @@
+# Production stack on one server: Caddy (HTTPS) → web (Next.js) → api → MongoDB,
+# plus a nightly backup job. See DEPLOY.md.
+#   docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+
+services:
+  mongo:
+    image: mongo:8
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', 'db.adminCommand("ping").ok']
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    env_file: .env.production
+    environment:
+      NODE_ENV: production
+      MONGO_URI: mongodb://mongo:27017/tghub
+      MEDIA_DIR: /data/media
+      COOKIE_SECURE: 'true'
+      # Caddy → Next.js → API: two proxies in front.
+      TRUST_PROXY: '2'
+      PUBLIC_WEB_URL: https://${DOMAIN}
+      CORS_ORIGINS: https://${DOMAIN}
+      INGESTION_ENABLED: 'true'
+    volumes:
+      - media:/data/media
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        API_INTERNAL_URL: http://api:4000
+    restart: unless-stopped
+    environment:
+      API_INTERNAL_URL: http://api:4000
+    depends_on:
+      - api
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - web
+
+  backup:
+    image: mongo:8
+    restart: unless-stopped
+    entrypoint: ['/bin/sh', '/scripts/backup-loop.sh']
+    environment:
+      MONGO_URI: mongodb://mongo:27017/tghub
+      KEEP_DAYS: '14'
+    volumes:
+      - ./deploy/backup.sh:/scripts/backup.sh:ro
+      - ./deploy/backup-loop.sh:/scripts/backup-loop.sh:ro
+      - ./backups:/backups
+      - media:/data/media:ro
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+volumes:
+  mongo-data:
+  media:
+  caddy-data:
+  caddy-config:

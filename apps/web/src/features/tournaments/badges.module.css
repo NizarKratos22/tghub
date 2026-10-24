@@ -1,0 +1,72 @@
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.status_registration_open {
+  background: var(--success-wash);
+  color: var(--success-text);
+}
+
+.status_upcoming {
+  background: var(--primary-wash);
+  color: var(--primary-text);
+}
+
+.status_live {
+  background: var(--live);
+  color: #fff;
+}
+
+.status_completed {
+  background: var(--surface-3);
+  color: var(--text-3);
+}
+
+.status_cancelled {
+  background: var(--surface-3);
+  color: var(--text-4);
+  text-decoration: line-through;
+}
+
+.liveDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.provider {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--text-2);
+}
+
+.provider_sample {
+  border-style: dashed;
+  color: var(--text-3);
+  background: repeating-linear-gradient(135deg, var(--surface-3) 0 4px, transparent 4px 8px);
+}

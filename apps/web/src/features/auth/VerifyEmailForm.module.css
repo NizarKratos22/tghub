@@ -1,0 +1,105 @@
+.form,
+.done {
+  display: grid;
+  gap: 16px;
+}
+
+.icon,
+.doneIcon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--primary-wash);
+  color: var(--primary-text);
+}
+
+.copy {
+  display: grid;
+  gap: 6px;
+}
+
+.copy h2,
+.done h2 {
+  font-size: 22px;
+}
+
+.copy p,
+.done p {
+  font-size: 14px;
+  color: var(--text-3);
+}
+
+.copy strong {
+  color: var(--text);
+}
+
+.dev {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px dashed color-mix(in srgb, var(--purple) 45%, transparent);
+  border-radius: var(--radius);
+  background: var(--purple-wash);
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.dev svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--purple-text);
+}
+
+.dev strong {
+  font-family: Consolas, Menlo, monospace;
+  font-size: 14px;
+  letter-spacing: 0.12em;
+  color: var(--text);
+}
+
+.error {
+  margin-top: -6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--danger-text);
+}
+
+.resend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+  font-size: 13.5px;
+  color: var(--text-3);
+}
+
+.resend button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--primary-text);
+  font-weight: 700;
+}
+
+.resend a {
+  color: var(--primary-text);
+  font-weight: 700;
+}
+
+.resend button:disabled {
+  color: var(--text-4);
+  font-weight: 500;
+  cursor: default;
+}
+
+.doneIcon {
+  background: var(--success-wash);
+  color: var(--success-text);
+}
+
+.done {
+  justify-items: start;
+}

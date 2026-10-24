@@ -1,0 +1,5 @@
+# One line ending everywhere: the server is Linux, and shell scripts break with CRLF.
+* text=auto eol=lf
+*.png binary
+*.webp binary
+*.ico binary

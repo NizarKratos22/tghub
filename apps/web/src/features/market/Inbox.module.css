@@ -1,0 +1,522 @@
+.inbox {
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  height: calc(100dvh - var(--header-h) - 120px);
+  min-height: 480px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+}
+
+/* List */
+
+.listPane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-inline-end: 1px solid var(--line);
+}
+
+.listHead {
+  display: grid;
+  gap: 10px;
+  padding: 16px 14px 10px;
+}
+
+.listHead h2 {
+  font-size: 19px;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.tab {
+  height: 32px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--surface-3);
+  color: var(--text-2);
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.tabOn {
+  background: var(--primary-wash);
+  color: var(--primary-text);
+}
+
+.listBody {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  padding: 4px 8px 12px;
+  overflow-y: auto;
+}
+
+.listEmpty {
+  padding: 24px 18px;
+  font-size: 13.5px;
+  color: var(--text-4);
+}
+
+.item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-radius: var(--radius);
+}
+
+.item:hover {
+  background: var(--surface-2);
+}
+
+.itemOn,
+.itemOn:hover {
+  background: var(--primary-wash);
+}
+
+.thumb {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: var(--radius);
+  background: var(--surface-3);
+  color: var(--text-4);
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius);
+  object-fit: cover;
+}
+
+.thumbAvatar {
+  position: absolute;
+  inset-inline-end: -4px;
+  bottom: -4px;
+  display: grid;
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+}
+
+.itemText {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 1px;
+}
+
+.itemTop {
+  display: flex;
+  min-width: 0;
+}
+
+.itemName,
+.itemPreview {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.itemName {
+  font-family: var(--font-display);
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.itemPreview {
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+.unread .itemPreview {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.itemMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  color: var(--text-4);
+}
+
+.roleTag {
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  background: var(--primary-wash);
+  color: var(--primary-text);
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.roleSeller {
+  background: var(--gold-wash);
+  color: var(--gold-text);
+}
+
+.unreadDot {
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--radius-pill);
+  background: var(--primary);
+  color: var(--on-primary);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+/* Thread */
+
+.thread {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.threadHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.back {
+  display: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: var(--text-2);
+}
+
+.back:hover {
+  background: var(--surface-3);
+}
+
+.threadListing {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  gap: 12px;
+  padding: 4px;
+  border-radius: var(--radius);
+}
+
+.threadListing:hover {
+  background: var(--surface-2);
+}
+
+.threadText {
+  display: grid;
+  min-width: 0;
+}
+
+.threadTitle {
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.threadSub {
+  overflow: hidden;
+  font-size: 12.5px;
+  color: var(--text-3);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.threadSub strong {
+  color: var(--text-2);
+}
+
+.messages {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 4px;
+  padding: 16px clamp(12px, 2vw, 24px);
+  overflow-y: auto;
+  background: var(--surface-2);
+}
+
+.older {
+  align-self: center;
+  margin-bottom: 8px;
+  padding: 6px 14px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--surface-3);
+  color: var(--text-2);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.messageRow {
+  display: grid;
+}
+
+.day {
+  justify-self: center;
+  margin: 12px 0 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-4);
+}
+
+.bubbleWrap {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  max-width: min(76%, 560px);
+}
+
+.mine {
+  flex-direction: row-reverse;
+  margin-inline-start: auto;
+}
+
+.bubble {
+  padding: 9px 13px;
+  border-radius: 18px 18px 18px 6px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  font-size: 14px;
+  line-height: 1.45;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.mine .bubble {
+  border-color: transparent;
+  border-radius: 18px 18px 6px 18px;
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.time {
+  flex-shrink: 0;
+  font-size: 10.5px;
+  color: var(--text-4);
+}
+
+.receipt {
+  display: inline-flex;
+  align-items: center;
+  justify-self: end;
+  gap: 4px;
+  margin-top: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-4);
+}
+
+.receiptSeen {
+  color: var(--primary-text);
+}
+
+/* Three dots in a bubble, pulsing one after another. */
+.typing {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.typingBubble {
+  display: inline-flex;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 18px 18px 18px 6px;
+  background: var(--surface);
+}
+
+.typingBubble span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-4);
+  animation: typingDot 1.2s infinite ease-in-out;
+}
+
+.typingBubble span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.typingBubble span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes typingDot {
+  0%,
+  60%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .typingBubble span {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
+.composer {
+  display: grid;
+  gap: 8px;
+  padding: 10px 14px 12px;
+  border-top: 1px solid var(--line);
+}
+
+.replies {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.reply {
+  flex-shrink: 0;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--primary-text);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.reply:hover {
+  background: var(--primary-wash);
+}
+
+.inputRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.inputRow textarea {
+  flex: 1;
+  min-height: 42px;
+  max-height: 140px;
+  padding: 10px 16px;
+  border: 1px solid transparent;
+  border-radius: 21px;
+  background: var(--field);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.45;
+  resize: none;
+  outline: none;
+  field-sizing: content;
+}
+
+.inputRow textarea:focus {
+  border-color: var(--primary);
+}
+
+.send {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.send:disabled {
+  background: var(--surface-3);
+  color: var(--text-4);
+  cursor: not-allowed;
+}
+
+.sendError,
+.closed {
+  font-size: 12.5px;
+  color: var(--danger-text);
+}
+
+.closed {
+  padding: 14px 18px;
+  border-top: 1px solid var(--line);
+  color: var(--text-3);
+  text-align: center;
+}
+
+.threadEmpty {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 6px;
+  padding: 24px;
+  color: var(--text-4);
+  text-align: center;
+}
+
+.threadEmpty p {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-2);
+}
+
+.threadEmpty span {
+  font-size: 13px;
+}
+
+/* One pane at a time on narrow screens. */
+@media (max-width: 860px) {
+  .inbox {
+    grid-template-columns: minmax(0, 1fr);
+    height: calc(100dvh - var(--header-h) - 96px);
+  }
+
+  .listPane {
+    border-inline-end: 0;
+  }
+
+  .hasThread .listPane,
+  .inbox:not(.hasThread) .threadEmpty {
+    display: none;
+  }
+
+  .back {
+    display: grid;
+  }
+
+  .bubbleWrap {
+    max-width: 86%;
+  }
+}

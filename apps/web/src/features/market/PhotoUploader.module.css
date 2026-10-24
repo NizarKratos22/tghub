@@ -1,0 +1,173 @@
+.uploader {
+  display: grid;
+  gap: 10px;
+}
+
+.head {
+  display: grid;
+  gap: 2px;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 13.5px;
+  font-weight: 800;
+}
+
+.hint {
+  font-size: 12.5px;
+  color: var(--text-4);
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 8px;
+}
+
+.tile {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--surface-3);
+}
+
+.tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.failed {
+  outline: 2px solid var(--danger);
+  outline-offset: -2px;
+}
+
+.cover {
+  position: absolute;
+  top: 6px;
+  inset-inline-start: 6px;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  color: var(--on-primary);
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 4px;
+  padding: 8px;
+  background: rgb(0 0 0 / 0.45);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.errorOverlay {
+  background: rgb(150 20 14 / 0.78);
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgb(255 255 255 / 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.controls {
+  position: absolute;
+  inset-inline-end: 4px;
+  bottom: 4px;
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 120ms var(--ease);
+}
+
+.tile:hover .controls,
+.tile:focus-within .controls {
+  opacity: 1;
+}
+
+.controls button {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.92);
+  color: #1f2123;
+}
+
+.controls button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Touch screens have no hover: keep the controls visible. */
+@media (hover: none) {
+  .controls {
+    opacity: 1;
+  }
+}
+
+.add {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 4px;
+  width: 100%;
+  aspect-ratio: 1;
+  border: 2px dashed var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 700;
+  transition:
+    border-color 120ms var(--ease),
+    background-color 120ms var(--ease);
+}
+
+.add small {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-4);
+}
+
+.add:hover,
+.dragging {
+  border-color: var(--primary);
+  background: var(--primary-wash);
+  color: var(--primary-text);
+}
+
+.addInvalid {
+  border-color: var(--danger);
+}
+
+.error {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--danger-text);
+}

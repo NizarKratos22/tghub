@@ -1,0 +1,150 @@
+.list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+
+.logo {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius);
+  color: #fff;
+}
+
+.discord {
+  background: #5865f2;
+}
+
+.steam {
+  background: #171a21;
+}
+
+.text {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+.text strong {
+  font-family: var(--font-display);
+  font-size: 14px;
+  color: var(--text);
+}
+
+.text a {
+  color: var(--primary-text);
+  font-weight: 600;
+}
+
+.connect {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 800;
+}
+
+.connect:hover {
+  border-color: var(--text);
+}
+
+.soon {
+  font-size: 12px;
+  color: var(--text-4);
+}
+
+.note {
+  margin: -4px 0 8px 50px;
+  font-size: 12.5px;
+  color: var(--text-3);
+}
+
+.note a {
+  color: var(--primary-text);
+  font-weight: 600;
+}
+
+.games {
+  display: grid;
+  gap: 10px;
+  padding: 0 0 6px 50px;
+}
+
+.gamesHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--text-3);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px 0 4px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.chip i {
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 2px 3px 0;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--font-num);
+  font-size: 11px;
+  font-style: normal;
+}
+
+.chip span {
+  color: var(--text-4);
+}
+
+.chip:hover {
+  border-color: var(--line-strong);
+}
+
+.hint {
+  font-size: 12.5px;
+  color: var(--text-3);
+}

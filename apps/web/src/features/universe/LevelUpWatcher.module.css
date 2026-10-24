@@ -1,0 +1,201 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: var(--overlay);
+  animation: fade 200ms var(--ease);
+}
+
+.card {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  width: min(100%, 420px);
+  padding: 36px 28px 24px;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-pop);
+  text-align: center;
+  overflow: hidden;
+  animation: pop 420ms cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
+.close {
+  position: absolute;
+  top: 10px;
+  inset-inline-end: 10px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--surface-3);
+  color: var(--text-2);
+}
+
+.close:hover {
+  color: var(--text);
+}
+
+/* Gold rays behind the badge, turning slowly. */
+.burst {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  width: 260px;
+  height: 260px;
+  margin-inline-start: -130px;
+  margin-top: -50px;
+  animation: spin 14s linear infinite;
+  pointer-events: none;
+}
+
+.burst span {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 14px;
+  height: 130px;
+  margin-inline-start: -7px;
+  transform-origin: 50% 100%;
+  background: linear-gradient(to top, transparent, color-mix(in srgb, var(--gold) 32%, transparent));
+  clip-path: polygon(50% 100%, 0 0, 100% 0);
+}
+
+.badge {
+  position: relative;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  width: 112px;
+  height: 112px;
+  margin-bottom: 6px;
+  border: 4px solid var(--surface);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffd666, #ffb400 55%, #c98400);
+  box-shadow:
+    0 0 0 3px var(--gold),
+    0 14px 30px rgb(255 180 0 / 0.35);
+  color: #1f2123;
+  line-height: 1;
+}
+
+.badgeLabel {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.badgeValue {
+  font-family: var(--font-num);
+  font-size: 58px;
+  font-weight: 600;
+  line-height: 0.85;
+}
+
+.kicker {
+  position: relative;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--gold-wash);
+  color: var(--gold-text);
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.title {
+  position: relative;
+  font-size: 23px;
+}
+
+.text {
+  position: relative;
+  max-width: 34ch;
+  font-size: 14px;
+  color: var(--text-3);
+}
+
+.text strong {
+  color: var(--text);
+}
+
+.progress {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.progressText {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-3);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.actions > * {
+  flex: 1;
+}
+
+.later {
+  height: 42px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-2);
+  font-family: var(--font-display);
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.later:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.85) translateY(12px);
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .burst {
+    animation: none;
+  }
+}

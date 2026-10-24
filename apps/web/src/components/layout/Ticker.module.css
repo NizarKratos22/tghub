@@ -1,0 +1,125 @@
+.ticker {
+  display: flex;
+  align-items: center;
+  height: var(--ticker-h);
+  background: var(--inverse);
+  color: var(--on-inverse);
+  font-size: 12.5px;
+  overflow: hidden;
+}
+
+.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+  height: 22px;
+  margin-inline-start: var(--gutter);
+  margin-inline-end: 12px;
+  padding: 0 9px;
+  border-radius: var(--radius-sm);
+  background: var(--live);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.viewport {
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent 0, #000 32px, #000 calc(100% - 32px), transparent 100%);
+}
+
+.track {
+  display: flex;
+  width: max-content;
+  height: 100%;
+  animation: scroll linear infinite;
+}
+
+.viewport:hover .track {
+  animation-play-state: paused;
+}
+
+.copy {
+  display: flex;
+}
+
+@keyframes scroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 100%;
+  padding: 0 26px 0 0;
+  white-space: nowrap;
+  opacity: 0.85;
+}
+
+.item::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  margin-inline-end: 18px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.35;
+}
+
+.item:hover {
+  opacity: 1;
+}
+
+.item:hover .title {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.kind {
+  color: var(--gold);
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.game {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.6;
+}
+
+.title {
+  font-weight: 500;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track {
+    animation: none;
+  }
+}

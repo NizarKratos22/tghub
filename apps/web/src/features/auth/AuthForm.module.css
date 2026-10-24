@@ -1,0 +1,31 @@
+.form {
+  display: grid;
+  gap: 16px;
+}
+
+.switch {
+  font-size: 13.5px;
+  color: var(--text-3);
+  text-align: center;
+}
+
+.switch a {
+  color: var(--primary-text);
+  font-weight: 700;
+}
+
+.switch a:hover {
+  text-decoration: underline;
+}
+
+.forgot {
+  justify-self: end;
+  margin-top: -8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary-text);
+}
+
+.forgot:hover {
+  text-decoration: underline;
+}

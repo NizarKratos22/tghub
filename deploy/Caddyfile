@@ -1,0 +1,21 @@
+# Caddy gets and renews the HTTPS certificate for {$DOMAIN} on its own.
+
+www.{$DOMAIN} {
+	redir https://{$DOMAIN}{uri} permanent
+}
+
+{$DOMAIN} {
+	# Compress everything except the live event stream, which must flush instantly.
+	@compressible not path /api/v1/stream
+	encode @compressible zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+
+	reverse_proxy web:3000 {
+		# Stream server-sent events straight through.
+		flush_interval -1
+	}
+}

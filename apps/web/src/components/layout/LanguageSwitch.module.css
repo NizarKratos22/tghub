@@ -1,0 +1,55 @@
+.switch {
+  justify-self: start;
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-3);
+}
+
+.option {
+  height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: none;
+  color: var(--text-3);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.option[lang='ar'] {
+  font-family: var(--font-cairo), Tahoma, sans-serif;
+  font-size: 13.5px;
+}
+
+.option:hover {
+  color: var(--text);
+}
+
+.on,
+.on:hover {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-1);
+}
+
+/* On the dark footer. */
+.dark {
+  background: rgb(255 255 255 / 0.08);
+}
+
+.dark .option {
+  color: rgb(255 255 255 / 0.6);
+}
+
+.dark .option:hover {
+  color: #fff;
+}
+
+.dark .on,
+.dark .on:hover {
+  background: rgb(255 255 255 / 0.16);
+  color: #fff;
+  box-shadow: none;
+}

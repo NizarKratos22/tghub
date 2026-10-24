@@ -1,0 +1,157 @@
+.layout {
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr);
+  gap: clamp(20px, 3vw, 32px);
+}
+
+.filters {
+  display: grid;
+  /* A shrinkable track, so the horizontally-scrolling filter rows on mobile can't widen the page. */
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: 18px;
+  position: sticky;
+  top: calc(var(--header-h) + 20px);
+  padding: 16px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.filterTitle {
+  padding: 0 8px 6px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.filterGroup ul {
+  display: grid;
+  gap: 1px;
+}
+
+.filter {
+  display: flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: var(--radius);
+  color: var(--text-2);
+  font-size: 13.5px;
+  font-weight: 500;
+  transition:
+    color 120ms var(--ease),
+    background-color 120ms var(--ease);
+}
+
+.filter:hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+.on,
+.on:hover {
+  background: var(--primary-wash);
+  color: var(--primary-text);
+  font-weight: 700;
+}
+
+.results {
+  min-width: 0;
+}
+
+.toolbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  height: 44px;
+  padding-inline-start: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-4);
+  transition:
+    border-color 120ms var(--ease),
+    box-shadow 120ms var(--ease);
+}
+
+.search:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-wash);
+}
+
+.search input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0 12px;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+}
+
+.count {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+  color: var(--text-3);
+  font-size: 13.5px;
+}
+
+.count strong {
+  color: var(--text);
+}
+
+.clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-inline-start: 10px;
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--primary-text);
+}
+
+@media (max-width: 860px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .filters {
+    position: static;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .filterTitle {
+    padding: 0 2px 6px;
+  }
+
+  .filterGroup ul {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .filter {
+    height: 32px;
+    padding: 0 12px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-3);
+    white-space: nowrap;
+  }
+
+  .toolbar {
+    flex-direction: column;
+  }
+}

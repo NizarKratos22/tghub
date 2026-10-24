@@ -1,0 +1,386 @@
+.hero {
+  --accent: var(--primary);
+  position: relative;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: var(--accent);
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 0 60% 0 0;
+  background: radial-gradient(ellipse at 10% 30%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 70%);
+  pointer-events: none;
+}
+
+.heroGrid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: clamp(20px, 3.4vw, 44px);
+  padding-block: clamp(26px, 4vw, 48px);
+}
+
+.dateBlock {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-2);
+  line-height: 1;
+}
+
+.dateWeekday {
+  width: 100%;
+  padding: 7px 0;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.dateMonth {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text-3);
+  text-transform: uppercase;
+}
+
+.dateDay {
+  margin: 14px 0 0;
+  font-family: var(--font-num);
+  font-size: 76px;
+  font-weight: 600;
+  line-height: 0.8;
+}
+
+.dateTime {
+  width: 100%;
+  margin-top: 12px;
+  padding: 9px 0;
+  border-top: 1px solid var(--line);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--text-2);
+}
+
+.info {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  min-width: 0;
+}
+
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-4);
+}
+
+.crumbs a {
+  color: var(--primary-text);
+}
+
+.crumbs a:hover {
+  text-decoration: underline;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.local {
+  height: 22px;
+  padding: 0 8px;
+  border-radius: var(--radius-sm);
+  background: var(--brand);
+  color: var(--on-brand);
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 22px;
+}
+
+.title {
+  font-size: clamp(28px, 4vw, 46px);
+  line-height: 1.08;
+  overflow-wrap: anywhere;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+  margin: 4px 0 0;
+}
+
+.facts div {
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.facts dt {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-4);
+}
+
+.facts dd {
+  margin: 2px 0 0;
+  font-family: var(--font-display);
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.noLink {
+  padding: 11px 14px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-3);
+}
+
+.followers {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-3);
+}
+
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(20px, 3vw, 32px);
+}
+
+.timeline {
+  display: grid;
+  padding: 4px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.timeline li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.timeline li:last-child {
+  border-bottom: 0;
+}
+
+.stepMark {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--primary);
+  border-radius: 50%;
+}
+
+.stepDone .stepMark {
+  border-color: var(--success);
+  background: var(--success);
+}
+
+.stepDone .stepLabel,
+.stepDone .stepWhen {
+  color: var(--text-4);
+}
+
+.stepLabel {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.stepWhen {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-2);
+}
+
+.note {
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--text-4);
+}
+
+.description {
+  max-width: 66ch;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: 14.5px;
+}
+
+.events {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.event {
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+}
+
+.eventName {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.standings {
+  display: grid;
+  margin-top: 10px;
+}
+
+.standings li {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--text-2);
+  font-size: 14px;
+}
+
+.standings li:last-child {
+  border-bottom: 0;
+}
+
+.standings .podium {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.placement {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--surface-3);
+  font-family: var(--font-num);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  padding-top: 2px;
+  color: var(--text-3);
+}
+
+.podium .placement {
+  background: var(--gold);
+  color: var(--on-gold);
+}
+
+.eventList {
+  display: grid;
+  padding: 4px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.eventList li {
+  display: grid;
+  gap: 2px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.eventList li:last-child {
+  border-bottom: 0;
+}
+
+.eventList .note {
+  margin: 0;
+}
+
+.attribution {
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  font-size: 12.5px;
+  color: var(--text-4);
+}
+
+@media (max-width: 860px) {
+  .heroGrid,
+  .split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dateBlock {
+    grid-template-columns: auto auto auto auto;
+    justify-content: start;
+    align-items: center;
+    gap: 12px;
+    padding-inline-end: 14px;
+    width: fit-content;
+  }
+
+  .dateWeekday {
+    width: auto;
+    padding: 14px 10px;
+    align-self: stretch;
+    display: grid;
+    place-items: center;
+  }
+
+  .dateDay {
+    margin: 0;
+    font-size: 40px;
+  }
+
+  .dateTime {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    width: auto;
+  }
+}

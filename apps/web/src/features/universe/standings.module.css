@@ -1,0 +1,369 @@
+/* Pulse */
+
+.pulse {
+  display: grid;
+  gap: 14px;
+  padding: clamp(18px, 2.4vw, 26px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-2);
+}
+
+.pulseHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.pulseLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--gold-wash);
+  color: var(--gold-text);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 11.5px;
+}
+
+.pulseLabel::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--gold);
+}
+
+.pulseEnds {
+  color: var(--text-3);
+  font-weight: 500;
+}
+
+.pulseTitle {
+  font-size: clamp(18px, 2vw, 22px);
+}
+
+.pulseFigure {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.pulsePercent {
+  font-family: var(--font-num);
+  font-size: clamp(64px, 7vw, 88px);
+  font-weight: 600;
+  line-height: 0.78;
+  color: var(--gold-text);
+}
+
+.pulsePercent small {
+  font-size: 0.45em;
+  margin-inline-start: 2px;
+}
+
+.pulseNumbers {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text-3);
+  text-align: end;
+}
+
+.pulseNumbers strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.pulseNext {
+  font-size: 13.5px;
+  color: var(--text-2);
+}
+
+.pulseNote {
+  font-size: 13.5px;
+  color: var(--text-3);
+}
+
+.milestones {
+  display: grid;
+  gap: 6px;
+}
+
+.milestones li {
+  display: grid;
+  grid-template-columns: 52px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  color: var(--text-3);
+}
+
+.milestones .reached {
+  background: var(--success-wash);
+  color: var(--text);
+}
+
+.milestoneAt {
+  font-family: var(--font-num);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.milestoneReward {
+  font-weight: 600;
+}
+
+.milestoneState {
+  font-family: var(--font-display);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.reached .milestoneState {
+  color: var(--success-text);
+}
+
+/* Leaderboard */
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  font-size: 14px;
+  overflow: hidden;
+}
+
+.table th {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-2);
+  font-family: var(--font-display);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-3);
+  text-align: start;
+}
+
+.table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+.table tr:last-child td {
+  border-bottom: 0;
+}
+
+.table tbody tr:hover td {
+  background: var(--surface-2);
+}
+
+.me td {
+  background: var(--primary-wash);
+}
+
+.rankCell {
+  width: 52px;
+}
+
+.rank {
+  display: inline-grid;
+  place-items: center;
+  min-width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--surface-3);
+  color: var(--text-3);
+  font-family: var(--font-num);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1;
+  padding-top: 2px;
+}
+
+.rank[data-podium='1'] {
+  background: #ffb400;
+  color: #1f2123;
+}
+
+.rank[data-podium='2'] {
+  background: #cacccf;
+  color: #1f2123;
+}
+
+.rank[data-podium='3'] {
+  background: #d08b4f;
+  color: #fff;
+}
+
+.player {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.player > span {
+  display: grid;
+  line-height: 1.25;
+  min-width: 0;
+}
+
+.playerName {
+  font-family: var(--font-display);
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player:hover .playerName {
+  color: var(--primary-text);
+}
+
+.playerTitle {
+  font-size: 12px;
+  color: var(--text-4);
+}
+
+.region {
+  color: var(--text-3);
+}
+
+.num {
+  text-align: end !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.xp {
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--gold-text);
+}
+
+.muted {
+  color: var(--text-3);
+  font-size: 14px;
+}
+
+/* Home standings */
+
+.homeStandings {
+  display: grid;
+  gap: 10px;
+}
+
+.switch {
+  display: flex;
+  justify-self: start;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--radius);
+  background: var(--surface-3);
+}
+
+.switchTab {
+  height: 30px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-3);
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.switchOn {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-1);
+}
+
+/* Regions */
+
+.regions {
+  display: grid;
+  gap: 2px;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.regions li {
+  display: grid;
+  grid-template-columns: 24px 130px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.regionRank {
+  font-family: var(--font-num);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-4);
+}
+
+.regionName {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13.5px;
+}
+
+.regionBar {
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-3);
+  overflow: hidden;
+}
+
+.regionBar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--line-strong);
+}
+
+.regionBar .regionLead {
+  background: var(--primary);
+}
+
+.regionXp {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-2);
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.regionXp small {
+  color: var(--text-4);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+@media (max-width: 560px) {
+  .hideSm {
+    display: none;
+  }
+
+  .regions li {
+    grid-template-columns: 20px 84px 1fr auto;
+    gap: 8px;
+  }
+}
