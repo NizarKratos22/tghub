@@ -79,7 +79,7 @@ when traffic demands it, without touching the emitters.
 ```
 source adapter (Steam News API, admin composer, internal events)
    → alerts.publish()  — unique dedupKey: the same announcement is stored once
-   → channels: inbox (fan-out by preferences + daily cap) · discord (webhooks) · push (phase 8)
+   → channels: inbox (fan-out by preferences + daily cap) · push (players away from the site) · discord (webhooks)
    → delivery_logs     — one row per channel per alert, visible in admin
 ```
 
@@ -126,6 +126,34 @@ one Zod schema validates both, with field paths the form maps straight onto inpu
 Domain events `market.conversation_started` and `market.listing_removed` become
 personal inbox alerts for the seller.
 
+**Real time** — `GET /stream` is a server-sent-event stream per signed-in tab
+(`core/realtime/hub.ts`, in-process; Redis pub/sub when the API scales out).
+It only nudges: every event's data is also reachable through normal endpoints,
+so a dropped connection loses nothing. The stream ends when the access token
+expires; the web client refreshes and reconnects with backoff. Web push
+(`modules/push`, VAPID) reaches players with no open stream; subscriptions are
+tied to the session that created them and endpoints must belong to a known
+browser push service.
+
+**Squads, social, connections** — clans keep a denormalised `xp`/`seasonXp`,
+updated on every `progression.xp_awarded` event and recomputed by a job (season
+rollovers). The activity feed is written only by event listeners
+(`modules/social/social.listeners.ts`) with dedup keys, so replays and toggles
+record once. Discord OAuth and Steam OpenID share a signed, single-use state
+cookie (`connections/oauth-state.ts`); a Discord identity is never auto-merged
+into an existing account by email. Bot interactions are verified with Ed25519
+over the raw body.
+
+**Payments** — `modules/payments/gateways.ts` puts Flouci, Konnect and a
+development checkout behind one interface: start a checkout, and ask for the
+real status. Redirects and webhooks only trigger a status check; an order flips
+`pending → paid` with a conditional update (so a webhook and a redirect can't
+both apply it) and only when the provider confirms the exact amount.
+
+**Monitoring** — 5xx errors, unhandled rejections and browser crashes are
+grouped by fingerprint (normalised message + first own stack frame) in
+`error_events`; a resolved error that recurs reopens itself.
+
 ## Web design
 
 - App Router. Public pages (home, radar, catalogue, game pages, profiles) are **server components** fetching the API directly — fast and indexable.
@@ -134,6 +162,7 @@ personal inbox alerts for the seller.
 - Dashboard charts are hand-drawn SVG (`features/admin/charts.tsx`): one axis per chart, 2px lines, capped columns with rounded data-ends, a crosshair tooltip, keyboard stepping and a table view. Series colours are validated per theme for colour-blind separation and contrast. Daily series come from `GET /admin/stats?days=7|30|90`, aggregated in Tunis time and compared with the previous window.
 - Filters live in the URL (`/games?genre=fps&platform=pc`) so every view is shareable.
 - Visual identity: tournament-platform styling — Montserrat headings and UI, Roboto body, Teko scoreboard numerals; white (light) or charcoal (dark) cards on a grey ground; one bright blue for every action, gold for prizes/XP/levels, green for good news, Tunisian red only for the brand mark, live states and destructive actions. Typographic game tiles on each game's own colour; marketplace grids lead with square photos and the price.
+- Languages: `src/i18n` holds one typed dictionary per language (French and Arabic must match the English shape, so a missing string is a build error). The root layout reads the `tgh_locale` cookie (or `Accept-Language`), sets `<html lang dir>`, and server components call `getT()` while client components use `useT()`. Stylesheets use logical properties (`margin-inline-start`, `inset-inline-end`…) and directional icons flip under `dir="rtl"`.
 - Theming: all colours are role tokens in `app/globals.css` (`--surface`, `--text-2`, `--primary`, `--gold-text`…) redefined under `[data-theme='dark']`. A `beforeInteractive` script applies the stored choice (or the OS preference) before first paint; components never reference raw colours.
 
 ## Testing
@@ -141,8 +170,11 @@ personal inbox alerts for the seller.
 `npm test` runs `node:test` suites for the pure logic that decides outcomes: the
 compatibility engine (`modules/hardware/compatibility.ts`), the level curve
 (`packages/shared/src/progression.ts`), the Steam BBCode cleaner, the listing
-rules (`packages/shared/src/market.test.ts`) and the upload pipeline (EXIF/GPS
-stripping, resizing, rejecting non-images). Next up:
+rules (`packages/shared/src/market.test.ts`), the upload pipeline (EXIF/GPS
+stripping, resizing, rejecting non-images), and the security-critical edges:
+one-time codes, the push-endpoint allowlist, Discord Ed25519 signatures (with a
+real HTTP round trip), Steam OpenID verification, OAuth state, payment status
+mapping and Flouci webhook signatures. Next up:
 integration tests for auth rotation, mission claims and alert fan-out against an
 in-memory MongoDB.
 
@@ -155,10 +187,11 @@ in-memory MongoDB.
 | 3 Accounts & shared backend | Done — auth, sessions, profiles, shared contracts |
 | 4 Universe | Done — XP, levels, titles, missions, achievements, Pulse, season + region standings |
 | 5 Alerts MVP | Done — inbox, preferences, dedup, Steam source, delivery logs, admin |
-| 6 Discord | Started — webhook channel per category; full bot later |
-| 7 Community & competition | Tournaments done (consumed from start.gg / FACEIT, reminders). Next: clans, teammate finder, chat, duels |
-| 8 Android app | Uses this API as-is (Bearer auth path already exists) + push channel |
-| 9 Business | Marketplace done — listings, photos, chats, saved items, reports + moderation, FiveM / mod assets. Next: seller verification, ratings after a completed sale, optional escrow via a payment partner |
+| 6 Discord | Done — webhook channels, Discord sign-in and linking, `/tgh` bot over HTTP interactions |
+| 7 Community & competition | Done — tournaments (consumed), clans + season standings, teammate finder, follows + feed, live chat. Next: duels |
+| 8 Android app | Uses this API as-is (Bearer auth path) — web push already reaches Android browsers |
+| 9 Business | Marketplace done — listings, photos, live chat, saved searches, ratings + verified sellers, featured listings via Flouci / Konnect. Next: escrow through a licensed partner |
+| 10 Going live | Done — Docker images, compose stack with Caddy HTTPS, CI, nightly backups, error monitoring, English / French / Arabic |
 
 ## Scaling notes
 
@@ -166,5 +199,5 @@ in-memory MongoDB.
 - Move the event bus and alert fan-out to a queue worker when one process can't keep up; the `AlertChannel` interface already isolates delivery.
 - Catalogue search uses indexed prefix/contains on normalized fields + aliases (`cs2`, `lol`). Switch to Atlas Search when the catalogue grows past tens of thousands.
 - Inbox notifications expire after 90 days (TTL index).
-- Marketplace chats poll (5 s for the open thread, 15 s for the list). Swap in SSE/WebSockets behind the same endpoints when concurrent chats grow; message pages are cursor-based already.
+- Marketplace chats are live over the event stream; polling only kicks in while the stream is down. Several API instances need the realtime hub on Redis pub/sub.
 - Transactions are not required (ledger-first + idempotency); enable a replica set later for multi-document transactions where needed.
