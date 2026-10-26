@@ -3,8 +3,10 @@
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import type { AdminOverview, Me, Role } from '@tgh/shared';
+import { PoweredByDefendr } from '@/components/layout/Defendr';
+import { Logo } from '@/components/layout/Logo';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { ButtonLink } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
@@ -12,6 +14,7 @@ import { Avatar, Skeleton } from '@/components/ui/primitives';
 import { useSession, useSignInHref, useSignOut } from '@/features/auth/session';
 import { api } from '@/lib/api/client';
 import { cx } from '@/lib/cx';
+import { useOpenForRoute } from '@/lib/useOpenForRoute';
 import { ADMIN_NAV, adminItemFor, canOpen } from './nav';
 import styles from './AdminShell.module.css';
 
@@ -41,12 +44,10 @@ function Sidebar({ me, counts, onNavigate }: { me: Me; counts: AdminOverview | u
 
   return (
     <div className={styles.sidebarInner}>
-      <Link href="/admin" className={styles.brand} onClick={onNavigate}>
-        <span className={styles.mark}>TG</span>
-        <span className={styles.brandText}>
-          HUB <span className={styles.brandTag}>Admin</span>
-        </span>
-      </Link>
+      <div className={styles.brand}>
+        <Logo href="/admin" surface="dark" onClick={onNavigate} />
+        <span className={styles.brandTag}>Admin</span>
+      </div>
 
       <nav className={styles.nav} aria-label="Admin">
         {ADMIN_NAV.map((group) => {
@@ -77,6 +78,7 @@ function Sidebar({ me, counts, onNavigate }: { me: Me; counts: AdminOverview | u
       </nav>
 
       <div className={styles.foot}>
+        <PoweredByDefendr label="Powered by" className={styles.powered} />
         <Link href="/" className={styles.link}>
           <Icon name="arrowLeft" size={18} />
           <span className={styles.linkText}>Back to the site</span>
@@ -105,12 +107,11 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const signInHref = useSignInHref();
   const { data: me, isPending } = useSession();
-  const [drawer, setDrawer] = useState(false);
+  const [drawer, setDrawer] = useOpenForRoute();
   const isAdmin = me?.role === 'admin';
   const overview = useQuery({ queryKey: OVERVIEW_KEY, queryFn: api.admin.overview, enabled: isAdmin, refetchInterval: 60_000 });
   const item = adminItemFor(pathname);
 
-  useEffect(() => setDrawer(false), [pathname]);
   useEffect(() => {
     document.body.style.overflow = drawer ? 'hidden' : '';
     return () => {

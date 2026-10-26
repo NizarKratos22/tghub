@@ -3,6 +3,7 @@ export * from './progression';
 export * from './schemas/common';
 export * from './schemas/auth';
 export * from './schemas/games';
+export * from './schemas/guides';
 export * from './schemas/radar';
 export * from './schemas/pc';
 export * from './schemas/alerts';

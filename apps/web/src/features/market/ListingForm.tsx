@@ -5,19 +5,14 @@ import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import {
   ASSET_DELIVERIES,
-  ASSET_DELIVERY_LABELS,
-  ASSET_SOURCE_LABELS,
   ASSET_SOURCES,
-  FIVEM_FRAMEWORK_LABELS,
   FIVEM_FRAMEWORKS,
   isDigitalCategory,
   listingInputSchema,
   MARKET_CATEGORIES,
   MARKET_CATEGORY_META,
-  MARKET_CONDITION_LABELS,
   MARKET_CONDITIONS,
   MARKET_SUBCATEGORIES,
-  MARKET_SUBCATEGORY_LABELS,
   TN_REGIONS,
   type AssetDelivery,
   type AssetSource,
@@ -31,9 +26,10 @@ import { Button } from '@/components/ui/Button';
 import { FormError, SelectField, TextAreaField, TextField } from '@/components/ui/Field';
 import { Icon } from '@/components/ui/Icon';
 import { SESSION_KEY } from '@/features/auth/session';
+import { useFormat, useT } from '@/i18n/I18nProvider';
+import { regionName } from '@/i18n/places';
 import { api, ApiError } from '@/lib/api/client';
 import { cx } from '@/lib/cx';
-import { formatTnd } from '@/lib/format';
 import { LISTING_KEYS, listingSubline } from './meta';
 import { PhotoUploader, slotsFromPhotos, type PhotoSlot } from './PhotoUploader';
 import cardStyles from './ListingCard.module.css';
@@ -133,6 +129,8 @@ function Check({ checked, onChange, label, hint }: { checked: boolean; onChange:
 }
 
 export function ListingForm({ listing }: { listing?: ListingDetail }) {
+  const t = useT();
+  const format = useFormat();
   const router = useRouter();
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState<Draft>(() => draftFrom(listing));
@@ -171,7 +169,7 @@ export function ListingForm({ listing }: { listing?: ListingDetail }) {
   };
 
   const cover = slots.find((slot) => slot.status === 'done' || slot.status === 'uploading');
-  const previewPrice = draft.price.trim() === '' ? 'Price' : formatTnd(Number(draft.price) || 0);
+  const previewPrice = draft.price.trim() === '' ? t.sell.previewPrice : format.tnd(Number(draft.price) || 0);
   const subline =
     draft.category !== ''
       ? listingSubline({
@@ -181,8 +179,8 @@ export function ListingForm({ listing }: { listing?: ListingDetail }) {
           subcategory: (draft.subcategory || null) as never,
           category: draft.category,
           condition: draft.condition || null,
-        })
-      : 'Category';
+        }, t)
+      : t.sell.previewCategory;
   const error = (key: string) => errors[key];
 
   return (
@@ -193,8 +191,8 @@ export function ListingForm({ listing }: { listing?: ListingDetail }) {
         </section>
 
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>What are you selling?</h2>
-          <div className={styles.categoryGrid} role="radiogroup" aria-label="Category" data-invalid={Boolean(error('category'))}>
+          <h2 className={styles.sectionTitle}>{t.sell.whatSelling}</h2>
+          <div className={styles.categoryGrid} role="radiogroup" aria-label={t.sell.category} data-invalid={Boolean(error('category'))}>
             {MARKET_CATEGORIES.map((category) => (
               <button
                 key={category}
@@ -204,19 +202,19 @@ export function ListingForm({ listing }: { listing?: ListingDetail }) {
                 className={cx(styles.category, draft.category === category && styles.categoryOn)}
                 onClick={() => setDraft((current) => ({ ...current, category, subcategory: '' }))}
               >
-                <strong>{MARKET_CATEGORY_META[category].label}</strong>
-                <small>{MARKET_CATEGORY_META[category].description}</small>
-                {MARKET_CATEGORY_META[category].digital ? <span className={styles.digitalTag}>Digital</span> : null}
+                <strong>{t.market.categoryNames[category]}</strong>
+                <small>{t.labels.categoryDescription[category]}</small>
+                {MARKET_CATEGORY_META[category].digital ? <span className={styles.digitalTag}>{t.sell.digital}</span> : null}
               </button>
             ))}
           </div>
           {error('category') ? <p className={styles.fieldError}>{error('category')}</p> : null}
           {draft.category && MARKET_SUBCATEGORIES[draft.category].length > 0 ? (
-            <SelectField label="Type" value={draft.subcategory} onChange={(e) => set('subcategory', e.target.value)} error={error('subcategory')}>
-              <option value="">Choose a type (optional)</option>
+            <SelectField label={t.sell.type} value={draft.subcategory} onChange={(e) => set('subcategory', e.target.value)} error={error('subcategory')}>
+              <option value="">{t.sell.chooseType}</option>
               {MARKET_SUBCATEGORIES[draft.category].map((sub) => (
                 <option key={sub} value={sub}>
-                  {MARKET_SUBCATEGORY_LABELS[sub]}
+                  {t.labels.subcategory[sub]}
                 </option>
               ))}
             </SelectField>
@@ -224,30 +222,30 @@ export function ListingForm({ listing }: { listing?: ListingDetail }) {
         </section>
 
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Listing</h2>
-          <TextField label="Title" value={draft.title} onChange={(e) => set('title', e.target.value)} maxLength={90} placeholder={digital ? 'e.g. Advanced garage script (QBCore)' : 'e.g. RTX 3060 12GB, boxed'} error={error('title')} />
+          <h2 className={styles.sectionTitle}>{t.sell.listing}</h2>
+          <TextField label={t.sell.titleLabel} value={draft.title} onChange={(e) => set('title', e.target.value)} maxLength={90} placeholder={digital ? t.sell.titleDigital : t.sell.titleItem} error={error('title')} />
           <div className={styles.priceRow}>
             <TextField
-              label="Price (TND)"
+              label={t.sell.price}
               inputMode="numeric"
               value={draft.price}
               onChange={(e) => set('price', e.target.value.replace(/[^\d]/g, ''))}
-              placeholder="0 for free"
+              placeholder={t.sell.pricePlaceholder}
               error={error('price')}
-              hint="Whole dinars."
+              hint={t.sell.priceHint}
             />
             <div className={styles.priceChecks}>
-              <Check checked={draft.negotiable} onChange={(v) => set('negotiable', v)} label="Negotiable" />
-              <Check checked={draft.openToTrades} onChange={(v) => set('openToTrades', v)} label="Open to trades" />
+              <Check checked={draft.negotiable} onChange={(v) => set('negotiable', v)} label={t.sell.negotiable} />
+              <Check checked={draft.openToTrades} onChange={(v) => set('openToTrades', v)} label={t.sell.openToTrades} />
             </div>
           </div>
           <TextAreaField
-            label="Description"
+            label={t.sell.description}
             value={draft.description}
             onChange={(e) => set('description', e.target.value)}
             maxLength={4000}
             rows={7}
-            placeholder={digital ? 'Features, dependencies, performance (ms), what the buyer gets, support and updates…' : 'Specs, age, condition, what is in the box, why you are selling…'}
+            placeholder={digital ? t.sell.descriptionDigital : t.sell.descriptionItem}
             error={error('description')}
             hint={`${draft.description.length}/4000`}
           />
@@ -255,29 +253,29 @@ export function ListingForm({ listing }: { listing?: ListingDetail }) {
 
         {draft.category && digital ? (
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Asset details</h2>
+            <h2 className={styles.sectionTitle}>{t.sell.assetDetails}</h2>
             {draft.category === 'fivem' ? (
               <div className={styles.group} data-invalid={Boolean(error('digital.framework'))}>
-                <span className={styles.groupLabel}>Framework</span>
-                <Choice name="Framework" value={draft.framework} options={FIVEM_FRAMEWORKS} labels={FIVEM_FRAMEWORK_LABELS} onChange={(v) => set('framework', v)} />
+                <span className={styles.groupLabel}>{t.sell.framework}</span>
+                <Choice name={t.sell.framework} value={draft.framework} options={FIVEM_FRAMEWORKS} labels={t.labels.framework} onChange={(v) => set('framework', v)} />
                 {error('digital.framework') ? <p className={styles.fieldError}>{error('digital.framework')}</p> : null}
               </div>
             ) : null}
             <div className={styles.group} data-invalid={Boolean(error('digital.delivery'))}>
-              <span className={styles.groupLabel}>How the buyer receives it</span>
-              <Choice name="Delivery" value={draft.delivery} options={ASSET_DELIVERIES} labels={ASSET_DELIVERY_LABELS} onChange={(v) => set('delivery', v)} />
-              {error('digital.delivery') ? <p className={styles.fieldError}>Choose how the buyer receives it</p> : null}
+              <span className={styles.groupLabel}>{t.sell.howReceives}</span>
+              <Choice name={t.sell.howReceives} value={draft.delivery} options={ASSET_DELIVERIES} labels={t.labels.delivery} onChange={(v) => set('delivery', v)} />
+              {error('digital.delivery') ? <p className={styles.fieldError}>{t.sell.deliveryMissing}</p> : null}
             </div>
             <div className={styles.group} data-invalid={Boolean(error('digital.source'))}>
-              <span className={styles.groupLabel}>Source code</span>
-              <Choice name="Source" value={draft.source} options={ASSET_SOURCES} labels={ASSET_SOURCE_LABELS} onChange={(v) => set('source', v)} />
-              {error('digital.source') ? <p className={styles.fieldError}>Say whether the source is open or escrowed</p> : null}
+              <span className={styles.groupLabel}>{t.sell.sourceCode}</span>
+              <Choice name={t.sell.sourceCode} value={draft.source} options={ASSET_SOURCES} labels={t.labels.source} onChange={(v) => set('source', v)} />
+              {error('digital.source') ? <p className={styles.fieldError}>{t.sell.sourceMissing}</p> : null}
             </div>
-            <SelectField label="Your location (optional)" value={draft.region} onChange={(e) => set('region', e.target.value as TnRegion | '')}>
-              <option value="">Don&apos;t show</option>
+            <SelectField label={t.sell.yourLocation} value={draft.region} onChange={(e) => set('region', e.target.value as TnRegion | '')}>
+              <option value="">{t.sell.dontShow}</option>
               {TN_REGIONS.map((region) => (
                 <option key={region} value={region}>
-                  {region}
+                  {regionName(region, t)}
                 </option>
               ))}
             </SelectField>
@@ -285,8 +283,8 @@ export function ListingForm({ listing }: { listing?: ListingDetail }) {
               <Check
                 checked={draft.rightsConfirmed}
                 onChange={(v) => set('rightsConfirmed', v)}
-                label="I own this asset or have the right to resell it"
-                hint="Leaked, cracked or resold-without-permission assets are removed and the account can be banned."
+                label={t.sell.rights}
+                hint={t.sell.rightsHint}
               />
               {error('digital.rightsConfirmed') || error('digital') ? <p className={styles.fieldError}>{error('digital.rightsConfirmed') ?? error('digital')}</p> : null}
             </div>
@@ -295,28 +293,28 @@ export function ListingForm({ listing }: { listing?: ListingDetail }) {
 
         {draft.category && !digital ? (
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Condition & hand-over</h2>
+            <h2 className={styles.sectionTitle}>{t.sell.conditionHandOver}</h2>
             <div className={styles.group} data-invalid={Boolean(error('condition'))}>
-              <span className={styles.groupLabel}>Condition</span>
-              <Choice name="Condition" value={draft.condition} options={MARKET_CONDITIONS} labels={MARKET_CONDITION_LABELS} onChange={(v) => set('condition', v)} />
+              <span className={styles.groupLabel}>{t.sell.condition}</span>
+              <Choice name={t.sell.condition} value={draft.condition} options={MARKET_CONDITIONS} labels={t.labels.condition} onChange={(v) => set('condition', v)} />
               {error('condition') ? <p className={styles.fieldError}>{error('condition')}</p> : null}
             </div>
             <div className={styles.locationRow}>
-              <SelectField label="Governorate" value={draft.region} onChange={(e) => set('region', e.target.value as TnRegion | '')} error={error('region')}>
-                <option value="">Choose…</option>
+              <SelectField label={t.sell.governorate} value={draft.region} onChange={(e) => set('region', e.target.value as TnRegion | '')} error={error('region')}>
+                <option value="">{t.sell.choose}</option>
                 {TN_REGIONS.filter((region) => region !== 'Abroad').map((region) => (
                   <option key={region} value={region}>
-                    {region}
+                    {regionName(region, t)}
                   </option>
                 ))}
               </SelectField>
-              <TextField label="Area (optional)" value={draft.area} onChange={(e) => set('area', e.target.value)} maxLength={60} placeholder="e.g. Lac 2, Sahloul" />
+              <TextField label={t.sell.area} value={draft.area} onChange={(e) => set('area', e.target.value)} maxLength={60} placeholder={t.sell.areaPlaceholder} />
             </div>
             <div className={styles.group} data-invalid={Boolean(error('meetup'))}>
-              <span className={styles.groupLabel}>Hand-over</span>
+              <span className={styles.groupLabel}>{t.sell.handOver}</span>
               <div className={styles.checkRow}>
-                <Check checked={draft.meetup} onChange={(v) => set('meetup', v)} label="Meet-up" hint="Buyer checks it in person" />
-                <Check checked={draft.shipping} onChange={(v) => set('shipping', v)} label="Delivery" hint="You ship it (e.g. by courier)" />
+                <Check checked={draft.meetup} onChange={(v) => set('meetup', v)} label={t.sell.meetup} hint={t.sell.meetupHint} />
+                <Check checked={draft.shipping} onChange={(v) => set('shipping', v)} label={t.sell.shipping} hint={t.sell.shippingHint} />
               </div>
               {error('meetup') ? <p className={styles.fieldError}>{error('meetup')}</p> : null}
             </div>
@@ -326,15 +324,15 @@ export function ListingForm({ listing }: { listing?: ListingDetail }) {
         <div className={styles.submit}>
           <FormError message={save.error instanceof ApiError && Object.keys(save.error.fields).length === 0 ? save.error.message : null} />
           <Button type="submit" size="lg" block loading={save.isPending} disabled={uploading}>
-            {uploading ? 'Waiting for photos…' : listing ? 'Save changes' : 'Publish listing'}
+            {uploading ? t.sell.waitingPhotos : listing ? t.sell.saveChanges : t.sell.publish}
           </Button>
-          <p className={styles.terms}>Listings are public. Payment and hand-over happen between you and the buyer — TG Hub never holds money.</p>
+          <p className={styles.terms}>{t.sell.terms}</p>
         </div>
       </div>
 
-      <aside className={styles.preview} aria-label="Preview">
+      <aside className={styles.preview} aria-label={t.sell.preview}>
         <p className={styles.previewTitle}>
-          <Icon name="eye" size={16} /> Preview
+          <Icon name="eye" size={16} /> {t.sell.preview}
         </p>
         <div className={cardStyles.card}>
           <span className={cardStyles.photo}>
@@ -347,21 +345,21 @@ export function ListingForm({ listing }: { listing?: ListingDetail }) {
             )}
             {digital ? (
               <span className={cardStyles.badge}>
-                <Icon name="download" size={12} /> Digital
+                <Icon name="download" size={12} /> {t.market.digital}
               </span>
             ) : draft.shipping ? (
               <span className={cardStyles.badge}>
-                <Icon name="box" size={12} /> Delivery
+                <Icon name="box" size={12} /> {t.market.delivery}
               </span>
             ) : null}
           </span>
           <span className={cardStyles.body}>
             <span className={cx(cardStyles.price, draft.price === '0' && cardStyles.free)}>{previewPrice}</span>
-            <span className={cardStyles.title}>{draft.title || 'Title'}</span>
-            <span className={cardStyles.sub}>{subline || 'Location'}</span>
+            <span className={cardStyles.title}>{draft.title || t.sell.previewTitle}</span>
+            <span className={cardStyles.sub}>{subline || t.sell.previewLocation}</span>
           </span>
         </div>
-        <p className={styles.previewNote}>This is how your listing appears in the marketplace grid.</p>
+        <p className={styles.previewNote}>{t.sell.previewNote}</p>
       </aside>
     </form>
   );

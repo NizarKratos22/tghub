@@ -4,6 +4,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
 import { TournamentLine } from '@/features/tournaments/TournamentRow';
+import { fill } from '@/i18n/config';
+import { useT } from '@/i18n/I18nProvider';
 import { api } from '@/lib/api/client';
 import styles from './MatchingGames.module.css';
 
@@ -12,6 +14,7 @@ import styles from './MatchingGames.module.css';
  * counts toward "Scout the Radar" (the server dedupes repeats).
  */
 export function MatchingGames({ q }: { q: string }) {
+  const t = useT();
   const queryClient = useQueryClient();
   const search = useQuery({
     queryKey: ['radar', 'search', q.toLowerCase()],
@@ -32,7 +35,7 @@ export function MatchingGames({ q }: { q: string }) {
     <div className={styles.wrap}>
       {games.length > 0 ? (
         <>
-          <p className="label">Games matching “{q}”</p>
+          <p className="label">{fill(t.radar.gamesMatching, { q })}</p>
           <ul className={styles.list}>
             {games.map((game) => (
               <li key={game.id}>
@@ -47,7 +50,7 @@ export function MatchingGames({ q }: { q: string }) {
       ) : null}
       {tournaments.length > 0 ? (
         <>
-          <p className="label">Upcoming tournaments</p>
+          <p className="label">{t.radar.upcoming}</p>
           <div>
             {tournaments.map((tournament) => (
               <TournamentLine key={tournament.id} tournament={tournament} />

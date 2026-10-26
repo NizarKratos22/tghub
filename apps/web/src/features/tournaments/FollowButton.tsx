@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { useSession, useSignInHref } from '@/features/auth/session';
+import { useT } from '@/i18n/I18nProvider';
 import { api } from '@/lib/api/client';
 
 const FOLLOWING_IDS = ['tournaments', 'following', 'ids'] as const;
@@ -28,6 +29,7 @@ export function FollowButton({
   status: TournamentStatus;
   size?: 'sm' | 'md';
 }) {
+  const t = useT();
   const { data: me } = useSession();
   const router = useRouter();
   const signInHref = useSignInHref();
@@ -60,9 +62,9 @@ export function FollowButton({
       aria-pressed={following}
       onClick={() => (me ? toggle.mutate() : router.push(signInHref))}
       disabled={Boolean(me) && ids.isPending}
-      title={following ? 'You will get registration and start reminders' : 'Get registration and start reminders'}
+      title={following ? t.tournaments.remindingTitle : t.tournaments.remindTitle}
     >
-      {following ? 'Reminding' : 'Remind me'}
+      {following ? t.tournaments.reminding : t.tournaments.remindMe}
     </Button>
   );
 }

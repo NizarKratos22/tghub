@@ -31,6 +31,20 @@ export async function fetchJson(service: string, url: string | URL, init: Reques
   }
 }
 
+/** Same failure handling as fetchJson, for the few upstreams that only have web pages. */
+export async function fetchText(service: string, url: string | URL, init: RequestInit = {}, timeoutMs = 10_000): Promise<string> {
+  let response: Response;
+  try {
+    response = await fetch(url, { ...init, signal: AbortSignal.timeout(timeoutMs) });
+  } catch (error) {
+    const timedOut = error instanceof Error && error.name === 'TimeoutError';
+    throw new UpstreamError(service, null, timedOut ? `${service} timed out` : `${service} is unreachable`);
+  }
+  if (response.status === 429) throw new UpstreamError(service, 429, `${service} rate limit reached — try again later`);
+  if (!response.ok) throw new UpstreamError(service, response.status, `${service} responded ${response.status}`);
+  return response.text();
+}
+
 /** Epoch numbers in seconds or milliseconds (providers don't document which) → Date. */
 export function fromEpoch(value: number | null | undefined): Date | null {
   if (!value || !Number.isFinite(value)) return null;

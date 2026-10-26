@@ -36,6 +36,7 @@ import type {
   TnRegion,
   TournamentProvider,
   TournamentStatus,
+  TrackableEvent,
   UserStatus,
 } from './constants';
 import type { SearchCriteria } from './schemas/market';
@@ -180,6 +181,15 @@ export interface GameDetail extends GameSummary {
   modes: GameMode[];
   languages: string[];
   links: { official: string | null; store: string | null };
+  /** Wide key art for the page header (IGDB artwork, else a screenshot). */
+  artworkUrl: string | null;
+  screenshots: Array<{ thumbUrl: string; url: string }>;
+  /** YouTube ids of trailers and gameplay videos. */
+  videos: string[];
+  /** IGDB's combined critic + player rating, 0–100. */
+  rating: { score: number; count: number } | null;
+  /** The game's IGDB page, for attribution. Null when the game isn't linked to IGDB. */
+  igdbUrl: string | null;
   requirements: {
     minimum: RequirementTier | null;
     recommended: RequirementTier | null;
@@ -207,8 +217,16 @@ export interface Resource {
     currency: string;
     discountPct: number | null;
   } | null;
+  /**
+   * Card picture: the source's own (Steam's header for the post), else one of
+   * the game's IGDB screenshots. `wideUrl` is the large size for a hero slot.
+   */
+  image: { url: string; wideUrl: string; fromGame: boolean } | null;
   isExpired: boolean;
 }
+
+/** Radar tab counts for the current search and game. Deals and events count only those still running. */
+export type RadarKindCounts = Record<ResourceKind | 'all', number>;
 
 export interface RadarSearchResult {
   query: string;
@@ -382,6 +400,10 @@ export interface CompatDimension {
   ratio: number | null;
 }
 
+/**
+ * The English sentences (headline, detail, notes) serve the bot and other
+ * clients; the site words the verdict itself from the structured fields.
+ */
 export interface CompatResult {
   game: GameSummary;
   overall: CheckStatus;
@@ -390,10 +412,15 @@ export interface CompatResult {
   detail: string;
   dimensions: CompatDimension[];
   bottleneck: CompatDimensionKey | null;
+  /** The developer published one tier only, so "recommended" means "meets it". */
+  singleTier: boolean;
   upgrades: Array<{ key: 'cpu' | 'gpu'; target: 'minimum' | 'recommended'; options: HardwareComponent[] }>;
   /** Context for the upgrade list, e.g. laptops can't swap CPU/GPU. */
   upgradeNote: string | null;
+  upgradeNoteKind: 'laptop' | 'socket' | null;
   ramAdvice: string | null;
+  /** RAM that would reach the recommended tier, when the rig has less. */
+  ramTargetGb: number | null;
 }
 
 export interface CompatibleGames {
@@ -423,6 +450,8 @@ export interface Mission {
   title: string;
   description: string;
   cadence: MissionCadence;
+  /** What counts towards it — the Universe page links each mission to where you do that. */
+  event: TrackableEvent;
   target: number;
   progress: number;
   xpReward: number;
@@ -540,7 +569,7 @@ export interface AlertSource {
   id: string;
   name: string;
   adapter: SourceAdapterName;
-  config: { appId: number };
+  config: { appId: number | null; includeDlc: boolean };
   game: GameRef | null;
   category: AlertCategory;
   enabled: boolean;
@@ -610,11 +639,92 @@ export interface AdminMission {
   id: string;
   code: string;
   title: string;
+  description: string;
   cadence: MissionCadence;
-  event: string;
+  event: TrackableEvent;
   target: number;
   xpReward: number;
   active: boolean;
+  startsAt: string | null;
+  endsAt: string | null;
+}
+
+/* ───────────── Guides ───────────── */
+
+export interface GuideSection {
+  title: string;
+  items: Array<{ label: string; text: string }>;
+}
+
+export interface OverwolfApp {
+  name: string;
+  url: string;
+  description: string;
+}
+
+/** A card on /guides. */
+export interface GuideSummary {
+  game: GameSummary;
+  intro: string;
+  sectionTitles: string[];
+  appCount: number;
+  updatedAt: string;
+}
+
+export interface GuideDetail {
+  game: GameDetail;
+  intro: string;
+  sections: GuideSection[];
+  overwolfApps: OverwolfApp[];
+  overwolfStoreUrl: string | null;
+  updatedAt: string;
+}
+
+/** Admin → Guides: every published game, with its guide when it has one. */
+export interface AdminGuideRow {
+  game: GameRef;
+  guide: {
+    published: boolean;
+    intro: string;
+    sections: GuideSection[];
+    overwolfApps: OverwolfApp[];
+    overwolfStoreUrl: string | null;
+    updatedAt: string;
+  } | null;
+}
+
+export interface AdminAchievement {
+  id: string;
+  code: string;
+  title: string;
+  description: string;
+  criteria: { kind: 'event_count'; event: TrackableEvent; count: number } | { kind: 'level'; level: number };
+  xpReward: number;
+  cosmetic: { kind: 'title' | 'badge'; value: string } | null;
+  /** Players who have it. */
+  unlocked: number;
+}
+
+export interface AdminSeason {
+  key: string;
+  title: string;
+  description: string;
+  goal: number;
+  current: number;
+  startsAt: string;
+  endsAt: string;
+  milestones: Array<{ percent: number; reward: string; reached: boolean }>;
+  contributors: number;
+  status: 'upcoming' | 'active' | 'ended';
+}
+
+export interface AdminXpAdjustment {
+  id: string;
+  player: { id: string; username: string; displayName: string };
+  amount: number;
+  reason: string;
+  by: string | null;
+  createdAt: string;
 }
 
 /* ───────────── Marketplace ───────────── */
@@ -952,7 +1062,10 @@ export interface Activity {
   id: string;
   type: ActivityType;
   actor: PlayerCard;
+  /** English sentence; clients word it themselves from `type` and `value`. */
   text: string;
+  /** The number in the sentence: level reached, players wanted, listing price (TND). */
+  value: number | null;
   target: { label: string; href: string } | null;
   /** Extra line under the sentence: a price, an XP reward. */
   detail: string | null;
@@ -1051,4 +1164,45 @@ export interface AdminErrorEvent {
   firstSeenAt: string;
   lastSeenAt: string;
   resolvedAt: string | null;
+}
+
+/* ───────────── Game data (IGDB) ───────────── */
+
+/** One catalogue game as the admin sees it: where its data comes from and how fresh it is. */
+export interface AdminGame {
+  id: string;
+  slug: string;
+  title: string;
+  coverUrl: string | null;
+  status: 'published' | 'draft';
+  igdbId: number | null;
+  igdbUrl: string | null;
+  igdbSyncedAt: string | null;
+}
+
+export interface AdminGames {
+  games: AdminGame[];
+  /** Whether the API has IGDB credentials. */
+  igdbConfigured: boolean;
+  lastSync: { at: string; updated: number; linked: number; failed: number } | null;
+}
+
+/** An IGDB search hit, with the catalogue game it's already linked to (if any). */
+export interface IgdbSearchResult {
+  igdbId: number;
+  name: string;
+  releaseYear: number | null;
+  coverUrl: string | null;
+  platforms: string[];
+  igdbUrl: string;
+  /** Slug of the catalogue game linked to this IGDB entry. */
+  inCatalogue: string | null;
+}
+
+export interface IgdbSyncResult {
+  updated: number;
+  linked: number;
+  failed: number;
+  /** Catalogue games IGDB couldn't match automatically; link them by hand. */
+  unmatched: string[];
 }

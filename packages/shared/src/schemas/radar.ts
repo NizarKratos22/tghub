@@ -15,6 +15,8 @@ export type RadarListQuery = z.infer<typeof radarListQuerySchema>;
 
 export const radarSearchQuerySchema = z.object({
   q: z.string().trim().min(2, 'Type at least 2 characters').max(80),
+  /** false for search-as-you-type suggestions, so they don't count as searches for missions. */
+  track: z.stringbool().default(true),
 });
 
 export const CURRENCIES = ['TND', 'USD', 'EUR'] as const;
@@ -33,6 +35,11 @@ export const resourceInputSchema = z
     summary: z.string().trim().max(500).default(''),
     url: z.url(),
     sourceName: z.string().trim().min(1).max(60),
+    imageUrl: z
+      .url()
+      .refine((url) => url.startsWith('https://'), 'Use an https:// image address')
+      .nullable()
+      .default(null),
     gameId: objectIdSchema.nullable().default(null),
     tags: z.array(z.string().trim().toLowerCase().max(24)).max(10).default([]),
     publishedAt: z.coerce.date().optional(),

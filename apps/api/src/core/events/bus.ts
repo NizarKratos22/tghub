@@ -10,6 +10,8 @@ export interface DomainEvents {
   'user.registered': { userId: string };
   'user.daily_login': { userId: string; day: string };
   'game.viewed': { userId: string; gameId: string };
+  /** A catalogue game now has a Steam app id (imported, re-linked or synced from IGDB). */
+  'game.on_steam': { gameId: string; steamAppId: number };
   'game.favorited': { userId: string; gameId: string };
   'pc.spec_saved': { userId: string; specId: string };
   'pc.compat_checked': { userId: string; gameId: string };

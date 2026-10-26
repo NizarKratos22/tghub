@@ -107,12 +107,12 @@ export async function currentPulse(): Promise<PulseDto | null> {
  * unique idempotency key turns retries and double-claims into no-ops.
  * Returns false when this award was already granted.
  */
-export async function awardXp(userId: string, amount: number, reason: string, idempotencyKey: string): Promise<boolean> {
+export async function awardXp(userId: string, amount: number, reason: string, idempotencyKey: string, grantedBy: string | null = null): Promise<boolean> {
   if (amount <= 0) return false;
   const season = await activePulse();
 
   try {
-    await XpLedger.create({ userId, amount, reason, idempotencyKey, seasonKey: season?.key ?? null });
+    await XpLedger.create({ userId, amount, reason, idempotencyKey, seasonKey: season?.key ?? null, grantedBy });
   } catch (error) {
     if (isDuplicateKeyError(error)) return false;
     throw error;
@@ -207,6 +207,7 @@ function toMissionDto(mission: MissionDoc, progress: MissionProgressDoc | undefi
     title: mission.title,
     description: mission.description,
     cadence: mission.cadence,
+    event: mission.event,
     target: mission.target,
     progress: Math.min(progress?.progress ?? 0, mission.target),
     xpReward: mission.xpReward,
@@ -272,7 +273,7 @@ export async function claimMission(userId: string, missionId: string): Promise<{
 
 /* ───────────── Achievements ───────────── */
 
-async function unlock(userId: string, achievement: AchievementDoc): Promise<void> {
+export async function unlock(userId: string, achievement: AchievementDoc): Promise<void> {
   try {
     await UserAchievement.create({ userId, achievementId: achievement._id });
   } catch (error) {
@@ -430,16 +431,19 @@ export async function seasonStatFor(userId: string): Promise<{ seasonXp: number;
 
 /* ───────────── Admin ───────────── */
 
-function toAdminMission(mission: MissionDoc): AdminMission {
+export function toAdminMission(mission: MissionDoc): AdminMission {
   return {
     id: String(mission._id),
     code: mission.code,
     title: mission.title,
+    description: mission.description,
     cadence: mission.cadence,
     event: mission.event,
     target: mission.target,
     xpReward: mission.xpReward,
     active: mission.active,
+    startsAt: iso(mission.startsAt),
+    endsAt: iso(mission.endsAt),
   };
 }
 

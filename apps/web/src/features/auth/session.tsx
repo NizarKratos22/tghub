@@ -6,9 +6,11 @@ import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { ButtonLink } from '@/components/ui/Button';
 import { EmptyState, Skeleton } from '@/components/ui/primitives';
+import { useT } from '@/i18n/I18nProvider';
 import { api, ApiError } from '@/lib/api/client';
+import { SESSION_KEY } from '@/lib/query-keys';
 
-export const SESSION_KEY = ['session'] as const;
+export { SESSION_KEY };
 
 /** Set by the API next to the httpOnly refresh cookie; holds no secret. */
 const hasSessionHint = () => typeof document !== 'undefined' && /(?:^|;\s*)tgh_session=/.test(document.cookie);
@@ -54,6 +56,7 @@ export function useSignInHref(): string {
 }
 
 export function SignInPrompt({ title, children }: { title: string; children?: ReactNode }) {
+  const t = useT();
   const signInHref = useSignInHref();
   return (
     <EmptyState
@@ -61,9 +64,9 @@ export function SignInPrompt({ title, children }: { title: string; children?: Re
       title={title}
       action={
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <ButtonLink href={signInHref}>Sign in</ButtonLink>
+          <ButtonLink href={signInHref}>{t.meta.signIn}</ButtonLink>
           <ButtonLink href="/register" variant="outline">
-            Create account
+            {t.meta.register}
           </ButtonLink>
         </div>
       }
@@ -76,7 +79,7 @@ export function SignInPrompt({ title, children }: { title: string; children?: Re
 /** Renders `children(me)` for signed-in players, a prompt for guests. */
 export function SignedIn({
   children,
-  prompt = 'Sign in to continue',
+  prompt,
   promptText,
   loading,
 }: {
@@ -85,8 +88,9 @@ export function SignedIn({
   promptText?: ReactNode;
   loading?: ReactNode;
 }) {
+  const t = useT();
   const { data: me, isPending } = useSession();
   if (isPending) return <>{loading ?? <Skeleton height={160} />}</>;
-  if (!me) return <SignInPrompt title={prompt}>{promptText}</SignInPrompt>;
+  if (!me) return <SignInPrompt title={prompt ?? t.recover.signInPrompt}>{promptText}</SignInPrompt>;
   return <>{children(me)}</>;
 }

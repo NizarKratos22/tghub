@@ -1,0 +1,128 @@
+{
+  "name": "TG Hub logo — redesign brief",
+  "purpose": "Generate a more stylish TG Hub logo with an OpenAI image model, while keeping what makes today's logo recognisable. Each direction below is a ready request; generate several per direction, pick one, then have it redrawn as a clean vector.",
+  "chosen_logo": {
+    "description": "Adopted 2026-10-25: a blue (#0089FB) tile with chamfered corners holding a white, forward-leaning TG monogram whose G encloses a play triangle; HUB in heavy charcoal (white on dark) capitals; TN as a small blue superscript.",
+    "originals": "https://pub-ac0646938950482d9e37f5be48f6653b.r2.dev/Tunisiagamerhub/tg-hub-{light|dark}-{primary|compact|icon}.png (opaque backgrounds)",
+    "site_files": {
+      "logos": "apps/web/public/brand/tg-hub-{light|dark}-{primary|compact}.webp — transparent, trimmed, 120 px tall",
+      "icon": "apps/web/public/brand/tg-hub-icon.png",
+      "favicon": "apps/web/src/app/icon.png",
+      "apple_touch_icon": "apps/web/src/app/apple-icon.png (full-bleed, iOS adds the rounding)",
+      "pwa_icons": "apps/web/public/icons/icon-192.png, icon-512.png, icon-maskable-512.png",
+      "notification_badge": "apps/web/public/icons/badge-96.png (white letters only)"
+    },
+    "usage": "Header: compact, following the site theme. Footer and admin sidebar: dark artwork always (they are dark in both themes)."
+  },
+  "current_logo": {
+    "description": "A red rounded square (#E10600, corners ≈ 19% of the side) holding a white \"TG\" in Montserrat ExtraBold, followed by \"HUB\" in charcoal capitals and a tiny grey \"TN\" region tag. Clean but generic: plain font, plain square, no idea of its own.",
+    "source": "apps/web/src/components/layout/Logo.tsx, Logo.module.css, src/app/icon.png"
+  },
+  "brief": {
+    "brand": "TG Hub — Tunisian Gaming Hub: one place for game news, tournaments, PC checks, a gear marketplace and squads, for players in Tunisia.",
+    "goal": "Keep the red-tile-with-TG idea, but give the mark a drawn idea of its own so it looks designed, not typed: a custom monogram, a confident silhouette, sharper energy.",
+    "personality": [
+      "confident",
+      "fast",
+      "competitive",
+      "modern",
+      "proudly Tunisian without folklore"
+    ],
+    "references_for_quality": "The polish of real esports and game-platform brands — FACEIT, start.gg, Riot Games, Valorant, repeat.gg — not their shapes.",
+    "must_keep": [
+      "The letters TG as the mark, white on red",
+      "The red #E10600 as the main colour",
+      "The word HUB next to the mark",
+      "TN as a small secondary region tag",
+      "Flat shapes that still read as a 16 px favicon and in one colour"
+    ],
+    "free_to_change": [
+      "The letter shapes of T and G (custom-drawn, joined, cut)",
+      "The tile's silhouette (cut corners, angled edges) as long as it stays a compact tile",
+      "The HUB lettering (custom cuts, tighter or wider spacing)",
+      "How the TN tag is styled"
+    ]
+  },
+  "palette": {
+    "brand_red": "#E10600",
+    "white": "#FFFFFF",
+    "charcoal": "#1F2123",
+    "dark_background": "#141517",
+    "off_white": "#F4F5F6",
+    "muted_grey": "#62686D",
+    "light_grey": "#EEF0F3",
+    "accent_gold_optional": "#FFB400",
+    "rule": "Red does the work; charcoal and white support it; gold only as a tiny accent if at all."
+  },
+  "avoid": [
+    "Gradients, neon glow, chrome, bevels, 3D, glossy highlights, drop shadows",
+    "Game controllers, joysticks, swords, shields, crowns, wings, flames, skulls, mascots",
+    "A literal Tunisian flag, star or full crescent badge",
+    "Italic or slanted lettering, script, hand-drawn or grunge textures",
+    "Circles or hexagon badges around the mark",
+    "Taglines or any text other than TG, HUB and TN",
+    "Mock-ups: no walls, paper, phones, T-shirts or photos — just the logo on a plain background"
+  ],
+  "directions": {
+    "A_cut_corner_monogram": "The tile loses one rounded corner for a sharp 45° cut (top-right), like a game-UI panel. T and G are drawn as one joined monogram: the T's crossbar runs straight into the top of the G.",
+    "B_negative_space_play": "Inside the red tile, the gap between the T's stem and the G's bar forms a small right-pointing triangle — a hidden play button that says games without a controller.",
+    "C_crescent_g": "The G is a thick, near-complete circle whose opening reads as a crisp crescent arc — a quiet nod to the Tunisian flag, no star, no badge.",
+    "D_wordmark_blade": "No separate tile: TGHUB as one bold custom wordmark, TG in red and HUB in charcoal, joined by one clean angled cut through the letters, with TN as a small red-outlined chip."
+  },
+  "openai": {
+    "endpoint": "POST https://api.openai.com/v1/images/generations",
+    "notes": [
+      "No separate negative prompt exists, so what to avoid is written into each prompt.",
+      "Image models sometimes misspell text — n is 4 so you can keep one where TG, HUB and TN are exact.",
+      "Results are raster images for choosing a direction; the chosen one should be redrawn as a vector (SVG) before it replaces the site logo.",
+      "If gpt-image-1 has been superseded on your account, use the newest image model."
+    ],
+    "requests": {
+      "A_cut_corner_monogram": {
+        "model": "gpt-image-1",
+        "size": "1536x1024",
+        "quality": "high",
+        "background": "transparent",
+        "output_format": "png",
+        "n": 4,
+        "prompt": "Professional esports brand logo for \"TG Hub\", a Tunisian gaming platform, flat vector, centred alone on a transparent background with generous empty space, horizontal lockup. On the left, a compact square tile in pure red #E10600: three corners slightly rounded, the top-right corner cut off with one sharp 45-degree chamfer like a modern game-interface panel. Inside the tile, a custom white #FFFFFF monogram of the letters T and G drawn as one connected shape in a heavy geometric sans-serif: the crossbar of the T extends to the right and becomes the top stroke of the G, the G has a short flat horizontal spur, all stroke ends cut square and crisp, strokes thick and even, the monogram filling about 65% of the tile. To the right, the word \"HUB\" in heavy geometric capitals, charcoal #1F2123, tight confident spacing, cap height about 45% of the tile, vertically centred, with one subtle detail: the inner corners of the H and B cut at the same 45-degree angle as the tile. After HUB, a tiny rounded tag with \"TN\" in small bold capitals, red #E10600 text on light grey #EEF0F3. Polished like FACEIT or Riot Games branding. Exactly these characters: TG, HUB, TN. Flat solid colours only — no gradient, no glow, no shadow, no 3D, no texture, no controller or weapon icons, no mascot, no flag, no star, no tagline, no mock-up."
+      },
+      "B_negative_space_play": {
+        "model": "gpt-image-1",
+        "size": "1536x1024",
+        "quality": "high",
+        "background": "transparent",
+        "output_format": "png",
+        "n": 4,
+        "prompt": "Professional esports brand logo for \"TG Hub\", a Tunisian gaming platform, flat vector, centred alone on a transparent background with generous empty space, horizontal lockup. On the left, a square tile in pure red #E10600 with gently rounded corners. Inside it, the letters T and G in bold white #FFFFFF geometric sans-serif, placed tightly side by side so that the empty space between the stem of the T and the inner bar of the G forms a small, clean, right-pointing triangle — a hidden play button that is noticed on a second look, not drawn as a separate icon. Stroke ends cut square, strokes thick, letters filling about 65% of the tile. To the right, the word \"HUB\" in heavy geometric capitals, charcoal #1F2123, tight spacing, cap height about 45% of the tile, vertically centred. After it, a tiny tag \"TN\" in bold capitals, muted grey #62686D on light grey #EEF0F3. Clean, modern and confident like start.gg or Valorant branding. Exactly these characters: TG, HUB, TN. Flat solid colours only — no gradient, no glow, no shadow, no 3D, no texture, no separate play-button icon, no controller, no mascot, no flag, no tagline, no mock-up."
+      },
+      "C_crescent_g": {
+        "model": "gpt-image-1",
+        "size": "1536x1024",
+        "quality": "high",
+        "background": "transparent",
+        "output_format": "png",
+        "n": 4,
+        "prompt": "Professional esports brand logo for \"TG Hub\", a Tunisian gaming platform, flat vector, centred alone on a transparent background with generous empty space, horizontal lockup. On the left, a square tile in pure red #E10600 with softly rounded corners. Inside it, a white #FFFFFF monogram: a bold, upright geometric T, and beside it a G drawn as a thick, almost complete circle whose opening on the right is a crisp, elegant crescent-shaped arc with a short straight bar — a quiet nod to the crescent of the Tunisian flag, with no star and no badge. Strokes thick and even, monogram filling about 65% of the tile. To the right, the word \"HUB\" in heavy geometric capitals, charcoal #1F2123, cap height about 45% of the tile, vertically centred. After it, a tiny tag \"TN\" in bold capitals, white text on red #E10600. Refined and modern, polished like a top esports organisation's identity. Exactly these characters: TG, HUB, TN. Flat solid colours only — no gradient, no glow, no shadow, no 3D, no texture, no star, no flag, no controller, no mascot, no tagline, no mock-up."
+      },
+      "D_wordmark_blade": {
+        "model": "gpt-image-1",
+        "size": "1536x1024",
+        "quality": "high",
+        "background": "transparent",
+        "output_format": "png",
+        "n": 4,
+        "prompt": "Professional esports wordmark logo reading \"TGHUB\" for a Tunisian gaming platform, flat vector, centred alone on a transparent background with generous empty space. One bold custom wordmark in heavy, wide, geometric upright capitals with square-cut stroke ends: the letters \"TG\" in pure red #E10600 and \"HUB\" in charcoal #1F2123, set tightly as one word. A single thin, straight, angled cut (about 30 degrees) slices cleanly through all five letters at the same height, like a blade mark, leaving a hairline gap — sharp, fast, deliberate. Above the end of the B, a tiny chip with the letters \"TN\" in red bold capitals inside a thin red outline. Confident and premium like FACEIT or Riot Games branding. Exactly these characters: TGHUB and TN. Flat solid colours only — no gradient, no glow, no shadow, no 3D, no texture, no italic letters, no icons, no mascot, no flag, no tagline, no mock-up."
+      },
+      "app_icon_from_chosen_direction": {
+        "model": "gpt-image-1",
+        "size": "1024x1024",
+        "quality": "high",
+        "background": "transparent",
+        "output_format": "png",
+        "n": 4,
+        "prompt": "Flat app icon for the gaming platform TG Hub: a single red #E10600 tile filling almost the whole transparent canvas, with a bold white #FFFFFF custom TG monogram centred inside it, the T's crossbar flowing into the top of the G, square-cut stroke ends, thick even strokes, the monogram about 60% of the tile's width. It must stay readable at 16 pixels. Nothing else: no gradient, no shine, no shadow, no border, no 3D, no other shapes, no other text. (Replace the monogram sentence with the chosen direction's monogram.)"
+      }
+    }
+  }
+}

@@ -1,11 +1,12 @@
 'use client';
 
-import { ALERT_CATEGORIES, ALERT_CATEGORY_META, type AlertCategory } from '@tgh/shared';
+import { ALERT_CATEGORIES, type AlertCategory } from '@tgh/shared';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { EmptyState, Skeleton } from '@/components/ui/primitives';
 import { SESSION_KEY, SignedIn } from '@/features/auth/session';
+import { useT } from '@/i18n/I18nProvider';
 import { api } from '@/lib/api/client';
 import { cx } from '@/lib/cx';
 import { ALERTS_KEY, NotificationRow, useOpenNotification } from './NotificationRow';
@@ -14,6 +15,7 @@ import styles from './Inbox.module.css';
 type StatusFilter = 'all' | 'unread';
 
 function InboxInner() {
+  const t = useT();
   const [status, setStatus] = useState<StatusFilter>('all');
   const [category, setCategory] = useState<AlertCategory | undefined>();
   const queryClient = useQueryClient();
@@ -39,10 +41,10 @@ function InboxInner() {
   return (
     <div className={styles.inbox}>
       <div className={styles.toolbar}>
-        <div className={styles.filters} role="group" aria-label="Filter alerts">
+        <div className={styles.filters} role="group" aria-label={t.alerts.filter}>
           {(['all', 'unread'] as const).map((value) => (
             <button key={value} type="button" className={cx(styles.filter, status === value && styles.filterOn)} onClick={() => setStatus(value)} aria-pressed={status === value}>
-              {value === 'all' ? 'All' : 'Unread'}
+              {value === 'all' ? t.common.all : t.notifications.unread}
             </button>
           ))}
           <span className={styles.divider} aria-hidden />
@@ -54,16 +56,16 @@ function InboxInner() {
               onClick={() => setCategory(category === value ? undefined : value)}
               aria-pressed={category === value}
             >
-              {ALERT_CATEGORY_META[value].label}
+              {t.labels.alertCategory[value].label}
             </button>
           ))}
         </div>
         <div className={styles.actions}>
           <Button variant="outline" size="sm" icon="check" onClick={() => markAll.mutate()} loading={markAll.isPending}>
-            Mark all read
+            {t.alerts.markAllRead}
           </Button>
           <ButtonLink href="/alerts/preferences" variant="ghost" size="sm" icon="settings">
-            Preferences
+            {t.alerts.preferences}
           </ButtonLink>
         </div>
       </div>
@@ -71,8 +73,8 @@ function InboxInner() {
       {inbox.isPending ? (
         <Skeleton height={320} />
       ) : items.length === 0 ? (
-        <EmptyState icon="bell" title={status === 'unread' ? 'All caught up' : 'Nothing here yet'}>
-          Favourite games to receive their patch notes, and pick categories in your preferences.
+        <EmptyState icon="bell" title={status === 'unread' ? t.alerts.caughtUp : t.alerts.nothing}>
+          {t.alerts.emptyText}
         </EmptyState>
       ) : (
         <ul className={styles.list}>
@@ -85,7 +87,7 @@ function InboxInner() {
       {inbox.hasNextPage ? (
         <div className={styles.more}>
           <Button variant="outline" onClick={() => inbox.fetchNextPage()} loading={inbox.isFetchingNextPage}>
-            Load older alerts
+            {t.alerts.loadOlder}
           </Button>
         </div>
       ) : null}
@@ -94,8 +96,9 @@ function InboxInner() {
 }
 
 export function Inbox() {
+  const t = useT();
   return (
-    <SignedIn prompt="Sign in to see your alerts" promptText="Patch notes for the games you follow, deals before they expire, tournament reminders and your own level-ups — in one inbox.">
+    <SignedIn prompt={t.alerts.signInPrompt} promptText={t.alerts.signInText}>
       {() => <InboxInner />}
     </SignedIn>
   );

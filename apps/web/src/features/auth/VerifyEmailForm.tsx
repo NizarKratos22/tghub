@@ -2,13 +2,15 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { EmailVerificationStatus, Me } from '@tgh/shared';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { CODE_LENGTH, CodeInput } from '@/components/ui/CodeInput';
 import { FormError } from '@/components/ui/Field';
 import { Icon } from '@/components/ui/Icon';
 import { Skeleton } from '@/components/ui/primitives';
+import { fill } from '@/i18n/config';
+import { useT } from '@/i18n/I18nProvider';
 import { api, ApiError } from '@/lib/api/client';
 import { SESSION_KEY, SignedIn } from './session';
 import { useSecondsUntil } from './useSecondsUntil';
@@ -16,6 +18,7 @@ import { forgetVerification, recallVerification, rememberVerification } from './
 import styles from './VerifyEmailForm.module.css';
 
 function Verify({ me, next }: { me: Me; next: string }) {
+  const t = useT();
   const router = useRouter();
   const queryClient = useQueryClient();
   const [code, setCode] = useState('');
@@ -23,13 +26,15 @@ function Verify({ me, next }: { me: Me; next: string }) {
   const [done, setDone] = useState(me.emailVerified);
 
   const remote = useQuery({ queryKey: ['auth', 'verification'], queryFn: api.auth.verification, enabled: !me.emailVerified });
-  useEffect(() => {
+  // Follow the server's answer each time a new one arrives.
+  const [handled, setHandled] = useState<typeof remote.data>(undefined);
+  if (remote.data !== handled) {
     const data = remote.data;
-    if (!data) return;
-    if ('verified' in data) setDone(true);
+    setHandled(data);
+    if (data && 'verified' in data) setDone(true);
     // Keep the dev code from sign-up if the server's status is about the same code.
-    else setStatus((current) => (current && current.expiresAt === data.expiresAt ? current : data));
-  }, [remote.data]);
+    else if (data) setStatus((current) => (current && current.expiresAt === data.expiresAt ? current : data));
+  }
 
   const verify = useMutation({
     mutationFn: (value: string) => api.auth.verifyEmail(value),
@@ -53,7 +58,7 @@ function Verify({ me, next }: { me: Me; next: string }) {
   });
 
   const wait = useSecondsUntil(status?.resendAt);
-  const error = verify.error instanceof ApiError ? (verify.error.fields.code ?? verify.error.message) : verify.error ? 'Could not check the code — try again' : null;
+  const error = verify.error instanceof ApiError ? (verify.error.fields.code ?? verify.error.message) : verify.error ? t.recover.checkFailed : null;
   const resendError = resend.error instanceof ApiError ? resend.error.message : null;
 
   if (done) {
@@ -62,10 +67,10 @@ function Verify({ me, next }: { me: Me; next: string }) {
         <span className={styles.doneIcon}>
           <Icon name="check" size={30} />
         </span>
-        <h2>Email confirmed</h2>
-        <p>You&apos;re all set — the marketplace and messaging are unlocked.</p>
+        <h2>{t.recover.confirmed}</h2>
+        <p>{t.recover.confirmedText}</p>
         <ButtonLink href={next} iconRight="arrowRight">
-          Continue
+          {t.recover.continue}
         </ButtonLink>
       </div>
     );
@@ -83,17 +88,15 @@ function Verify({ me, next }: { me: Me; next: string }) {
         <Icon name="message" size={26} />
       </span>
       <div className={styles.copy}>
-        <h2>Enter the code we emailed you</h2>
-        <p>
-          We sent a 6-digit code to <strong>{status?.email ?? me.email}</strong>. It expires in 15 minutes.
-        </p>
+        <h2>{t.recover.verifyTitle}</h2>
+        <p>{fill(t.recover.verifyText, { email: status?.email ?? me.email })}</p>
       </div>
 
       {status?.devCode ? (
         <p className={styles.dev}>
           <Icon name="code" size={16} />
           <span>
-            Development mode — no email server is configured, so here is your code: <strong>{status.devCode}</strong>
+            {t.recover.devCode} <strong>{status.devCode}</strong>
           </span>
         </p>
       ) : null}
@@ -106,13 +109,13 @@ function Verify({ me, next }: { me: Me; next: string }) {
       ) : null}
 
       <Button type="submit" size="lg" block loading={verify.isPending} disabled={code.length !== CODE_LENGTH}>
-        Confirm email
+        {t.recover.confirm}
       </Button>
 
       <div className={styles.resend}>
-        <span>Didn&apos;t get it? Check spam, or</span>
+        <span>{t.recover.didntGet}</span>
         <button type="button" onClick={() => resend.mutate()} disabled={wait > 0 || resend.isPending}>
-          {resend.isPending ? 'Sending…' : wait > 0 ? `send a new code in ${wait}s` : 'send a new code'}
+          {resend.isPending ? t.recover.sending : wait > 0 ? fill(t.recover.resendIn, { seconds: wait }) : t.recover.resend}
         </button>
       </div>
       <FormError message={resendError} />
@@ -121,8 +124,9 @@ function Verify({ me, next }: { me: Me; next: string }) {
 }
 
 export function VerifyEmailForm({ next }: { next: string }) {
+  const t = useT();
   return (
-    <SignedIn prompt="Sign in to confirm your email" loading={<Skeleton height={320} />}>
+    <SignedIn prompt={t.recover.signInToConfirm} loading={<Skeleton height={320} />}>
       {(me) => <Verify me={me} next={next} />}
     </SignedIn>
   );

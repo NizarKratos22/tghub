@@ -46,7 +46,8 @@ export const GENRE_LABELS: Record<Genre, string> = {
   strategy: 'Strategy',
 };
 
-export const GAME_MODES = ['competitive', 'co-op', 'casual', 'single-player'] as const;
+/** IGDB's game modes, which the catalogue now takes as published. */
+export const GAME_MODES = ['single-player', 'multiplayer', 'co-op', 'split-screen', 'mmo', 'battle-royale'] as const;
 export type GameMode = (typeof GAME_MODES)[number];
 
 export const RESOURCE_KINDS = ['news', 'patch', 'guide', 'deal', 'event'] as const;
@@ -93,7 +94,8 @@ export type AlertAudience = (typeof ALERT_AUDIENCES)[number];
 export const ALERT_CHANNELS = ['inbox', 'discord', 'push'] as const;
 export type AlertChannelName = (typeof ALERT_CHANNELS)[number];
 
-export const SOURCE_ADAPTERS = ['steam_news'] as const;
+/** steam_news: one game's official announcements. steam_free: Steam's free-to-keep giveaways, as Radar deals. */
+export const SOURCE_ADAPTERS = ['steam_news', 'steam_free'] as const;
 export type SourceAdapterName = (typeof SOURCE_ADAPTERS)[number];
 
 export const COMPONENT_TYPES = ['cpu', 'gpu'] as const;

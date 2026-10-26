@@ -1,19 +1,25 @@
 import type { Metadata } from 'next';
 import { ForgotPasswordFlow } from '@/features/auth/ForgotPasswordFlow';
+import { getT } from '@/i18n/server';
 import { AuthLayout } from '../AuthLayout';
 
-export const metadata: Metadata = { title: 'Reset your password', robots: { index: false } };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t.recover.metaTitle, robots: { index: false } };
+}
 
 export default async function ForgotPasswordPage(props: PageProps<'/forgot-password'>) {
-  const { email } = await props.searchParams;
+  const [{ email }, t] = await Promise.all([props.searchParams, getT()]);
+  const [line, lead, em, after] = t.recover.pageTitle;
   return (
     <AuthLayout
-      kicker="Account / Recover"
+      kicker={t.recover.kicker}
       title={
         <>
-          Back in
+          {line}
           <br />
-          the <em>game</em>.
+          {lead} <em>{em}</em>
+          {after}
         </>
       }
     >

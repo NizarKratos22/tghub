@@ -3,7 +3,7 @@ import sharp from 'sharp';
 import type { MarketPhoto } from '@tgh/shared';
 import { AppError } from '../../core/http/errors';
 import { logger } from '../../core/logger';
-import { storage } from '../../core/storage/storage';
+import { publicObjectUrl, storage } from '../../core/storage/storage';
 import { Media, type MediaDoc, type MediaPurpose } from './media.model';
 
 const ACCEPTED_FORMATS = new Set(['jpeg', 'png', 'webp', 'gif', 'heif', 'avif', 'tiff']);
@@ -26,9 +26,14 @@ export function mediaKey(id: string | Types.ObjectId, variant: MediaVariant): st
   return `${String(id)}-${variant}.webp`;
 }
 
-/** Same-origin path: the web app proxies /api/v1, native clients prefix the API host. */
+/**
+ * The bucket's public domain when images live in R2 (served by Cloudflare's
+ * edge), otherwise a same-origin path: the web app proxies /api/v1 and native
+ * clients prefix the API host.
+ */
 export function mediaUrl(id: string | Types.ObjectId, variant: MediaVariant): string {
-  return `/api/v1/media/${mediaKey(id, variant)}`;
+  const key = mediaKey(id, variant);
+  return publicObjectUrl(key) ?? `/api/v1/media/${key}`;
 }
 
 export function toPhoto(doc: Pick<MediaDoc, '_id' | 'width' | 'height'>): MarketPhoto {
@@ -95,7 +100,7 @@ export async function processImage(input: Buffer, purpose: MediaPurpose = 'listi
 export async function storeImage(ownerId: string, purpose: MediaPurpose, input: Buffer): Promise<MarketPhoto> {
   const image = await processImage(input, purpose);
   const id = new Types.ObjectId();
-  await Promise.all([storage.put(mediaKey(id, 'full'), image.full), storage.put(mediaKey(id, 'thumb'), image.thumb)]);
+  await Promise.all([storage.put(mediaKey(id, 'full'), image.full, 'image/webp'), storage.put(mediaKey(id, 'thumb'), image.thumb, 'image/webp')]);
   const doc = await Media.create({
     _id: id,
     ownerId,

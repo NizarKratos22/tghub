@@ -8,6 +8,7 @@ import { Button, ButtonLink } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/primitives';
 import { SESSION_KEY, useSession, useSignInHref } from '@/features/auth/session';
 import { CompatResultView } from '@/features/pc/CompatResultView';
+import { useT } from '@/i18n/I18nProvider';
 import { componentName, isComplete, toHardware, useRigDraft } from '@/features/pc/rig';
 import { api, ApiError } from '@/lib/api/client';
 import styles from './GameActions.module.css';
@@ -15,6 +16,7 @@ import styles from './GameActions.module.css';
 const FAVORITES_KEY = ['bookmarks', 'game'] as const;
 
 export function FavoriteButton({ gameId }: { gameId: string }) {
+  const t = useT();
   const { data: me } = useSession();
   const router = useRouter();
   const signInHref = useSignInHref();
@@ -50,7 +52,7 @@ export function FavoriteButton({ gameId }: { gameId: string }) {
       aria-pressed={isFavorite}
       disabled={Boolean(me) && favorites.isPending}
     >
-      {isFavorite ? 'Following' : 'Favourite'}
+      {isFavorite ? t.games.following : t.games.favourite}
     </Button>
   );
 }
@@ -75,6 +77,7 @@ export function ViewTracker({ slug }: { slug: string }) {
 
 /** Uses the rig from the PC Lab (saved primary rig, or the local draft) to judge this game. */
 export function QuickCheck({ game }: { game: GameSummary }) {
+  const t = useT();
   const { data: me } = useSession();
   const { rig, loaded } = useRigDraft();
   const specs = useQuery({ queryKey: ['pc', 'specs'], queryFn: api.pc.specs, enabled: Boolean(me) });
@@ -104,9 +107,9 @@ export function QuickCheck({ game }: { game: GameSummary }) {
   if (!input || staleDraft) {
     return (
       <div className={styles.empty}>
-        <p>Tell us your CPU, GPU and RAM once in the PC Lab — every game page will check against it.</p>
+        <p>{t.games.setupText}</p>
         <ButtonLink href={`/pc?game=${game.slug}`} iconRight="arrowRight">
-          Set up my rig
+          {t.games.setup}
         </ButtonLink>
       </div>
     );
@@ -115,7 +118,7 @@ export function QuickCheck({ game }: { game: GameSummary }) {
   return (
     <div className={styles.check}>
       <p className={styles.using}>
-        Checking with <strong>{rigLabel}</strong>
+        {t.games.checkingWith} <strong>{rigLabel}</strong>
       </p>
       {check.data ? <CompatResultView result={check.data} compact /> : check.isError ? <p className={styles.error}>{check.error.message}</p> : <Skeleton height={140} />}
     </div>

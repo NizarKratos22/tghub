@@ -1,6 +1,15 @@
 import type { Request, Response } from 'express';
 import { Router } from 'express';
-import { forgotPasswordSchema, loginSchema, refreshSchema, registerSchema, resetPasswordSchema, verifyEmailSchema, type AuthResult } from '@tgh/shared';
+import {
+  forgotPasswordSchema,
+  loginSchema,
+  refreshSchema,
+  registerSchema,
+  resetPasswordSchema,
+  usernameAvailableQuerySchema,
+  verifyEmailSchema,
+  type AuthResult,
+} from '@tgh/shared';
 import { requireAuth } from '../../core/auth/middleware';
 import { env } from '../../config/env';
 import { ACCESS_COOKIE, CLIENT_TYPE_HEADER, REFRESH_COOKIE, SESSION_HINT_COOKIE } from '../../core/auth/context';
@@ -8,7 +17,7 @@ import { handle } from '../../core/http/handler';
 import { authLimiter, verificationLimiter } from '../../core/http/rate-limit';
 import { getMe } from '../users/users.service';
 import { forgotPassword, resetPassword } from './account.service';
-import { login, logout, refresh, register, type ClientMeta, type IssuedSession } from './auth.service';
+import { login, logout, refresh, register, usernameAvailable, type ClientMeta, type IssuedSession } from './auth.service';
 import { resendVerificationCode, verificationStatus, verifyEmailCode } from './verification.service';
 
 const REFRESH_COOKIE_PATH = '/api/v1/auth';
@@ -42,6 +51,11 @@ async function respond(req: Request, res: Response, session: IssuedSession): Pro
 }
 
 export const authRouter = Router();
+
+authRouter.get(
+  '/username-available',
+  handle({ query: usernameAvailableQuerySchema }, async ({ query }) => ({ available: await usernameAvailable(query.username) })),
+);
 
 authRouter.post(
   '/register',

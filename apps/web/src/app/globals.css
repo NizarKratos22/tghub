@@ -16,9 +16,10 @@
   --radius-lg: 10px;
   --radius-pill: 999px;
 
-  --container: 1600px;
-  --gutter: clamp(16px, 3vw, 40px);
-  --header-h: 60px;
+  /* Header, page content and footer share this width and --gutter, so their edges line up. */
+  --container: 1920px;
+  --gutter: clamp(18px, 3.6vw, 56px);
+  --header-h: 64px;
   --ticker-h: 34px;
   --ease: cubic-bezier(0.2, 0.7, 0.1, 1);
 
@@ -72,6 +73,16 @@
   --purple-wash: rgb(166 61 230 / 0.1);
   --purple-text: #8a2cc4;
 
+  --orange: #f26b0f;
+  --orange-wash: rgb(242 107 15 / 0.12);
+  --orange-text: #c2530a;
+
+  /* Solid labels that sit on pictures: the same in both themes, as the picture is. White text passes 4.5:1. */
+  --badge-blue: #0b74b8;
+  --badge-orange: #c2530a;
+  --badge-purple: #8a2cc4;
+  --badge-green: #00875a;
+
   --live: #e10600;
 }
 
@@ -116,6 +127,10 @@
   --purple: #c345ff;
   --purple-wash: rgb(195 69 255 / 0.16);
   --purple-text: #d68bff;
+
+  --orange: #ff8a3d;
+  --orange-wash: rgb(255 138 61 / 0.16);
+  --orange-text: #ffa365;
 
   --live: #ff3b30;
 }

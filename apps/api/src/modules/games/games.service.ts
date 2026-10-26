@@ -16,7 +16,7 @@ export async function listGames(query: GameListQuery): Promise<Page<GameSummary>
 
   if (query.q) {
     const term = query.q.toLowerCase();
-    filter.$or = [{ titleLower: { $regex: escapeRegex(term) } }, { aliases: term }, { tags: term }];
+    filter.$or = [{ titleLower: { $regex: escapeRegex(term) } }, { aliases: term }, { 'igdb.altNames': term }, { tags: term }];
   }
   if (query.genre) filter.genres = query.genre;
   if (query.platform) filter.platforms = query.platform;
@@ -39,7 +39,7 @@ export async function searchGames(term: string, limit: number): Promise<GameSumm
   const lower = term.toLowerCase();
   const games = await Game.find({
     status: 'published',
-    $or: [{ titleLower: { $regex: escapeRegex(lower) } }, { aliases: lower }, { tags: lower }],
+    $or: [{ titleLower: { $regex: escapeRegex(lower) } }, { aliases: lower }, { 'igdb.altNames': lower }, { tags: lower }],
   })
     .sort(SORTS.popular)
     .limit(limit)
@@ -77,6 +77,14 @@ export async function gameSummariesByIds(ids: Array<Types.ObjectId | string>): P
   const byId = new Map(games.map((game) => [String(game._id), toGameSummary(game)]));
   // Preserve the caller's order (e.g. most recently bookmarked first).
   return ids.map((id) => byId.get(String(id))).filter((game): game is GameSummary => Boolean(game));
+}
+
+/** IGDB screenshots per game (key art when there are none; it is often a logo) — the fallback pictures for Radar stories about it. */
+export async function gameArtMap(ids: Array<Types.ObjectId | string | null | undefined>): Promise<Map<string, string[]>> {
+  const unique = [...new Set(ids.filter(Boolean).map(String))];
+  if (unique.length === 0) return new Map();
+  const games = await Game.find({ _id: { $in: unique } }).select('igdb.artworkIds igdb.screenshotIds').lean<Array<Pick<GameDoc, '_id' | 'igdb'>>>();
+  return new Map(games.map((game) => [String(game._id), game.igdb?.screenshotIds?.length ? game.igdb.screenshotIds : (game.igdb?.artworkIds ?? [])]));
 }
 
 /** Batch lookup so feeds don't do one query per item. */

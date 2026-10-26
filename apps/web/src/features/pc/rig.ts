@@ -30,6 +30,7 @@ export function useRigDraft() {
 
   useEffect(() => {
     const stored = readStoredRig();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage only exists after hydration; reading it in render would mismatch the server HTML.
     if (stored) setRig(stored);
     setLoaded(true);
   }, []);

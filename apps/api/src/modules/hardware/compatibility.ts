@@ -25,6 +25,8 @@ export interface Evaluation {
   detail: string;
   dimensions: CompatDimension[];
   bottleneck: CompatDimensionKey | null;
+  /** The developer published one tier only; "recommended" then means "meets it". */
+  singleTier: boolean;
 }
 
 const RANK = { below: 0, minimum: 1, recommended: 2 } as const;
@@ -147,7 +149,7 @@ export function evaluate(hardware: HardwareProfile, tiers: TierPair): Evaluation
   if (singleTier) {
     for (const dimension of dimensions) dimension.recommended = null;
   }
-  return { overall, confidence, dimensions, bottleneck, ...description };
+  return { overall, confidence, dimensions, bottleneck, singleTier, ...description };
 }
 
 function list(keys: CompatDimensionKey[]): string {

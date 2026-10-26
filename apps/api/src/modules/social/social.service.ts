@@ -100,6 +100,7 @@ export interface ActivityInput {
   actorId: string;
   type: ActivityType;
   text: string;
+  value?: number | null;
   target?: { label: string; href: string } | null;
   detail?: string | null;
   visual?: ActivityVisual;
@@ -115,6 +116,7 @@ export async function recordActivity(input: ActivityInput): Promise<void> {
       actorId: input.actorId,
       type: input.type,
       text: input.text,
+      value: input.value ?? null,
       target: input.target ?? null,
       detail: input.detail ?? null,
       visual: input.visual ?? null,
@@ -123,6 +125,18 @@ export async function recordActivity(input: ActivityInput): Promise<void> {
   } catch (error) {
     if (!isDuplicateKeyError(error)) throw error;
   }
+}
+
+/** Rows written before `value` existed carry the number only inside their English text. */
+function legacyValue(doc: ActivityDoc): number | null {
+  const digits = (text: string | null | undefined) => {
+    const match = text?.replace(/,/g, '').match(/\d+/);
+    return match ? Number(match[0]) : null;
+  };
+  if (doc.type === 'level_up') return digits(doc.visual?.kind === 'mark' ? doc.visual.label : doc.text);
+  if (doc.type === 'lfg_posted') return /a teammate/.test(doc.text) ? 1 : digits(doc.text);
+  if (doc.type === 'listing') return digits(doc.detail);
+  return null;
 }
 
 async function toActivities(docs: ActivityDoc[], viewerId: string | null): Promise<ActivityDto[]> {
@@ -145,6 +159,7 @@ async function toActivities(docs: ActivityDoc[], viewerId: string | null): Promi
         type: doc.type,
         actor,
         text: doc.text,
+        value: doc.value ?? legacyValue(doc),
         target: doc.target,
         detail: doc.detail,
         visual: doc.visual,

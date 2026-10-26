@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { formatDateTime, relativeTime, timeLeft } from '@/lib/format';
+import { fill } from '@/i18n/config';
+import { useFormat, useT } from '@/i18n/I18nProvider';
 
 /** Re-renders every `interval` ms so countdowns stay honest. */
 function useNow(interval: number): number {
@@ -15,19 +16,23 @@ function useNow(interval: number): number {
 
 export function RelativeTime({ iso, className }: { iso: string; className?: string }) {
   const now = useNow(60_000);
+  const format = useFormat();
   return (
-    <time dateTime={iso} title={formatDateTime(iso)} className={className} suppressHydrationWarning>
-      {relativeTime(iso, now)}
+    <time dateTime={iso} title={format.dateTime(iso)} className={className} suppressHydrationWarning>
+      {format.relative(iso, now)}
     </time>
   );
 }
 
-export function Countdown({ iso, prefix = 'Ends in', endedLabel = 'Ended', className }: { iso: string; prefix?: string; endedLabel?: string; className?: string }) {
+/** `label` is a template with `{time}` — "Ends in {time}" — so each language can place the time where it reads naturally. */
+export function Countdown({ iso, label, endedLabel, className }: { iso: string; label?: string; endedLabel?: string; className?: string }) {
   const now = useNow(30_000);
-  const left = timeLeft(iso, now);
+  const t = useT();
+  const format = useFormat();
+  const left = format.timeLeft(iso, now);
   return (
-    <time dateTime={iso} title={formatDateTime(iso)} className={className} suppressHydrationWarning>
-      {left ? `${prefix} ${left}` : endedLabel}
+    <time dateTime={iso} title={format.dateTime(iso)} className={className} suppressHydrationWarning>
+      {left ? fill(label ?? t.time.endsIn, { time: left }) : (endedLabel ?? t.time.ended)}
     </time>
   );
 }

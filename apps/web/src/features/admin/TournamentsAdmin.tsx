@@ -5,7 +5,6 @@ import type {
   DiscoveryProvider,
   GameSummary,
   StartggVideogame,
-  TournamentImportResult,
   TournamentSource,
   TournamentSourceRunResult,
 } from '@tgh/shared';
@@ -19,6 +18,7 @@ import { RelativeTime } from '@/components/ui/time';
 import { ProviderBadge, TournamentStatusBadge } from '@/features/tournaments/badges';
 import { api, ApiError } from '@/lib/api/client';
 import { formatDateTime } from '@/lib/format';
+import { TournamentLinkImport } from '@/features/tournaments/TournamentLinkImport';
 import styles from './admin.module.css';
 
 const fieldsOf = (error: unknown) => (error instanceof ApiError ? error.fields : {});
@@ -52,18 +52,7 @@ function describeConfig(source: TournamentSource): string {
 /* ───────────── Providers + import ───────────── */
 
 function Connections() {
-  const queryClient = useQueryClient();
   const providers = useQuery({ queryKey: ['admin', 'tournaments', 'providers'], queryFn: api.admin.tournaments.providers });
-  const [url, setUrl] = useState('');
-  const [result, setResult] = useState<TournamentImportResult | null>(null);
-  const importer = useMutation({
-    mutationFn: () => api.admin.tournaments.import(url),
-    onSuccess: (data) => {
-      setResult(data);
-      setUrl('');
-      void queryClient.invalidateQueries({ queryKey: ['admin', 'tournaments'] });
-    },
-  });
 
   return (
     <div className={styles.columns}>
@@ -91,33 +80,7 @@ function Connections() {
       </Panel>
 
       <Panel title="Import by link">
-        <form
-          className={styles.form}
-          onSubmit={(event) => {
-            event.preventDefault();
-            setResult(null);
-            importer.mutate();
-          }}
-        >
-          <TextField
-            label="Tournament URL"
-            value={url}
-            onChange={(event) => setUrl(event.target.value)}
-            placeholder="https://www.start.gg/tournament/… or https://www.faceit.com/en/championship/…"
-            error={fieldsOf(importer.error).url}
-            hint="For a Tunisian organizer's event that discovery hasn't picked up yet."
-          />
-          <FormError message={messageOf(importer.error)} />
-          <Button type="submit" icon="plus" loading={importer.isPending} disabled={!url.trim()}>
-            Import
-          </Button>
-          {result ? (
-            <p className={styles.result}>
-              {result.created ? 'Imported' : 'Already mirrored — refreshed'}:{' '}
-              <Link href={`/tournaments/${result.tournament.slug}`}>{result.tournament.name}</Link>
-            </p>
-          ) : null}
-        </form>
+        <TournamentLinkImport hint="For a Tunisian organizer's event that discovery hasn't picked up yet. Also available on the Overview, Games and Radar pages." />
       </Panel>
     </div>
   );

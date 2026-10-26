@@ -2,6 +2,7 @@
   "name": "@tgh/api",
   "version": "0.1.0",
   "private": true,
+  "license": "UNLICENSED",
   "type": "module",
   "scripts": {
     "dev": "tsx watch --clear-screen=false src/main.ts",
@@ -10,10 +11,12 @@
     "seed": "tsx src/seed/index.ts",
     "discord:register": "tsx src/scripts/register-discord-commands.ts",
     "admin:promote": "tsx src/scripts/promote-admin.ts",
+    "media:to-r2": "tsx src/scripts/media-to-r2.ts",
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test \"src/**/*.test.ts\""
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1156.0",
     "@tgh/shared": "*",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",

@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   check:
-    name: Typecheck, test, build
+    name: Typecheck, lint, test, build
     runs-on: ubuntu-latest
     env:
       # CI-only values; real secrets live on the server, never in the repository.
@@ -30,6 +30,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run typecheck
+      # After typecheck: the type-aware rules need the route types next typegen writes.
+      - run: npm run lint
       - run: npm test
       - run: npm run build
 

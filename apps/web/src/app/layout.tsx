@@ -4,7 +4,7 @@ import Script from 'next/script';
 import type { ReactNode } from 'react';
 import { directionOf } from '@/i18n/config';
 import { I18nProvider } from '@/i18n/I18nProvider';
-import { getLocale } from '@/i18n/server';
+import { getLocale, getT } from '@/i18n/server';
 import { themeBootScript } from '@/lib/theme';
 import { Providers } from './providers';
 import './globals.css';
@@ -15,11 +15,10 @@ const body = Roboto({ subsets: ['latin'], weight: ['400', '500', '700'], variabl
 const arabic = Cairo({ subsets: ['arabic', 'latin'], weight: ['500', '600', '700', '800'], variable: '--font-cairo' });
 const numerals = Teko({ subsets: ['latin'], weight: ['500', '600'], variable: '--font-teko' });
 
-export const metadata: Metadata = {
-  title: { default: 'TG Hub — Tunisian Gaming Hub', template: '%s · TG Hub' },
-  description:
-    'Game news, patch notes, deals and events in one Radar. A gaming marketplace for gear and FiveM assets, PC checks, missions and XP — built in Tunisia.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: { default: t.meta.title, template: '%s · TG Hub' }, description: t.meta.description };
+}
 
 export const viewport: Viewport = {
   themeColor: [

@@ -3,10 +3,11 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import type { CSSProperties } from 'react';
-import { ALERT_CATEGORY_META, type AlertCategory, type Notification } from '@tgh/shared';
+import type { AlertCategory, Notification } from '@tgh/shared';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { RelativeTime } from '@/components/ui/time';
 import { SESSION_KEY } from '@/features/auth/session';
+import { useT } from '@/i18n/I18nProvider';
 import { api } from '@/lib/api/client';
 import { cx } from '@/lib/cx';
 import { isExternal } from '@/lib/format';
@@ -44,6 +45,7 @@ export function useOpenNotification(onOpened?: () => void) {
 
 /** Facebook-style row: a round badge for the game or category, the text, an unread dot. */
 export function NotificationRow({ item, onOpen, compact = false }: { item: Notification; onOpen: (item: Notification) => void; compact?: boolean }) {
+  const t = useT();
   const unread = !item.readAt;
   return (
     <li>
@@ -70,11 +72,11 @@ export function NotificationRow({ item, onOpen, compact = false }: { item: Notif
             <span className={styles.dotSep} aria-hidden>
               ·
             </span>
-            <span>{ALERT_CATEGORY_META[item.category].label}</span>
+            <span>{t.labels.alertCategory[item.category].label}</span>
             {item.url && isExternal(item.url) ? <Icon name="arrowUpRight" size={12} /> : null}
           </span>
         </span>
-        {unread ? <span className={styles.unreadDot} aria-label="Unread" /> : null}
+        {unread ? <span className={styles.unreadDot} aria-label={t.notifications.unread} /> : null}
       </button>
     </li>
   );

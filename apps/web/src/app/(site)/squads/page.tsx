@@ -6,11 +6,12 @@ import { ButtonLink } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/primitives';
 import { LfgBoard } from '@/features/squads/LfgBoard';
 import { SquadsTabs } from '@/features/squads/shared';
+import { TournamentStrip } from '@/features/tournaments/TournamentStrip';
 
-export const metadata: Metadata = {
-  title: 'Find teammates',
-  description: 'Post what you want to play or join players already looking — ranked duos, squads, roleplay nights.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t.squads.lfgTitle, description: t.squads.lfgLede };
+}
 
 export default async function SquadsPage() {
   const t = await getT();
@@ -26,6 +27,7 @@ export default async function SquadsPage() {
         <Suspense fallback={<Skeleton height={420} />}>
           <LfgBoard />
         </Suspense>
+        <TournamentStrip limit={4} note={t.squads.tournamentsNote} />
       </div>
     </>
   );

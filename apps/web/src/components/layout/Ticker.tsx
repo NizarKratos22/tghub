@@ -1,12 +1,16 @@
+'use client';
+
 import Link from 'next/link';
-import { RESOURCE_KIND_LABELS, type Resource } from '@tgh/shared';
+import type { Resource } from '@tgh/shared';
+import { useT } from '@/i18n/I18nProvider';
 import { isExternal } from '@/lib/format';
 import styles from './Ticker.module.css';
 
 function TickerItem({ item }: { item: Resource }) {
+  const t = useT();
   const content = (
     <>
-      <span className={styles.kind}>{RESOURCE_KIND_LABELS[item.kind]}</span>
+      <span className={styles.kind}>{t.labels.resourceKind[item.kind]}</span>
       {item.game ? <span className={styles.game}>{item.game.monogram}</span> : null}
       <span className={styles.title}>{item.title}</span>
     </>
@@ -24,11 +28,12 @@ function TickerItem({ item }: { item: Resource }) {
 
 /** Scrolling strip of live Radar items. Duplicated once so the loop is seamless. */
 export function Ticker({ items }: { items: Resource[] }) {
+  const t = useT();
   return (
     <div className={styles.ticker}>
       <span className={styles.live}>
         <span className={styles.dot} aria-hidden />
-        Live radar
+        {t.radar.live}
       </span>
       <div className={styles.viewport}>
         <div className={styles.track} style={{ animationDuration: `${Math.max(40, items.length * 9)}s` }}>

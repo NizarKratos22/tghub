@@ -13,6 +13,7 @@ import {
   type GameSummary,
   type PublishAlertResult,
   type ResourceKind,
+  type SourceAdapterName,
   type SourceRunResult,
 } from '@tgh/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -26,8 +27,8 @@ import { useSession } from '@/features/auth/session';
 import { api, ApiError } from '@/lib/api/client';
 import styles from './admin.module.css';
 
-const fieldsOf = (error: unknown) => (error instanceof ApiError ? error.fields : {});
-const messageOf = (error: unknown) => (error instanceof ApiError && Object.keys(error.fields).length > 0 ? null : error instanceof Error ? error.message : null);
+export const fieldsOf = (error: unknown) => (error instanceof ApiError ? error.fields : {});
+export const messageOf = (error: unknown) => (error instanceof ApiError && Object.keys(error.fields).length > 0 ? null : error instanceof Error ? error.message : null);
 
 function useGames() {
   return useQuery({ queryKey: ['games', 'all'], queryFn: () => api.games.list({ pageSize: 48, sort: 'title' }), staleTime: 10 * 60_000 });
@@ -46,7 +47,7 @@ function GameSelect({ value, onChange, label = 'Game', games }: { value: string;
   );
 }
 
-function Panel({ title, children, aside }: { title: string; children: ReactNode; aside?: ReactNode }) {
+export function Panel({ title, children, aside }: { title: string; children: ReactNode; aside?: ReactNode }) {
   return (
     <section className={styles.panel}>
       <header className={styles.panelHead}>
@@ -222,8 +223,10 @@ export function SourcesAdmin() {
   const games = useGames();
   const sources = useQuery({ queryKey: ['admin', 'sources'], queryFn: api.admin.sources });
   const [lastRun, setLastRun] = useState<SourceRunResult | null>(null);
-  const [form, setForm] = useState({ name: '', appId: '', gameId: '', intervalMinutes: '60' });
+  const emptySource = { adapter: 'steam_news' as SourceAdapterName, name: '', appId: '', gameId: '', intervalMinutes: '60', includeDlc: false };
+  const [form, setForm] = useState(emptySource);
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['admin'] });
+  const news = form.adapter === 'steam_news';
 
   const run = useMutation({ mutationFn: api.admin.runSource, onSuccess: (result) => (setLastRun(result), refresh()) });
   const toggle = useMutation({ mutationFn: (s: AlertSource) => api.admin.updateSource(s.id, { enabled: !s.enabled }), onSuccess: refresh });
@@ -232,19 +235,22 @@ export function SourcesAdmin() {
     mutationFn: () =>
       api.admin.createSource({
         name: form.name,
-        adapter: 'steam_news',
-        config: { appId: Number(form.appId) },
-        gameId: form.gameId || null,
-        category: 'game_update',
+        adapter: form.adapter,
+        config: news ? { appId: Number(form.appId) || null } : { appId: null, includeDlc: form.includeDlc },
+        gameId: news ? form.gameId || null : null,
+        category: news ? 'game_update' : 'deal',
         intervalMinutes: Number(form.intervalMinutes),
       }),
-    onSuccess: () => (setForm({ name: '', appId: '', gameId: '', intervalMinutes: '60' }), refresh()),
+    onSuccess: () => (setForm(emptySource), refresh()),
   });
   const fields = fieldsOf(create.error);
 
   return (
     <div className={styles.stackCol}>
-      <Panel title="Alert sources" aside={<span className={styles.dim}>Official Steam announcements · auto-disabled after 5 failures</span>}>
+      <Panel
+        title="Alert sources"
+        aside={<span className={styles.dim}>Steam announcements (added for every game on Steam) and free-to-keep giveaways · auto-disabled after 5 failures</span>}
+      >
         {sources.data ? (
           sources.data.length > 0 ? (
             <div className={styles.tableWrap}>
@@ -265,7 +271,8 @@ export function SourcesAdmin() {
                         {source.name}
                         <span className={styles.dim}>
                           {' '}
-                          · app {source.config.appId} · every {source.intervalMinutes}m
+                          · {source.adapter === 'steam_free' ? `free to keep${source.config.includeDlc ? ' incl. DLC' : ''}` : `app ${source.config.appId}`} · every{' '}
+                          {source.intervalMinutes}m
                         </span>
                         {source.lastError ? <span className={styles.error}>{source.lastError}</span> : null}
                       </td>
@@ -303,15 +310,28 @@ export function SourcesAdmin() {
 
       <Panel title="Add Steam source">
         <form
-          className={styles.formInline}
+          className={styles.sourceForm}
           onSubmit={(event) => {
             event.preventDefault();
             create.mutate();
           }}
         >
+          <SelectField label="Type" value={form.adapter} onChange={(e) => setForm({ ...form, adapter: e.target.value as SourceAdapterName })}>
+            <option value="steam_news">Game announcements</option>
+            <option value="steam_free">Free-to-keep giveaways</option>
+          </SelectField>
           <TextField label="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} error={fields.name} />
-          <TextField label="Steam app id" inputMode="numeric" value={form.appId} onChange={(e) => setForm({ ...form, appId: e.target.value })} error={fields['config.appId']} />
-          <GameSelect value={form.gameId} onChange={(gameId) => setForm({ ...form, gameId })} games={games.data?.items ?? []} />
+          {news ? (
+            <>
+              <TextField label="Steam app id" inputMode="numeric" value={form.appId} onChange={(e) => setForm({ ...form, appId: e.target.value })} error={fields['config.appId']} />
+              <GameSelect value={form.gameId} onChange={(gameId) => setForm({ ...form, gameId })} games={games.data?.items ?? []} />
+            </>
+          ) : (
+            <label className={styles.inlineCheck}>
+              <input type="checkbox" checked={form.includeDlc} onChange={(e) => setForm({ ...form, includeDlc: e.target.checked })} />
+              Include free DLC
+            </label>
+          )}
           <SelectField label="Interval" value={form.intervalMinutes} onChange={(e) => setForm({ ...form, intervalMinutes: e.target.value })}>
             {[30, 60, 180, 720].map((m) => (
               <option key={m} value={m}>
@@ -435,7 +455,7 @@ export function ContentAdmin() {
   const queryClient = useQueryClient();
   const games = useGames();
   const recent = useQuery({ queryKey: ['admin', 'resources'], queryFn: () => api.radar.list({ pageSize: 15 }) });
-  const empty = { kind: 'guide' as ResourceKind, title: '', summary: '', url: '', sourceName: 'TG Hub Guides', gameId: '', startsAt: '', expiresAt: '', location: '', store: '', price: '', originalPrice: '', currency: 'USD' };
+  const empty = { kind: 'guide' as ResourceKind, title: '', summary: '', url: '', sourceName: 'TG Hub Guides', imageUrl: '', gameId: '', startsAt: '', expiresAt: '', location: '', store: '', price: '', originalPrice: '', currency: 'USD' };
   const [form, setForm] = useState(empty);
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['admin', 'resources'] });
 
@@ -447,6 +467,7 @@ export function ContentAdmin() {
         summary: form.summary,
         url: form.url,
         sourceName: form.sourceName,
+        imageUrl: form.imageUrl.trim() || null,
         gameId: form.gameId || null,
         startsAt: form.startsAt ? new Date(form.startsAt).toISOString() : null,
         expiresAt: form.expiresAt ? new Date(form.expiresAt).toISOString() : null,
@@ -488,6 +509,13 @@ export function ContentAdmin() {
             <TextField label="Link (https://…)" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} error={fields.url} />
             <TextField label="Source" value={form.sourceName} onChange={(e) => setForm({ ...form, sourceName: e.target.value })} error={fields.sourceName} />
           </div>
+          <TextField
+            label="Picture (https://…, optional)"
+            value={form.imageUrl}
+            onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
+            error={fields.imageUrl}
+            hint="Leave empty to use one of the game's screenshots."
+          />
           {timed ? (
             <div className={styles.row2}>
               {form.kind === 'event' ? (
@@ -645,76 +673,6 @@ export function UsersAdmin() {
   );
 }
 
-/* ───────────── Missions ───────────── */
-
-export function MissionsAdmin() {
-  const queryClient = useQueryClient();
-  const missions = useQuery({ queryKey: ['admin', 'missions'], queryFn: api.admin.missions });
-  const update = useMutation({
-    mutationFn: ({ id, body }: { id: string; body: Record<string, unknown> }) => api.admin.updateMission(id, body),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'missions'] }),
-  });
-
-  return (
-    <Panel title="Missions & rewards" aside={<span className={styles.dim}>Changes apply to the current period immediately</span>}>
-      <FormError message={update.error?.message} />
-      {missions.data ? (
-        <div className={styles.tableWrap}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Mission</th>
-                <th>Counts</th>
-                <th className={styles.num}>Target</th>
-                <th className={styles.num}>XP</th>
-                <th>Active</th>
-              </tr>
-            </thead>
-            <tbody>
-              {missions.data.map((mission) => (
-                <tr key={mission.id}>
-                  <td className={styles.cellTitle}>
-                    {mission.title}
-                    <span className={styles.dim}> · {mission.cadence}</span>
-                  </td>
-                  <td className={styles.mono}>{mission.event}</td>
-                  <td className={styles.num}>
-                    <input
-                      className={styles.numInput}
-                      type="number"
-                      min={1}
-                      defaultValue={mission.target}
-                      onBlur={(e) => Number(e.target.value) !== mission.target && update.mutate({ id: mission.id, body: { target: Number(e.target.value) } })}
-                      aria-label={`${mission.title} target`}
-                    />
-                  </td>
-                  <td className={styles.num}>
-                    <input
-                      className={styles.numInput}
-                      type="number"
-                      min={0}
-                      defaultValue={mission.xpReward}
-                      onBlur={(e) => Number(e.target.value) !== mission.xpReward && update.mutate({ id: mission.id, body: { xpReward: Number(e.target.value) } })}
-                      aria-label={`${mission.title} XP reward`}
-                    />
-                  </td>
-                  <td>
-                    <Button size="sm" variant={mission.active ? 'secondary' : 'outline'} onClick={() => update.mutate({ id: mission.id, body: { active: !mission.active } })}>
-                      {mission.active ? 'On' : 'Off'}
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <Skeleton height={240} />
-      )}
-    </Panel>
-  );
-}
-
 /* ───────────── Payments ───────────── */
 
 const ORDER_TONES: Record<string, TagTone> = { paid: 'success', pending: 'gold', failed: 'danger', expired: 'muted' };
@@ -850,5 +808,164 @@ export function ErrorsAdmin() {
         </div>
       )}
     </Panel>
+  );
+}
+
+/* ───────────── Games (IGDB) ───────────── */
+
+function IgdbSearch() {
+  const queryClient = useQueryClient();
+  const [term, setTerm] = useState('');
+  const [submitted, setSubmitted] = useState('');
+  const results = useQuery({ queryKey: ['admin', 'igdb', 'search', submitted], queryFn: () => api.admin.igdbSearch(submitted), enabled: submitted.length >= 2 });
+  const add = useMutation({
+    mutationFn: (igdbId: number) => api.admin.igdbImport(igdbId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'games'] });
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'igdb', 'search'] });
+      void queryClient.invalidateQueries({ queryKey: ['games'] });
+    },
+  });
+  return (
+    <Panel title="Add a game from IGDB">
+      <form
+        className={styles.formInline}
+        onSubmit={(event: FormEvent) => {
+          event.preventDefault();
+          setSubmitted(term.trim());
+        }}
+      >
+        <TextField label="Search IGDB" value={term} onChange={(e) => setTerm(e.target.value)} placeholder="e.g. Brawlhalla, Fall Guys, Hearthstone" />
+        <Button type="submit" disabled={term.trim().length < 2} loading={results.isFetching}>
+          Search
+        </Button>
+      </form>
+      <FormError message={messageOf(results.error) ?? messageOf(add.error)} />
+      {results.data ? (
+        results.data.length === 0 ? (
+          <p className={styles.dim}>Nothing on IGDB for “{submitted}”.</p>
+        ) : (
+          <ul className={styles.igdbResults}>
+            {results.data.map((hit) => (
+              <li key={hit.igdbId} className={styles.igdbResult}>
+                {hit.coverUrl ? <img src={hit.coverUrl} alt="" className={styles.cover} /> : <span className={styles.cover} />}
+                <span>
+                  <strong title={hit.name}>{hit.name}</strong>
+                  <span className={styles.dim}>
+                    {[hit.releaseYear, hit.platforms.join(', ')].filter(Boolean).join(' · ')} ·{' '}
+                    <a href={hit.igdbUrl} target="_blank" rel="noreferrer">
+                      IGDB #{hit.igdbId}
+                    </a>
+                  </span>
+                  <span className={styles.actions}>
+                    {hit.inCatalogue ? (
+                      <Link href={`/games/${hit.inCatalogue}`}>In the catalogue</Link>
+                    ) : (
+                      <Button size="sm" icon="plus" onClick={() => add.mutate(hit.igdbId)} loading={add.isPending && add.variables === hit.igdbId}>
+                        Add to catalogue
+                      </Button>
+                    )}
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )
+      ) : null}
+    </Panel>
+  );
+}
+
+export function GamesAdmin() {
+  const queryClient = useQueryClient();
+  const games = useQuery({ queryKey: ['admin', 'games'], queryFn: api.admin.games });
+  const refresh = () => {
+    void queryClient.invalidateQueries({ queryKey: ['admin', 'games'] });
+    void queryClient.invalidateQueries({ queryKey: ['games'] });
+  };
+  const sync = useMutation({ mutationFn: api.admin.igdbSync, onSuccess: refresh });
+  const link = useMutation({ mutationFn: ({ id, igdbId }: { id: string; igdbId: number }) => api.admin.linkIgdb(id, igdbId), onSuccess: refresh });
+
+  if (!games.data) return <Skeleton height={320} />;
+  const { igdbConfigured, lastSync } = games.data;
+  const relink = (id: string, title: string, current: number | null) => {
+    const answer = window.prompt(`IGDB id for ${title} (the number in its IGDB search result)`, current ? String(current) : '');
+    const igdbId = Number(answer);
+    if (answer && Number.isInteger(igdbId) && igdbId > 0) link.mutate({ id, igdbId });
+  };
+
+  return (
+    <div className={styles.stackCol}>
+      <Panel
+        title="IGDB"
+        aside={
+          igdbConfigured ? (
+            <Button size="sm" variant="outline" icon="refresh" onClick={() => sync.mutate()} loading={sync.isPending}>
+              Sync now
+            </Button>
+          ) : null
+        }
+      >
+        {igdbConfigured ? (
+          <p className={styles.dim}>
+            Descriptions, release dates, companies, platforms, modes, covers, screenshots, trailers and ratings come from IGDB and refresh daily. Titles,
+            nicknames, genres, PC requirements and ranking stay as set here.
+            {lastSync ? ` Last sync: ${lastSync.updated} updated, ${lastSync.linked} newly linked, ${lastSync.failed} failed.` : ''}
+          </p>
+        ) : (
+          <p className={styles.error}>IGDB isn’t connected. Set IGDB_CLIENT_ID and IGDB_CLIENT_SECRET (or IGDB_TOKEN) on the API server.</p>
+        )}
+        {sync.data && sync.data.unmatched.length > 0 ? (
+          <p className={styles.error}>No automatic IGDB match for: {sync.data.unmatched.join(', ')}. Use “Change” to link them by id.</p>
+        ) : null}
+        <FormError message={messageOf(sync.error) ?? messageOf(link.error)} />
+      </Panel>
+
+      {igdbConfigured ? <IgdbSearch /> : null}
+
+      <Panel title={`Catalogue · ${games.data.games.length}`}>
+        <div className={styles.tableWrap}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th />
+                <th>Game</th>
+                <th>IGDB</th>
+                <th>Synced</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {games.data.games.map((game) => (
+                <tr key={game.id}>
+                  <td>{game.coverUrl ? <img src={game.coverUrl} alt="" className={styles.cover} /> : <span className={styles.cover} />}</td>
+                  <td className={styles.cellTitle}>
+                    <Link href={`/games/${game.slug}`}>{game.title}</Link>
+                    {game.status === 'draft' ? <Tag tone="muted">draft</Tag> : null}
+                  </td>
+                  <td>
+                    {game.igdbId ? (
+                      <a href={game.igdbUrl ?? '#'} target="_blank" rel="noreferrer" className={styles.mono}>
+                        #{game.igdbId}
+                      </a>
+                    ) : (
+                      <Tag tone="gold">not linked</Tag>
+                    )}
+                  </td>
+                  <td className={styles.cellTime}>{game.igdbSyncedAt ? <RelativeTime iso={game.igdbSyncedAt} /> : '—'}</td>
+                  <td>
+                    {igdbConfigured ? (
+                      <button type="button" className={styles.linkButton} onClick={() => relink(game.id, game.title, game.igdbId)} disabled={link.isPending}>
+                        Change
+                      </button>
+                    ) : null}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Panel>
+    </div>
   );
 }

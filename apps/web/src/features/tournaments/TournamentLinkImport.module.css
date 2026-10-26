@@ -1,0 +1,60 @@
+.form {
+  display: grid;
+  gap: 10px;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+}
+
+.result {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  color: var(--success-text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.result a {
+  color: var(--primary-text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Admin-only box on public pages: dashed, so it reads as a tool, not content. */
+.admin {
+  padding: 10px 14px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.admin summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-2);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin[open] summary {
+  margin-bottom: 10px;
+}
+
+.badge {
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--primary-wash);
+  color: var(--primary-text);
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+}

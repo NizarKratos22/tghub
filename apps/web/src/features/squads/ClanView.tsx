@@ -1,6 +1,6 @@
 'use client';
 
-import { CLAN_JOIN_POLICY_META, countryName, MAX_CLAN_MEMBERS, type ClanDetail, type ClanMember } from '@tgh/shared';
+import { MAX_CLAN_MEMBERS, type ClanDetail, type ClanMember } from '@tgh/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -11,9 +11,11 @@ import { Icon } from '@/components/ui/Icon';
 import { Avatar, EmptyState, Skeleton } from '@/components/ui/primitives';
 import { RelativeTime } from '@/components/ui/time';
 import { useSession, useSignInHref } from '@/features/auth/session';
+import { fill } from '@/i18n/config';
+import { useFormat, useLocale, useT } from '@/i18n/I18nProvider';
+import { countryName } from '@/i18n/places';
 import { api } from '@/lib/api/client';
 import { cx } from '@/lib/cx';
-import { formatDateYear, formatNumber } from '@/lib/format';
 import { ClanFields } from './ClanForm';
 import { ClanEmblem, Flag, RoleBadge, SQUAD_KEYS } from './shared';
 import styles from './ClanView.module.css';
@@ -35,6 +37,7 @@ function useClanMutation<T>(tag: string, fn: (value: T) => Promise<ClanDetail | 
 
 /** Join, apply, withdraw or leave — whatever fits the viewer. */
 function JoinPanel({ clan }: { clan: ClanDetail }) {
+  const t = useT();
   const { data: me } = useSession();
   const signInHref = useSignInHref();
   const router = useRouter();
@@ -53,76 +56,74 @@ function JoinPanel({ clan }: { clan: ClanDetail }) {
   if (!me) {
     body = (
       <ButtonLink href={signInHref} block>
-        Sign in to join
+        {t.clan.signInToJoin}
       </ButtonLink>
     );
   } else if (clan.viewer.role === 'owner' && clan.memberCount > 1) {
-    body = <p className={styles.panelText}>You lead this clan. To leave it, make another member leader first (Members → ⋯).</p>;
+    body = <p className={styles.panelText}>{t.clan.leaderCantLeave}</p>;
   } else if (clan.viewer.role) {
     const owner = clan.viewer.role === 'owner';
     body = (
       <>
-        <p className={styles.panelText}>
-          You&rsquo;re {owner ? 'the leader' : `${clan.viewer.role === 'officer' ? 'an officer' : 'a member'}`} of this clan.
-        </p>
+        <p className={styles.panelText}>{t.clan.youAre[clan.viewer.role]}</p>
         <Button
           variant="ghost"
           size="sm"
           loading={leave.isPending}
           onClick={() => {
-            const question = owner && clan.memberCount <= 1 ? 'You are the last member — leaving disbands the clan. Continue?' : `Leave [${clan.tag}] ${clan.name}?`;
+            const question = owner && clan.memberCount <= 1 ? t.clan.lastMember : fill(t.clan.leaveConfirm, { tag: clan.tag, name: clan.name });
             if (window.confirm(question)) leave.mutate(undefined);
           }}
         >
-          {owner && clan.memberCount <= 1 ? 'Leave and disband' : 'Leave clan'}
+          {owner && clan.memberCount <= 1 ? t.clan.leaveDisband : t.clan.leave}
         </Button>
       </>
     );
   } else if (clan.viewer.otherClan) {
     body = (
       <p className={styles.panelText}>
-        You&rsquo;re in{' '}
+        {t.clan.inOtherBefore}{' '}
         <Link href={`/clans/${clan.viewer.otherClan.tag}`}>
           [{clan.viewer.otherClan.tag}] {clan.viewer.otherClan.name}
         </Link>
-        . Players can be in one clan at a time.
+        {t.clan.inOtherAfter}
       </p>
     );
   } else if (clan.viewer.requestPending) {
     body = (
       <>
         <p className={styles.panelText}>
-          <Icon name="clock" size={15} /> Application sent. The leader and officers have been notified.
+          <Icon name="clock" size={15} /> {t.clan.applicationSent}
         </p>
         <Button variant="ghost" size="sm" loading={withdraw.isPending} onClick={() => withdraw.mutate(undefined)}>
-          Withdraw application
+          {t.clan.withdrawApplication}
         </Button>
       </>
     );
   } else if (full || clan.joinPolicy === 'closed') {
-    body = <p className={styles.panelText}>{full ? 'This clan is full.' : 'This clan isn’t recruiting right now.'}</p>;
+    body = <p className={styles.panelText}>{full ? t.clan.isFull : t.clan.notRecruiting}</p>;
   } else if (!me.emailVerified) {
     body = (
       <ButtonLink href="/verify-email" variant="outline" block>
-        Confirm your email to join
+        {t.clan.verifyToJoin}
       </ButtonLink>
     );
   } else if (clan.joinPolicy === 'open') {
     body = (
       <Button block icon="plus" loading={join.isPending} onClick={() => join.mutate(undefined)}>
-        Join clan
+        {t.clan.join}
       </Button>
     );
   } else if (composing) {
     body = (
       <div className={styles.apply}>
-        <textarea value={message} onChange={(e) => setMessage(e.target.value)} maxLength={200} rows={3} placeholder="Say hi — your rank, main role, when you play…" aria-label="Message to the clan" autoFocus />
+        <textarea value={message} onChange={(e) => setMessage(e.target.value)} maxLength={200} rows={3} placeholder={t.clan.applyPlaceholder} aria-label={t.clan.applyLabel} autoFocus />
         <div className={styles.applyActions}>
           <Button variant="ghost" size="sm" onClick={() => setComposing(false)}>
-            Cancel
+            {t.common.cancel}
           </Button>
           <Button size="sm" icon="send" loading={join.isPending} onClick={() => join.mutate(undefined)}>
-            Send application
+            {t.clan.sendApplication}
           </Button>
         </div>
       </div>
@@ -130,7 +131,7 @@ function JoinPanel({ clan }: { clan: ClanDetail }) {
   } else {
     body = (
       <Button block icon="send" onClick={() => setComposing(true)}>
-        Apply to join
+        {t.clan.applyToJoin}
       </Button>
     );
   }
@@ -145,6 +146,7 @@ function JoinPanel({ clan }: { clan: ClanDetail }) {
 
 /** "⋯" menu with what the viewer may do to this member. */
 function MemberMenu({ clan, member }: { clan: ClanDetail; member: ClanMember }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const userId = member.user.id;
@@ -171,29 +173,29 @@ function MemberMenu({ clan, member }: { clan: ClanDetail; member: ClanMember }) 
   };
   return (
     <div className={styles.menuWrap} ref={ref}>
-      <button type="button" className={styles.menuButton} onClick={() => setOpen((v) => !v)} aria-label={`Manage ${member.user.displayName}`} aria-expanded={open}>
+      <button type="button" className={styles.menuButton} onClick={() => setOpen((v) => !v)} aria-label={fill(t.clan.manage, { name: member.user.displayName })} aria-expanded={open}>
         <Icon name="more" size={18} />
       </button>
       {open ? (
         <div className={styles.menu} role="menu">
           {isOwner && member.role === 'member' ? (
             <button type="button" role="menuitem" onClick={() => run(() => setRole.mutate('officer'))}>
-              <Icon name="shield" size={15} /> Make officer
+              <Icon name="shield" size={15} /> {t.clan.makeOfficer}
             </button>
           ) : null}
           {isOwner && member.role === 'officer' ? (
             <button type="button" role="menuitem" onClick={() => run(() => setRole.mutate('member'))}>
-              <Icon name="user" size={15} /> Make member
+              <Icon name="user" size={15} /> {t.clan.makeMember}
             </button>
           ) : null}
           {isOwner ? (
-            <button type="button" role="menuitem" onClick={() => run(() => window.confirm(`Hand leadership to ${member.user.displayName}? You'll become an officer.`) && makeLeader.mutate(undefined))}>
-              <Icon name="star" size={15} /> Make leader
+            <button type="button" role="menuitem" onClick={() => run(() => window.confirm(fill(t.clan.makeLeaderConfirm, { name: member.user.displayName })) && makeLeader.mutate(undefined))}>
+              <Icon name="star" size={15} /> {t.clan.makeLeader}
             </button>
           ) : null}
           {canRemove ? (
-            <button type="button" role="menuitem" className={styles.menuDanger} onClick={() => run(() => window.confirm(`Remove ${member.user.displayName} from the clan?`) && remove.mutate(undefined))}>
-              <Icon name="close" size={15} /> Remove from clan
+            <button type="button" role="menuitem" className={styles.menuDanger} onClick={() => run(() => window.confirm(fill(t.clan.removeConfirm, { name: member.user.displayName })) && remove.mutate(undefined))}>
+              <Icon name="close" size={15} /> {t.clan.remove}
             </button>
           ) : null}
         </div>
@@ -204,6 +206,7 @@ function MemberMenu({ clan, member }: { clan: ClanDetail; member: ClanMember }) 
 }
 
 function Members({ clan }: { clan: ClanDetail }) {
+  const t = useT();
   return (
     <ul className={styles.members}>
       {clan.members.map((member) => (
@@ -213,7 +216,7 @@ function Members({ clan }: { clan: ClanDetail }) {
             <span className={styles.memberText}>
               <strong>{member.user.displayName}</strong>
               <span>
-                Lv {member.user.level} <Flag country={member.user.country} /> · joined <RelativeTime iso={member.joinedAt} />
+                {fill(t.common.levelShort, { level: member.user.level })} <Flag country={member.user.country} /> · {t.clan.joined} <RelativeTime iso={member.joinedAt} />
               </span>
             </span>
           </Link>
@@ -226,8 +229,9 @@ function Members({ clan }: { clan: ClanDetail }) {
 }
 
 function Requests({ clan }: { clan: ClanDetail }) {
+  const t = useT();
   const decide = useClanMutation(clan.tag, ({ id, accept }: { id: string; accept: boolean }) => api.clans.decide(clan.tag, id, accept));
-  if (clan.requests.length === 0) return <p className={styles.muted}>No applications waiting. You&rsquo;ll get a notification when someone applies.</p>;
+  if (clan.requests.length === 0) return <p className={styles.muted}>{t.clan.noApplications}</p>;
   return (
     <>
       <FormError message={decide.error?.message} />
@@ -239,17 +243,17 @@ function Requests({ clan }: { clan: ClanDetail }) {
               <span className={styles.memberText}>
                 <strong>{request.user.displayName}</strong>
                 <span>
-                  Lv {request.user.level} <Flag country={request.user.country} /> · <RelativeTime iso={request.createdAt} />
+                  {fill(t.common.levelShort, { level: request.user.level })} <Flag country={request.user.country} /> · <RelativeTime iso={request.createdAt} />
                 </span>
               </span>
             </Link>
             {request.message ? <p className={styles.requestMessage}>&ldquo;{request.message}&rdquo;</p> : null}
             <div className={styles.requestActions}>
               <Button size="sm" icon="check" disabled={decide.isPending} onClick={() => decide.mutate({ id: request.id, accept: true })}>
-                Accept
+                {t.lfg.accept}
               </Button>
               <Button size="sm" variant="ghost" disabled={decide.isPending} onClick={() => decide.mutate({ id: request.id, accept: false })}>
-                Decline
+                {t.lfg.decline}
               </Button>
             </div>
           </li>
@@ -260,6 +264,7 @@ function Requests({ clan }: { clan: ClanDetail }) {
 }
 
 function Settings({ clan, onSaved }: { clan: ClanDetail; onSaved: () => void }) {
+  const t = useT();
   const router = useRouter();
   const queryClient = useQueryClient();
   const disband = useMutation({
@@ -271,15 +276,15 @@ function Settings({ clan, onSaved }: { clan: ClanDetail; onSaved: () => void }) 
   });
   return (
     <div className={styles.settings}>
-      <ClanFields initial={clan} submitLabel="Save changes" onSaved={onSaved} />
+      <ClanFields initial={clan} submitLabel={t.clan.saveChanges} onSaved={onSaved} />
       {clan.viewer.role === 'owner' ? (
         <div className={styles.danger}>
           <div>
-            <strong>Disband clan</strong>
-            <span>Removes the clan and every membership. This can&rsquo;t be undone.</span>
+            <strong>{t.clan.disbandTitle}</strong>
+            <span>{t.clan.disbandText}</span>
           </div>
-          <Button variant="danger" size="sm" loading={disband.isPending} onClick={() => window.confirm(`Disband [${clan.tag}] ${clan.name} for good?`) && disband.mutate()}>
-            Disband
+          <Button variant="danger" size="sm" loading={disband.isPending} onClick={() => window.confirm(fill(t.clan.disbandConfirm, { tag: clan.tag, name: clan.name })) && disband.mutate()}>
+            {t.clan.disband}
           </Button>
           <FormError message={disband.error?.message} />
         </div>
@@ -289,14 +294,17 @@ function Settings({ clan, onSaved }: { clan: ClanDetail; onSaved: () => void }) 
 }
 
 export function ClanView({ tag }: { tag: string }) {
+  const t = useT();
+  const format = useFormat();
+  const locale = useLocale();
   const clan = useQuery({ queryKey: SQUAD_KEYS.clan(tag), queryFn: () => api.clans.get(tag) });
   const [tab, setTab] = useState<Tab>('members');
 
   if (clan.isError) {
     return (
       <div className="container page">
-        <EmptyState icon="shield" title="Clan not found" action={<ButtonLink href="/clans">Browse clans</ButtonLink>}>
-          It may have been disbanded, or the tag changed hands.
+        <EmptyState icon="shield" title={t.clan.notFound} action={<ButtonLink href="/clans">{t.clan.browse}</ButtonLink>}>
+          {t.clan.notFoundText}
         </EmptyState>
       </div>
     );
@@ -311,8 +319,8 @@ export function ClanView({ tag }: { tag: string }) {
   const data = clan.data;
   const manager = data.viewer.role === 'owner' || data.viewer.role === 'officer';
   const tabs: Array<{ id: Tab; label: string; count?: number }> = [
-    { id: 'members', label: 'Members', count: data.memberCount },
-    ...(manager ? [{ id: 'requests' as const, label: 'Applications', count: data.requests.length }, { id: 'settings' as const, label: 'Settings' }] : []),
+    { id: 'members', label: t.clan.tabs.members, count: data.memberCount },
+    ...(manager ? [{ id: 'requests' as const, label: t.clan.tabs.requests, count: data.requests.length }, { id: 'settings' as const, label: t.clan.tabs.settings }] : []),
   ];
 
   return (
@@ -322,10 +330,10 @@ export function ClanView({ tag }: { tag: string }) {
           <ClanEmblem tag={data.tag} color={data.color} size={112} className={styles.heroEmblem} />
           <div className={styles.identity}>
             <p className={styles.kicker}>
-              [{data.tag}] · {data.country ? countryName(data.country) : 'Worldwide'} · since {formatDateYear(data.createdAt)}
+              [{data.tag}] · {data.country ? countryName(data.country, locale) : t.clan.worldwide} · {fill(t.clan.since, { date: format.dateYear(data.createdAt) })}
             </p>
             <h1 className={styles.name}>{data.name}</h1>
-            {data.description ? <p className={styles.description}>{data.description}</p> : null}
+            {data.description ? <p className={styles.description} dir="auto">{data.description}</p> : null}
             {data.games.length > 0 ? (
               <div className={styles.games}>
                 {data.games.map((game) => (
@@ -341,29 +349,29 @@ export function ClanView({ tag }: { tag: string }) {
         </div>
         <div className={`container ${styles.stats}`}>
           <div>
-            <span className="label">Season XP</span>
-            <strong>{formatNumber(data.seasonXp)}</strong>
+            <span className="label">{t.clan.statSeason}</span>
+            <strong>{format.number(data.seasonXp)}</strong>
           </div>
           <div>
-            <span className="label">All-time XP</span>
-            <strong>{formatNumber(data.xp)}</strong>
+            <span className="label">{t.clan.statAllTime}</span>
+            <strong>{format.number(data.xp)}</strong>
           </div>
           <div>
-            <span className="label">Members</span>
+            <span className="label">{t.clan.statMembers}</span>
             <strong>
               {data.memberCount}
               <small>/{MAX_CLAN_MEMBERS}</small>
             </strong>
           </div>
           <div>
-            <span className="label">Recruiting</span>
-            <strong className={styles.policyStat}>{data.memberCount >= MAX_CLAN_MEMBERS ? 'Full' : CLAN_JOIN_POLICY_META[data.joinPolicy].label}</strong>
+            <span className="label">{t.clan.statRecruiting}</span>
+            <strong className={styles.policyStat}>{data.memberCount >= MAX_CLAN_MEMBERS ? t.clan.full : t.labels.clanPolicy[data.joinPolicy].label}</strong>
           </div>
         </div>
       </section>
 
       <div className="container page">
-        <div className={styles.tabs} role="tablist" aria-label="Clan">
+        <div className={styles.tabs} role="tablist" aria-label={t.clan.clanTabs}>
           {tabs.map((item) => (
             <button key={item.id} type="button" role="tab" aria-selected={tab === item.id} className={cx(styles.tab, tab === item.id && styles.tabOn)} onClick={() => setTab(item.id)}>
               {item.label}

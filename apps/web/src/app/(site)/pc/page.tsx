@@ -1,18 +1,18 @@
 import type { Metadata } from 'next';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PcLab } from '@/features/pc/PcLab';
+import { getT } from '@/i18n/server';
 
-export const metadata: Metadata = { title: 'PC Lab' };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t.nav.pc };
+}
 
 export default async function PcLabPage(props: PageProps<'/pc'>) {
-  const { game } = await props.searchParams;
+  const [{ game }, t] = await Promise.all([props.searchParams, getT()]);
   return (
     <>
-      <PageHeader
-        code="Will it run?"
-        title="PC Lab"
-        lede="Compare your rig with each game's published requirements. No invented FPS numbers — when we don't have the data, we say so."
-      />
+      <PageHeader code={t.pc.code} title={t.nav.pc} lede={t.pc.lede} />
       <div className="container page">
         <PcLab initialGame={typeof game === 'string' ? game : undefined} />
       </div>

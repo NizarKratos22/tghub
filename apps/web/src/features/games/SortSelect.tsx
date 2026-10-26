@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useT } from '@/i18n/I18nProvider';
 import styles from './SortSelect.module.css';
 
 interface SortOption {
@@ -10,11 +11,12 @@ interface SortOption {
 }
 
 /** The one filter control that needs JS: a select that navigates on change. */
-export function SortSelect({ value, options, label = 'Sort' }: { value: string; options: SortOption[]; label?: string }) {
+export function SortSelect({ value, options, label }: { value: string; options: SortOption[]; label?: string }) {
+  const t = useT();
   const router = useRouter();
   return (
     <label className={styles.sort}>
-      <span className="label">{label}</span>
+      <span className="label">{label ?? t.market.sort}</span>
       <select
         value={value}
         onChange={(event) => {

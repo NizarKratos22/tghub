@@ -11,6 +11,13 @@ export const componentQuerySchema = z.object({
 });
 export type ComponentQuery = z.infer<typeof componentQuerySchema>;
 
+/** A part name as a computer reports it ("NVIDIA GeForce RTX 4060 Laptop GPU"), to match against the index. */
+export const componentMatchQuerySchema = z.object({
+  type: z.enum(COMPONENT_TYPES),
+  name: z.string().trim().min(2).max(160),
+});
+export type ComponentMatchQuery = z.infer<typeof componentMatchQuerySchema>;
+
 export const ramGbSchema = z.number().int().min(2).max(256);
 
 export const specHardwareSchema = z.object({

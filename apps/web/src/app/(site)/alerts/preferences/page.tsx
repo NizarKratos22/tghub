@@ -1,13 +1,18 @@
 import type { Metadata } from 'next';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PreferencesForm } from '@/features/alerts/PreferencesForm';
+import { getT } from '@/i18n/server';
 
-export const metadata: Metadata = { title: 'Alert preferences' };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t.account.alertPrefs };
+}
 
-export default function AlertPreferencesPage() {
+export default async function AlertPreferencesPage() {
+  const t = await getT();
   return (
     <>
-      <PageHeader code="Alerts" title="Preferences" lede="Low noise by default: every category is on, but game updates only arrive for games you follow." />
+      <PageHeader code={t.nav.alerts} title={t.alerts.preferences} lede={t.alerts.prefsLede} />
       <div className="container page">
         <PreferencesForm />
       </div>

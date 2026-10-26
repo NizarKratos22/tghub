@@ -1,11 +1,12 @@
 'use client';
 
 import type { ClanRole, CountryCode, GameSummary } from '@tgh/shared';
-import { CLAN_ROLE_LABELS, countryName } from '@tgh/shared';
+
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
-import { useT } from '@/i18n/I18nProvider';
+import { useLocale, useT } from '@/i18n/I18nProvider';
+import { countryName } from '@/i18n/places';
 import { api } from '@/lib/api/client';
 import { cx } from '@/lib/cx';
 import styles from './squads.module.css';
@@ -50,7 +51,8 @@ export function ClanTag({ tag, className }: { tag: string; className?: string })
 }
 
 export function RoleBadge({ role }: { role: ClanRole }) {
-  return <span className={cx(styles.role, styles[`role_${role}`])}>{CLAN_ROLE_LABELS[role]}</span>;
+  const t = useT();
+  return <span className={cx(styles.role, styles[`role_${role}`])}>{t.labels.clanRole[role]}</span>;
 }
 
 /**
@@ -58,9 +60,10 @@ export function RoleBadge({ role }: { role: ClanRole }) {
  * bare letters, so the chip looks the same on every device.
  */
 export function Flag({ country }: { country: CountryCode | null }) {
+  const locale = useLocale();
   if (!country) return null;
   return (
-    <abbr className={styles.flag} title={countryName(country)}>
+    <abbr className={styles.flag} title={countryName(country, locale)}>
       {country}
     </abbr>
   );

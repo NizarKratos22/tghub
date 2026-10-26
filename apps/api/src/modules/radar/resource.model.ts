@@ -10,6 +10,8 @@ export interface ResourceDoc {
   summary: string;
   url: string;
   sourceName: string;
+  /** Header picture from the source (Steam event image, or one set by hand). */
+  imageUrl: string | null;
   /** Stable id from an ingested feed (e.g. "steam:5123…") — prevents duplicates. */
   externalId: string | null;
   gameId: Types.ObjectId | null;
@@ -48,6 +50,7 @@ const resourceSchema = new Schema<ResourceDoc>(
     summary: { type: String, default: '' },
     url: { type: String, required: true },
     sourceName: { type: String, required: true },
+    imageUrl: { type: String, default: null },
     externalId: { type: String, default: null },
     gameId: { type: Schema.Types.ObjectId, ref: 'Game', default: null },
     tags: { type: [String], default: [] },

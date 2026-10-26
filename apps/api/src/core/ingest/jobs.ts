@@ -32,7 +32,7 @@ export function startJobs(): void {
         running = false;
       }
     };
-    const timer = setInterval(tick, job.everyMs);
+    const timer = setInterval(() => void tick(), job.everyMs);
     timer.unref();
     timers.push(timer);
     void tick();

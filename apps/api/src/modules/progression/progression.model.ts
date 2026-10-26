@@ -6,25 +6,30 @@ import { MISSION_CADENCES, TRACKABLE_EVENTS, type MissionCadence, type Trackable
 export interface XpLedgerDoc {
   _id: Types.ObjectId;
   userId: Types.ObjectId;
+  /** Negative only for XP an admin took back. */
   amount: number;
   reason: string;
   /** e.g. "mission:<id>:2026-10-24" — the unique index makes awards exactly-once. */
   idempotencyKey: string;
   seasonKey: string | null;
+  /** The admin behind a manual adjustment; null for everything players earn themselves. */
+  grantedBy: Types.ObjectId | null;
   createdAt: Date;
 }
 
 const xpLedgerSchema = new Schema<XpLedgerDoc>(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    amount: { type: Number, required: true, min: 1 },
+    amount: { type: Number, required: true, validate: { validator: (value: number) => value !== 0, message: 'XP amount cannot be zero' } },
     reason: { type: String, required: true },
     idempotencyKey: { type: String, required: true, unique: true },
     seasonKey: { type: String, default: null },
+    grantedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
   },
   { timestamps: { createdAt: true, updatedAt: false } },
 );
 xpLedgerSchema.index({ userId: 1, createdAt: -1 });
+xpLedgerSchema.index({ grantedBy: 1, createdAt: -1 }, { partialFilterExpression: { grantedBy: { $type: 'objectId' } } });
 xpLedgerSchema.index({ createdAt: -1 });
 
 export const XpLedger = model<XpLedgerDoc>('XpLedger', xpLedgerSchema, 'xp_ledger');

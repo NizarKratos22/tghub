@@ -85,3 +85,9 @@ export const gameUpdateSchema = z
 export type GameUpdateInput = z.infer<typeof gameUpdateSchema>;
 
 export const gameIdParamsSchema = z.object({ gameId: objectIdSchema });
+
+/** IGDB ids are positive integers; the admin pastes one or picks it from a search. */
+export const igdbIdSchema = z.coerce.number().int().positive().max(10_000_000);
+export const igdbSearchQuerySchema = z.object({ q: z.string().trim().min(2).max(80) });
+export const igdbImportSchema = z.object({ igdbId: igdbIdSchema });
+export const igdbLinkSchema = z.object({ igdbId: igdbIdSchema });

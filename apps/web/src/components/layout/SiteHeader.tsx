@@ -1,6 +1,7 @@
 import type { Page, Resource } from '@tgh/shared';
 import { getT } from '@/i18n/server';
 import { serverApiOr } from '@/lib/api/server';
+import { HeaderShell } from './HeaderShell';
 import { Logo } from './Logo';
 import { MainNav } from './MainNav';
 import { Ticker } from './Ticker';
@@ -19,12 +20,12 @@ export async function SiteHeader() {
         {t.common.skipToContent}
       </a>
       {ticker && ticker.items.length > 0 ? <Ticker items={ticker.items} /> : null}
-      <header className={styles.header}>
+      <HeaderShell className={styles.header} liftedClassName={styles.lifted}>
         <div className={`container ${styles.inner}`}>
           <Logo />
           <MainNav />
         </div>
-      </header>
+      </HeaderShell>
     </>
   );
 }

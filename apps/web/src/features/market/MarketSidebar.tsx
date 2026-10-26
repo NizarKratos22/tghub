@@ -1,11 +1,8 @@
 import Link from 'next/link';
 import {
-  FIVEM_FRAMEWORK_LABELS,
   FIVEM_FRAMEWORKS,
   isDigitalCategory,
   MARKET_CATEGORIES,
-  MARKET_CATEGORY_META,
-  MARKET_CONDITION_LABELS,
   MARKET_CONDITIONS,
   TN_REGIONS,
   type MarketCategoryCount,
@@ -13,9 +10,9 @@ import {
 } from '@tgh/shared';
 import { ButtonLink } from '@/components/ui/Button';
 import { Icon, type IconName } from '@/components/ui/Icon';
-import { getT } from '@/i18n/server';
+import { regionName } from '@/i18n/places';
+import { getFormat, getT } from '@/i18n/server';
 import { cx } from '@/lib/cx';
-import { formatNumber } from '@/lib/format';
 import { CATEGORY_ICONS } from './meta';
 import styles from './MarketSidebar.module.css';
 
@@ -33,7 +30,7 @@ const ACCOUNT_LINKS: Array<{ href: string; label: 'browseAll' | 'inbox' | 'saved
 export async function MarketNav({ active }: { active: string }) {
   const t = await getT();
   return (
-    <nav className={styles.nav} aria-label="Marketplace">
+    <nav className={styles.nav} aria-label={t.nav.market}>
       {ACCOUNT_LINKS.map((link) => (
         <Link key={link.href} href={link.href} className={cx(styles.navLink, active === link.href && styles.navOn)}>
           <span className={styles.navIcon}>
@@ -60,7 +57,7 @@ export async function MarketSidebar({
   /** Inbox and forms need the whole phone screen; the nav row stays reachable from the header. */
   collapseOnMobile?: boolean;
 }) {
-  const t = await getT();
+  const [t, format] = await Promise.all([getT(), getFormat()]);
   const countFor = new Map(counts?.map((row) => [row.category, row.count]));
   const total = counts?.reduce((sum, row) => sum + row.count, 0) ?? 0;
   const digital = query?.category ? isDigitalCategory(query.category) : false;
@@ -102,7 +99,7 @@ export async function MarketSidebar({
                     <option value="">{t.market.allTunisia}</option>
                     {TN_REGIONS.filter((region) => region !== 'Abroad').map((region) => (
                       <option key={region} value={region}>
-                        {region}
+                        {regionName(region, t)}
                       </option>
                     ))}
                   </select>
@@ -125,7 +122,7 @@ export async function MarketSidebar({
                     <option value="">{t.market.anyFramework}</option>
                     {FIVEM_FRAMEWORKS.map((framework) => (
                       <option key={framework} value={framework}>
-                        {FIVEM_FRAMEWORK_LABELS[framework]}
+                        {t.labels.framework[framework]}
                       </option>
                     ))}
                   </select>
@@ -140,7 +137,7 @@ export async function MarketSidebar({
                       <option value="">{t.market.anyCondition}</option>
                       {MARKET_CONDITIONS.map((condition) => (
                         <option key={condition} value={condition}>
-                          {MARKET_CONDITION_LABELS[condition]}
+                          {t.labels.condition[condition]}
                         </option>
                       ))}
                     </select>
@@ -172,7 +169,7 @@ export async function MarketSidebar({
                     <Icon name="grid" size={18} />
                   </span>
                   <span className={styles.categoryText}>{t.market.allCategories}</span>
-                  {total > 0 ? <span className={styles.count}>{formatNumber(total)}</span> : null}
+                  {total > 0 ? <span className={styles.count}>{format.number(total)}</span> : null}
                 </Link>
               </li>
               {MARKET_CATEGORIES.map((category) => (
@@ -185,7 +182,7 @@ export async function MarketSidebar({
                       <Icon name={CATEGORY_ICONS[category]} size={18} />
                     </span>
                     <span className={styles.categoryText}>{t.market.categoryNames[category]}</span>
-                    {countFor.get(category) ? <span className={styles.count}>{formatNumber(countFor.get(category)!)}</span> : null}
+                    {countFor.get(category) ? <span className={styles.count}>{format.number(countFor.get(category)!)}</span> : null}
                   </Link>
                 </li>
               ))}

@@ -1,0 +1,512 @@
+/* Kind colours: news blue, patch notes orange, guides purple, deals gold, events green. */
+
+.tone_news {
+  --kind: var(--primary);
+  --kind-wash: var(--primary-wash);
+  --kind-text: var(--primary-text);
+  --kind-solid: var(--badge-blue);
+  --on-kind: var(--on-primary);
+}
+
+.tone_patch {
+  --kind: var(--orange);
+  --kind-wash: var(--orange-wash);
+  --kind-text: var(--orange-text);
+  --kind-solid: var(--badge-orange);
+  --on-kind: var(--on-primary);
+}
+
+.tone_guide {
+  --kind: var(--purple);
+  --kind-wash: var(--purple-wash);
+  --kind-text: var(--purple-text);
+  --kind-solid: var(--badge-purple);
+  --on-kind: var(--on-primary);
+}
+
+.tone_deal {
+  --kind: var(--gold);
+  --kind-wash: var(--gold-wash);
+  --kind-text: var(--gold-text);
+  --kind-solid: var(--gold);
+  --on-kind: var(--on-gold);
+}
+
+.tone_event {
+  --kind: var(--success);
+  --kind-wash: var(--success-wash);
+  --kind-text: var(--success-text);
+  --kind-solid: var(--badge-green);
+  --on-kind: var(--on-primary);
+}
+
+/* Kind pill */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: var(--radius-sm);
+  background: var(--kind-wash);
+  color: var(--kind-text);
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.pillSolid {
+  background: var(--kind-solid);
+  color: var(--on-kind);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.25);
+}
+
+/* Shared picture layer */
+
+.picture {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 420ms var(--ease);
+}
+
+/* No picture: radar rings on charcoal in the kind's colour… */
+.fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background-color: #17191c;
+  background-image: repeating-radial-gradient(circle at 88% 115%, color-mix(in srgb, var(--kind) 34%, transparent) 0 1px, transparent 1.5px 30px);
+  color: var(--kind);
+}
+
+/* …or on the game's colour, darkened so its white monogram reads. */
+.fallbackGame {
+  background-color: color-mix(in oklab, var(--art) 72%, black);
+  background-image: repeating-radial-gradient(circle at 88% 115%, rgb(255 255 255 / 0.12) 0 1px, transparent 1.5px 30px);
+  color: rgb(255 255 255 / 0.92);
+}
+
+.monogram {
+  font-family: var(--font-num);
+  font-size: clamp(44px, 5vw, 64px);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.corner,
+.cornerEnd {
+  position: absolute;
+  top: 12px;
+  z-index: 2;
+  display: flex;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.corner {
+  inset-inline-start: 12px;
+}
+
+.cornerEnd {
+  inset-inline-end: 12px;
+}
+
+.cornerEnd:empty {
+  display: none;
+}
+
+.discount {
+  padding: 4px 9px 2px;
+  border-radius: var(--radius-sm);
+  background: var(--badge-green);
+  color: var(--on-primary);
+  font-family: var(--font-num);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.3);
+}
+
+.dateTile {
+  display: grid;
+  justify-items: center;
+  min-width: 48px;
+  padding: 5px 8px 3px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.3);
+}
+
+.dateTile span {
+  color: var(--success-text);
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.dateTile strong {
+  font-family: var(--font-num);
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* The title link covers the whole card; the game tag sits above it. */
+.stretch::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.stretch:focus-visible {
+  outline: none;
+}
+
+.stretch:focus-visible::after {
+  border-radius: inherit;
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.expired {
+  opacity: 0.6;
+  filter: grayscale(0.6);
+}
+
+/* Grid card */
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+  overflow: hidden;
+  transition:
+    transform 180ms var(--ease),
+    box-shadow 180ms var(--ease),
+    border-color 180ms var(--ease);
+}
+
+.card:hover,
+.card:focus-within {
+  transform: translateY(-3px);
+  border-color: color-mix(in oklab, var(--kind) 55%, var(--line));
+  box-shadow: var(--shadow-2);
+}
+
+.card:hover .picture,
+.card:focus-within .picture,
+.spot:hover .picture,
+.spot:focus-within .picture {
+  transform: scale(1.05);
+}
+
+.media {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--surface-3);
+}
+
+/* A thin band of the kind's colour where picture meets text. */
+.media::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 3px;
+  background: var(--kind);
+}
+
+.body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px 16px;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  font-size: 12px;
+  color: var(--text-4);
+}
+
+.game {
+  --accent: var(--primary);
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 2px 9px 2px 7px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-3);
+  color: var(--text-2);
+  font-family: var(--font-display);
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.game:hover {
+  color: var(--text);
+  background: var(--line);
+}
+
+.gameDot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.time {
+  white-space: nowrap;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 15.5px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--text);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card:hover .title,
+.card:focus-within .title {
+  color: var(--kind-text);
+}
+
+.summary {
+  color: var(--text-3);
+  font-size: 13.5px;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin-top: auto;
+  padding-top: 6px;
+  font-size: 12px;
+  color: var(--text-4);
+}
+
+.source {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-inline-start: auto;
+  font-weight: 500;
+}
+
+.price {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  font-variant-numeric: tabular-nums;
+}
+
+.price strong {
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.price s {
+  color: var(--text-4);
+}
+
+.countdown {
+  font-weight: 700;
+  color: var(--text-2);
+}
+
+.urgent {
+  color: var(--danger-text);
+}
+
+.when {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+/* Spotlight tile: picture full-bleed, words on a dark scrim. */
+
+.spot {
+  position: relative;
+  display: flex;
+  min-height: 210px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: #0d0e10;
+  box-shadow: var(--shadow-1);
+  isolation: isolate;
+  transition: box-shadow 180ms var(--ease);
+}
+
+.spot:hover,
+.spot:focus-within {
+  box-shadow: var(--shadow-2);
+}
+
+/* Picture and scrim sit below the words, which stay in normal flow so the title link can cover the whole tile. */
+.spot .picture,
+.spot .fallback {
+  z-index: -2;
+}
+
+.spot::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(to top, rgb(9 10 12 / 0.94) 0%, rgb(9 10 12 / 0.6) 42%, rgb(9 10 12 / 0) 78%);
+  pointer-events: none;
+}
+
+.spot::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 2;
+  height: 4px;
+  background: var(--kind);
+}
+
+.spotLead {
+  min-height: clamp(320px, 38vw, 480px);
+}
+
+.spotBody {
+  display: grid;
+  gap: 10px;
+  align-self: end;
+  width: 100%;
+  padding: clamp(16px, 2vw, 28px);
+  color: #fff;
+}
+
+.spotMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  font-size: 12.5px;
+  color: rgb(255 255 255 / 0.78);
+}
+
+.spotGame {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: #fff;
+}
+
+.spotTitle {
+  font-family: var(--font-display);
+  font-size: clamp(16px, 1.4vw, 19px);
+  font-weight: 800;
+  line-height: 1.25;
+  text-wrap: balance;
+  text-shadow: 0 1px 12px rgb(0 0 0 / 0.4);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.spotLead .spotTitle {
+  max-width: 28ch;
+  font-size: clamp(24px, 2.8vw, 38px);
+  line-height: 1.1;
+}
+
+.spotSummary {
+  max-width: 62ch;
+  color: rgb(255 255 255 / 0.82);
+  font-size: 15px;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.spotSource {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-self: start;
+  margin-top: 4px;
+  padding: 8px 14px;
+  border-radius: var(--radius);
+  background: var(--kind-solid);
+  color: var(--on-kind);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .spotLead {
+    min-height: 360px;
+  }
+
+  .spotSummary {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .picture {
+    transition: none;
+  }
+
+  .card:hover,
+  .card:focus-within {
+    transform: none;
+  }
+
+  .card:hover .picture,
+  .card:focus-within .picture,
+  .spot:hover .picture,
+  .spot:focus-within .picture {
+    transform: none;
+  }
+}

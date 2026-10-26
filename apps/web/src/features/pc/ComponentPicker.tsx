@@ -2,7 +2,6 @@
 
 import {
   COMPONENT_BRANDS,
-  COMPONENT_SEGMENT_LABELS,
   type ComponentBrand,
   type ComponentSegment,
   type ComponentType,
@@ -11,6 +10,8 @@ import {
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Fragment, useEffect, useId, useMemo, useState, type KeyboardEvent, type MouseEvent } from 'react';
 import { Icon } from '@/components/ui/Icon';
+import { fill } from '@/i18n/config';
+import { useFormat, useT } from '@/i18n/I18nProvider';
 import { api } from '@/lib/api/client';
 import { cx } from '@/lib/cx';
 import styles from './ComponentPicker.module.css';
@@ -59,6 +60,8 @@ const keepFocus = (event: MouseEvent) => event.preventDefault();
  * it becomes a browser: every part matching the filters, grouped by series.
  */
 export function ComponentPicker({ type, label, value, onChange, placeholder }: ComponentPickerProps) {
+  const t = useT();
+  const format = useFormat();
   const id = useId();
   const [editing, setEditing] = useState(!value);
   const [text, setText] = useState('');
@@ -81,10 +84,19 @@ export function ComponentPicker({ type, label, value, onChange, placeholder }: C
     return browsing ? groupBySeries(list) : list;
   }, [results.data, browsing]);
 
-  useEffect(() => setHighlight(0), [term, brand, segment]);
-  useEffect(() => {
+  // A new search or filter starts the highlight from the top again.
+  const filterKey = `${term}|${brand ?? ''}|${segment ?? ''}`;
+  const [highlightFor, setHighlightFor] = useState(filterKey);
+  if (highlightFor !== filterKey) {
+    setHighlightFor(filterKey);
+    setHighlight(0);
+  }
+  // A part picked here or from outside (a detected PC, a shared link) closes the search.
+  const [shownValue, setShownValue] = useState(value);
+  if (shownValue !== value) {
+    setShownValue(value);
     if (value) setEditing(false);
-  }, [value]);
+  }
 
   const choose = (component: HardwareComponent) => {
     onChange(component);
@@ -123,21 +135,21 @@ export function ComponentPicker({ type, label, value, onChange, placeholder }: C
         <button type="button" className={styles.selected} onClick={() => setEditing(true)}>
           <span className={styles.selectedText}>
             <span className={styles.brand}>
-              {value.brand} · {COMPONENT_SEGMENT_LABELS[value.segment]}
+              {value.brand} · {t.labels.componentSegment[value.segment]}
             </span>
             <span className={styles.model}>{value.model}</span>
           </span>
-          <span className={styles.score} title="Relative performance index">
+          <span className={styles.score} title={t.pc.perfIndex}>
             <span className={styles.scoreBar}>
               <span style={{ width: `${Math.min(100, (value.score / maxScore) * 100)}%` }} />
             </span>
-            <span className="mono">{value.score.toLocaleString('en-US')}</span>
+            <span className="mono">{format.number(value.score)}</span>
           </span>
-          <span className={styles.change}>Change</span>
+          <span className={styles.change}>{t.pc.change}</span>
         </button>
       ) : (
         <>
-          <div className={styles.filters} role="group" aria-label={`${label} filters`}>
+          <div className={styles.filters} role="group" aria-label={fill(t.pc.filters, { label })}>
             <span className={styles.filterSet}>
               {BRANDS[type].map((item) => (
                 <button
@@ -168,7 +180,7 @@ export function ComponentPicker({ type, label, value, onChange, placeholder }: C
                     setOpen(true);
                   }}
                 >
-                  {COMPONENT_SEGMENT_LABELS[item]}
+                  {t.labels.componentSegment[item]}
                 </button>
               ))}
             </span>
@@ -195,7 +207,7 @@ export function ComponentPicker({ type, label, value, onChange, placeholder }: C
               autoFocus={Boolean(value)}
             />
             {value ? (
-              <button type="button" className={styles.cancel} onClick={() => setEditing(false)} aria-label="Keep current selection">
+              <button type="button" className={styles.cancel} onClick={() => setEditing(false)} aria-label={t.pc.keepCurrent}>
                 <Icon name="close" size={14} />
               </button>
             ) : null}
@@ -204,7 +216,7 @@ export function ComponentPicker({ type, label, value, onChange, placeholder }: C
       )}
 
       {editing && open ? (
-        <ul id={`${id}-list`} role="listbox" aria-label={`${label} results`} className={styles.list}>
+        <ul id={`${id}-list`} role="listbox" aria-label={fill(t.pc.results, { label })} className={styles.list}>
           {options.map((option, index) => (
             <Fragment key={option.id}>
               {browsing && (index === 0 || groupKey(option) !== groupKey(options[index - 1]!)) ? (
@@ -228,18 +240,18 @@ export function ComponentPicker({ type, label, value, onChange, placeholder }: C
                   {option.model}
                 </span>
                 <span className={styles.optionMeta}>
-                  {option.segment !== 'desktop' ? `${COMPONENT_SEGMENT_LABELS[option.segment]} · ` : ''}
-                  {option.vramGb ? `${option.vramGb} GB · ` : ''}
+                  {option.segment !== 'desktop' ? `${t.labels.componentSegment[option.segment]} · ` : ''}
+                  {option.vramGb ? `${fill(t.pc.gbValue, { value: option.vramGb })} · ` : ''}
                   {option.releaseYear ?? ''}
                 </span>
               </li>
             </Fragment>
           ))}
           {results.isSuccess && options.length === 0 ? (
-            <li className={styles.none}>No match in our index. Try the model number, e.g. “3060”, “5600” or “12450H”.</li>
+            <li className={styles.none}>{t.pc.noMatch}</li>
           ) : null}
           {browsing && options.length >= BROWSE_LIMIT ? (
-            <li className={styles.none}>Showing the {BROWSE_LIMIT} fastest — type or filter to find older parts.</li>
+            <li className={styles.none}>{fill(t.pc.showingFastest, { count: BROWSE_LIMIT })}</li>
           ) : null}
         </ul>
       ) : null}

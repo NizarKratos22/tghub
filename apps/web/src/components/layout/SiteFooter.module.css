@@ -19,6 +19,10 @@
   color: #fff;
 }
 
+.brand > a[target='_blank'] {
+  justify-self: start;
+}
+
 .brand p {
   max-width: 38ch;
   color: #a0a4a8;
@@ -64,10 +68,17 @@
   background: var(--gold);
 }
 
+.base a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .base {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
-  gap: 24px;
+  gap: 8px 24px;
   padding-block: 18px 26px;
   border-top: 1px solid #303336;
   font-size: 12.5px;

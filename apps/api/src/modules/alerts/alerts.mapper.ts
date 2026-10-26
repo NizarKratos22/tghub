@@ -61,7 +61,7 @@ export function toSourceDto(doc: AlertSourceDoc, games: Map<string, GameRef>): A
     id: String(doc._id),
     name: doc.name,
     adapter: doc.adapter,
-    config: { appId: doc.config.appId },
+    config: { appId: doc.config.appId ?? null, includeDlc: doc.config.includeDlc ?? false },
     game: gameFrom(games, doc.gameId),
     category: doc.category,
     enabled: doc.enabled,

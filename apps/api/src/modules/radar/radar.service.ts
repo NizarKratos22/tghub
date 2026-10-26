@@ -1,5 +1,5 @@
 import type { QueryFilter, SortOrder, Types } from 'mongoose';
-import type { Page, RadarListQuery, RadarSearchResult, Resource as ResourceDto, ResourceInput, ResourceKind } from '@tgh/shared';
+import { RESOURCE_KINDS, type Page, type RadarKindCounts, type RadarListQuery, type RadarSearchResult, type Resource as ResourceDto, type ResourceInput, type ResourceKind } from '@tgh/shared';
 import type { AuthContext } from '../../core/auth/context';
 import { bus } from '../../core/events/bus';
 import { firstTime } from '../../core/events/once';
@@ -21,17 +21,23 @@ function textClause(q: string): QueryFilter<ResourceDoc> {
   return { $or: [{ titleLower: { $regex: escapeRegex(term) } }, { tags: term }] };
 }
 
-export async function listResources(query: RadarListQuery): Promise<Page<ResourceDto>> {
-  const now = new Date();
+/** Status, game and search clauses shared by the feed and its tab counts; null when the game doesn't exist. */
+async function baseClauses(query: Pick<RadarListQuery, 'q' | 'game'>): Promise<QueryFilter<ResourceDoc>[] | null> {
   const clauses: QueryFilter<ResourceDoc>[] = [{ status: 'published' }];
-
-  if (query.kind) clauses.push({ kind: query.kind });
   if (query.game) {
     const game = await Game.findOne({ slug: query.game }).select('_id').lean();
-    if (!game) return paginate([], 0, query.page, query.pageSize);
+    if (!game) return null;
     clauses.push({ gameId: game._id });
   }
   if (query.q) clauses.push(textClause(query.q));
+  return clauses;
+}
+
+export async function listResources(query: RadarListQuery): Promise<Page<ResourceDto>> {
+  const now = new Date();
+  const clauses = await baseClauses(query);
+  if (!clauses) return paginate([], 0, query.page, query.pageSize);
+  if (query.kind) clauses.push({ kind: query.kind });
   if (query.active) clauses.push(activeClause(now));
 
   const filter: QueryFilter<ResourceDoc> = { $and: clauses };
@@ -45,7 +51,32 @@ export async function listResources(query: RadarListQuery): Promise<Page<Resourc
   return paginate(await toResources(docs), total, query.page, query.pageSize);
 }
 
-export async function radarSearch(q: string, auth: AuthContext | null): Promise<RadarSearchResult> {
+const TIMED_KINDS = new Set<ResourceKind>(['deal', 'event']);
+
+/** How many items each Radar tab holds. Deals and events count only running ones, like their tabs show by default. */
+export async function radarKindCounts(query: Pick<RadarListQuery, 'q' | 'game'>): Promise<RadarKindCounts> {
+  const counts = Object.fromEntries([...RESOURCE_KINDS, 'all'].map((kind) => [kind, 0])) as RadarKindCounts;
+  const clauses = await baseClauses(query);
+  if (!clauses) return counts;
+  const now = new Date();
+  const rows = await Resource.aggregate<{ _id: ResourceKind; total: number; running: number }>([
+    { $match: { $and: clauses } },
+    {
+      $group: {
+        _id: '$kind',
+        total: { $sum: 1 },
+        running: { $sum: { $cond: [{ $or: [{ $eq: [{ $ifNull: ['$expiresAt', null] }, null] }, { $gt: ['$expiresAt', now] }] }, 1, 0] } },
+      },
+    },
+  ]);
+  for (const row of rows) {
+    counts[row._id] = TIMED_KINDS.has(row._id) ? row.running : row.total;
+    counts.all += row.total;
+  }
+  return counts;
+}
+
+export async function radarSearch(q: string, auth: AuthContext | null, track = true): Promise<RadarSearchResult> {
   const [games, tournaments, docs] = await Promise.all([
     searchGames(q, 6),
     searchTournaments(q, 5),
@@ -55,7 +86,7 @@ export async function radarSearch(q: string, auth: AuthContext | null): Promise<
       .lean<ResourceDoc[]>(),
   ]);
   // Repeating the same search doesn't count twice towards missions.
-  if (auth && (await firstTime(`search:${auth.userId}:${q.toLowerCase()}:${dayKey()}`))) {
+  if (track && auth && (await firstTime(`search:${auth.userId}:${q.toLowerCase()}:${dayKey()}`))) {
     bus.emit('radar.searched', { userId: auth.userId, query: q });
   }
   return { query: q, games, tournaments, resources: await toResources(docs) };
@@ -117,16 +148,19 @@ export async function deleteResource(id: string): Promise<void> {
 
 export interface IngestedResource {
   externalId: string;
-  kind: Extract<ResourceKind, 'news' | 'patch'>;
+  kind: Extract<ResourceKind, 'news' | 'patch' | 'deal'>;
   title: string;
   summary: string;
   url: string;
   sourceName: string;
   gameId: Types.ObjectId | null;
   publishedAt: Date;
+  imageUrl: string | null;
+  deal: { store: string; price: number; originalPrice: number | null; currency: string } | null;
+  expiresAt: Date | null;
 }
 
-/** Inserts a feed item once; later runs of the same feed are no-ops. */
+/** Inserts a feed item once; later runs only add a picture that wasn't known before. */
 export async function upsertIngestedResource(item: IngestedResource): Promise<boolean> {
   const result = await Resource.updateOne(
     { externalId: item.externalId },
@@ -134,11 +168,14 @@ export async function upsertIngestedResource(item: IngestedResource): Promise<bo
       $setOnInsert: {
         ...item,
         titleLower: item.title.toLowerCase(),
-        tags: item.kind === 'patch' ? ['patch-notes'] : [],
+        // Tags make "patch notes" and "free" searchable.
+        tags: item.kind === 'patch' ? ['patch-notes'] : item.deal?.price === 0 ? ['free'] : [],
         status: 'published',
       },
     },
     { upsert: true },
   );
-  return result.upsertedCount === 1;
+  if (result.upsertedCount === 1) return true;
+  if (item.imageUrl) await Resource.updateOne({ externalId: item.externalId, imageUrl: null }, { $set: { imageUrl: item.imageUrl } });
+  return false;
 }

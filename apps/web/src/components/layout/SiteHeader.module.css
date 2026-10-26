@@ -5,13 +5,30 @@
   height: var(--header-h);
   background: var(--surface);
   border-bottom: 1px solid var(--line);
+  transition: box-shadow 200ms var(--ease);
 }
 
+/* Once the page scrolls under it, the header lifts off with a soft shadow. */
+.lifted {
+  box-shadow: 0 6px 20px -8px rgb(16 24 40 / 0.18);
+}
+
+:global(:root[data-theme='dark']) .lifted {
+  box-shadow: 0 8px 24px -8px rgb(0 0 0 / 0.6);
+}
+
+/* Same edges as the page below: the logo sits over the content's left edge, the account controls over its right. */
 .inner {
   display: flex;
   align-items: center;
   gap: 28px;
   height: 100%;
+}
+
+@media (max-width: 400px) {
+  .inner {
+    gap: 12px;
+  }
 }
 
 .skip {

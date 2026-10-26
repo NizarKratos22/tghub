@@ -3,13 +3,18 @@ import { AuthForm } from '@/features/auth/AuthForm';
 import { getT } from '@/i18n/server';
 import { AuthLayout } from '../AuthLayout';
 
-export const metadata: Metadata = { title: 'Sign in' };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t.meta.signIn };
+}
 
 export default async function LoginPage(props: PageProps<'/login'>) {
   const { next, auth_error: authError } = await props.searchParams;
   const t = await getT();
   return (
     <AuthLayout
+      mode="login"
+      next={typeof next === 'string' ? next : undefined}
       kicker={t.auth.loginKicker}
       title={
         <>

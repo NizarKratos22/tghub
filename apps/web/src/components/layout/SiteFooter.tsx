@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getT } from '@/i18n/server';
 import { LanguageSwitch } from './LanguageSwitch';
+import { PoweredByDefendr } from './Defendr';
 import { Logo } from './Logo';
 import styles from './SiteFooter.module.css';
 
@@ -12,6 +13,7 @@ export async function SiteFooter() {
       links: [
         { href: '/radar', label: t.nav.radar },
         { href: '/games', label: t.footer.catalogue },
+        { href: '/guides', label: t.nav.guides },
         { href: '/tournaments', label: t.nav.tournaments },
         { href: '/squads', label: t.footer.findTeammates },
         { href: '/clans', label: t.footer.clans },
@@ -37,8 +39,9 @@ export async function SiteFooter() {
     <footer className={styles.footer}>
       <div className={`container ${styles.grid}`}>
         <div className={styles.brand}>
-          <Logo />
+          <Logo variant="primary" surface="dark" />
           <p>{t.footer.tagline}</p>
+          <PoweredByDefendr label={t.footer.poweredBy} />
           <LanguageSwitch tone="dark" />
         </div>
         {columns.map((column) => (
@@ -63,8 +66,16 @@ export async function SiteFooter() {
         </div>
       </div>
       <div className={`container ${styles.base}`}>
-        <span>© {new Date().getFullYear()} TG Hub</span>
+        <span>
+          © {new Date().getFullYear()} TG Hub · {t.footer.rights}
+        </span>
         <span>{t.footer.disclaimer}</span>
+        <span>
+          {t.footer.gameData}{' '}
+          <a href="https://www.igdb.com" target="_blank" rel="noreferrer">
+            IGDB.com
+          </a>
+        </span>
       </div>
     </footer>
   );

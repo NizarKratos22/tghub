@@ -97,7 +97,7 @@ export const SAMPLE_TOURNAMENTS: SampleTournament[] = [
       organizer: null,
       gameName: 'Counter-Strike 2',
       startsAt: at(2 * DAY, 20),
-      registration: { isOpen: false, closesAt: at(1 * DAY, 20) },
+      registration: { isOpen: false, closesAt: at(DAY, 20) },
       online: true,
       location: null,
       region: 'EU',

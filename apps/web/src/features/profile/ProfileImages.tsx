@@ -7,6 +7,8 @@ import { useRef, useState, type ChangeEvent } from 'react';
 import { Icon } from '@/components/ui/Icon';
 import { Avatar } from '@/components/ui/primitives';
 import { SESSION_KEY } from '@/features/auth/session';
+import { fill } from '@/i18n/config';
+import { useT } from '@/i18n/I18nProvider';
 import { api } from '@/lib/api/client';
 import { ImageCropDialog, type CropSpec } from './ImageCropDialog';
 import styles from './ProfileImages.module.css';
@@ -26,6 +28,7 @@ const MAX_SOURCE_MB = 25;
  * their own — they don't wait for the profile form's Save button.
  */
 export function ProfileImages({ me, name, color }: { me: Me; name: string; color: string }) {
+  const t = useT();
   const queryClient = useQueryClient();
   const input = useRef<HTMLInputElement>(null);
   const [picking, setPicking] = useState<Kind>('avatar');
@@ -49,8 +52,8 @@ export function ProfileImages({ me, name, color }: { me: Me; name: string; color
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
-    if (!file.type.startsWith('image/') && !/\.(heic|heif)$/i.test(file.name)) return setNotice('Choose an image — JPG, PNG or WebP');
-    if (file.size > MAX_SOURCE_MB * 1024 * 1024) return setNotice(`That image is over ${MAX_SOURCE_MB} MB`);
+    if (!file.type.startsWith('image/') && !/\.(heic|heif)$/i.test(file.name)) return setNotice(t.profileEdit.chooseImage);
+    if (file.size > MAX_SOURCE_MB * 1024 * 1024) return setNotice(fill(t.profileEdit.tooBig, { mb: MAX_SOURCE_MB }));
     upload.reset();
     setEditing({ kind: picking, file });
   };
@@ -58,14 +61,13 @@ export function ProfileImages({ me, name, color }: { me: Me; name: string; color
   return (
     <div className={styles.root}>
       <div className={styles.banner}>
-        {/* eslint-disable-next-line @next/next/no-img-element -- immutable media URL */}
         {me.bannerUrl ? <img src={me.bannerUrl} alt="" className={styles.bannerImage} /> : null}
         <div className={styles.bannerTools}>
           <button type="button" className={styles.chip} onClick={() => pick('banner')}>
-            <Icon name="camera" size={15} /> {me.bannerUrl ? 'Change cover' : 'Add cover'}
+            <Icon name="camera" size={15} /> {me.bannerUrl ? t.profileEdit.changeCover : t.profileEdit.addCover}
           </button>
           {me.bannerUrl ? (
-            <button type="button" className={styles.chip} onClick={() => remove.mutate('banner')} disabled={remove.isPending} aria-label="Remove cover">
+            <button type="button" className={styles.chip} onClick={() => remove.mutate('banner')} disabled={remove.isPending} aria-label={t.profileEdit.removeCover}>
               <Icon name="trash" size={15} />
             </button>
           ) : null}
@@ -75,18 +77,18 @@ export function ProfileImages({ me, name, color }: { me: Me; name: string; color
       <div className={styles.identity}>
         <div className={styles.avatar}>
           <Avatar name={name} color={color} src={me.avatarUrl} size={96} />
-          <button type="button" className={styles.avatarEdit} onClick={() => pick('avatar')} aria-label={me.avatarUrl ? 'Change profile picture' : 'Add profile picture'}>
+          <button type="button" className={styles.avatarEdit} onClick={() => pick('avatar')} aria-label={me.avatarUrl ? t.profileEdit.changePicture : t.profileEdit.addPicture}>
             <Icon name="camera" size={16} />
           </button>
         </div>
         <div className={styles.meta}>
           <p className={styles.name}>{name}</p>
           <p className={styles.handle}>
-            @{me.username} · <Link href={`/u/${me.username}`}>View public profile</Link>
+            @{me.username} · <Link href={`/u/${me.username}`}>{t.profileEdit.viewProfile}</Link>
           </p>
           {me.avatarUrl ? (
             <button type="button" className={styles.textButton} onClick={() => remove.mutate('avatar')} disabled={remove.isPending}>
-              Remove picture
+              {t.profileEdit.removePicture}
             </button>
           ) : null}
         </div>
@@ -102,8 +104,8 @@ export function ProfileImages({ me, name, color }: { me: Me; name: string; color
         <ImageCropDialog
           file={editing.file}
           spec={SPECS[editing.kind]}
-          title={editing.kind === 'avatar' ? 'Profile picture' : 'Cover image'}
-          hint={editing.kind === 'banner' ? 'Wide screens may trim a little from the top and bottom.' : 'Shown as a circle across TG Hub.'}
+          title={editing.kind === 'avatar' ? t.profileEdit.pictureTitle : t.profileEdit.coverTitle}
+          hint={editing.kind === 'banner' ? t.profileEdit.coverHint : t.profileEdit.pictureHint}
           busy={upload.isPending}
           error={upload.error?.message}
           onCancel={() => setEditing(null)}

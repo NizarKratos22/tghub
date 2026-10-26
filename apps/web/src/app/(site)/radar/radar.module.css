@@ -51,23 +51,121 @@
   background: var(--primary-hover);
 }
 
+.kinds {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 22px;
+  padding-bottom: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.kinds::-webkit-scrollbar {
+  display: none;
+}
+
+/* Category tab: the kind's colour on its icon, filled in when chosen. */
+.kind {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 14px 0 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--text-2);
+  font-family: var(--font-display);
+  font-size: 13.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition:
+    border-color 140ms var(--ease),
+    background-color 140ms var(--ease),
+    color 140ms var(--ease);
+}
+
+/* "All" has no kind of its own (the kinds set these through their tone class). */
+.kindAll {
+  --kind: var(--text-3);
+  --kind-solid: var(--inverse);
+  --on-kind: var(--on-inverse);
+  padding-inline-start: 14px;
+}
+
+.kind:hover {
+  border-color: var(--kind);
+  color: var(--text);
+}
+
+.kindIcon {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--kind-wash);
+  color: var(--kind-text);
+}
+
+.count {
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-3);
+  color: var(--text-3);
+  font-size: 11.5px;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.kindOn,
+.kindOn:hover {
+  border-color: var(--kind-solid);
+  background: var(--kind-solid);
+  color: var(--on-kind);
+}
+
+.kindOn .kindIcon {
+  background: rgb(255 255 255 / 0.2);
+  color: inherit;
+}
+
+.kindOn .count {
+  background: rgb(0 0 0 / 0.18);
+  color: inherit;
+}
+
+/* Spotlight: one big story and two beside it. */
+.spotlight {
+  display: grid;
+  grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr);
+  gap: 14px;
+  margin-bottom: clamp(24px, 3vw, 36px);
+}
+
+.spotSide {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 14px;
+}
+
 .layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 250px;
   gap: clamp(20px, 3vw, 32px);
-  margin-top: 22px;
 }
 
 .feed {
   min-width: 0;
 }
 
-.list {
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
-  box-shadow: var(--shadow-1);
-  overflow: hidden;
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 270px), 1fr));
+  gap: 16px;
 }
 
 .status {
@@ -78,6 +176,13 @@
   padding-bottom: 14px;
   color: var(--text-3);
   font-size: 13.5px;
+}
+
+.feedTitle {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--text);
 }
 
 .status strong,
@@ -122,8 +227,14 @@
   background: var(--surface);
 }
 
+.sideTournaments {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
 .sideTitle {
-  padding: 0 6px 8px;
+  padding: 0 6px 10px;
   font-family: var(--font-display);
   font-size: 13px;
   font-weight: 800;
@@ -131,14 +242,15 @@
 
 .side ul {
   display: grid;
-  gap: 1px;
+  gap: 2px;
 }
 
 .gameLink {
+  --accent: var(--primary);
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 7px 8px;
+  padding: 5px 6px;
   border-radius: var(--radius);
   color: var(--text-2);
   font-size: 13.5px;
@@ -157,11 +269,41 @@
   font-weight: 700;
 }
 
-.gameDot {
-  width: 9px;
-  height: 9px;
+/* Box art thumbnail, or the game's monogram on its colour. */
+.gameCover {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 40px;
   flex-shrink: 0;
-  border-radius: 50%;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--font-num);
+  font-size: 15px;
+  box-shadow: 0 0 0 1px var(--line);
+}
+
+.gameOn .gameCover {
+  box-shadow: 0 0 0 2px var(--primary);
+}
+
+.gameTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 1100px) {
+  .spotlight {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .spotSide {
+    grid-template-rows: none;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 900px) {
@@ -171,5 +313,11 @@
 
   .side {
     display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .spotSide {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

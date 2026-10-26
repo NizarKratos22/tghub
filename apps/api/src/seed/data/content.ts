@@ -140,17 +140,3 @@ export const PLAYERS: PlayerSeed[] = [
   { username: 'ariana_ace', region: 'Ariana', xp: 350, bio: 'New here.' },
   { username: 'lyon_lynx', region: null, country: 'FR', xp: 2_400, bio: 'Tunisian in Lyon. EU ping, TN heart.' },
 ];
-
-/* ───────────── Alert sources ───────────── */
-
-/** Official developer announcements via Steam News, one per Steam game. */
-export const STEAM_SOURCES = [
-  'counter-strike-2',
-  'dota-2',
-  'pubg-battlegrounds',
-  'apex-legends',
-  'marvel-rivals',
-  'efootball',
-  'rocket-league',
-  'tekken-8',
-];

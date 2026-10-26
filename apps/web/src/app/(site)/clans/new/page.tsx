@@ -1,13 +1,18 @@
 import type { Metadata } from 'next';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { CreateClanForm } from '@/features/squads/ClanForm';
+import { getT } from '@/i18n/server';
 
-export const metadata: Metadata = { title: 'Create a clan' };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t.clan.newTitle };
+}
 
-export default function NewClanPage() {
+export default async function NewClanPage() {
+  const t = await getT();
   return (
     <>
-      <PageHeader code="Squads" title="Create a clan" lede="Pick a tag and a colour, say what you play, and choose who can join." />
+      <PageHeader code={t.squads.code} title={t.clan.newTitle} lede={t.clan.newLede} />
       <div className="container page" style={{ maxWidth: 900 }}>
         <CreateClanForm />
       </div>

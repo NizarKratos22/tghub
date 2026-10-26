@@ -17,3 +17,9 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Jump links land below the sticky header and the section bar. */
+.top,
+.section {
+  scroll-margin-top: calc(var(--header-h) + 72px);
+}

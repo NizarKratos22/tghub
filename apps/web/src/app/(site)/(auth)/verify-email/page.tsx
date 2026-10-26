@@ -1,8 +1,12 @@
 import type { Metadata } from 'next';
 import { VerifyEmailForm } from '@/features/auth/VerifyEmailForm';
+import { getT } from '@/i18n/server';
 import { AuthLayout } from '../AuthLayout';
 
-export const metadata: Metadata = { title: 'Confirm your email', robots: { index: false } };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t.recover.verifyMetaTitle, robots: { index: false } };
+}
 
 /** Only same-site relative paths, like sign-in. */
 function safeNext(value: string | string[] | undefined): string {
@@ -10,15 +14,18 @@ function safeNext(value: string | string[] | undefined): string {
 }
 
 export default async function VerifyEmailPage(props: PageProps<'/verify-email'>) {
-  const { next } = await props.searchParams;
+  const [{ next }, t] = await Promise.all([props.searchParams, getT()]);
+  const [line, lead, em, after] = t.recover.verifyPageTitle;
   return (
     <AuthLayout
-      kicker="Account / Confirm"
+      kicker={t.recover.verifyKicker}
       title={
         <>
-          One last
+          {line}
           <br />
-          <em>step</em>.
+          {lead ? `${lead} ` : null}
+          <em>{em}</em>
+          {after}
         </>
       }
     >

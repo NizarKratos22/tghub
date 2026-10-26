@@ -7,7 +7,7 @@ import { requireAuth, requireVerifiedEmail } from '../../core/auth/middleware';
 import { AppError } from '../../core/http/errors';
 import { handle } from '../../core/http/handler';
 import { uploadLimiter } from '../../core/http/rate-limit';
-import { storage } from '../../core/storage/storage';
+import { publicObjectUrl, storage } from '../../core/storage/storage';
 import { storeImage } from './media.service';
 
 const upload = multer({
@@ -45,10 +45,17 @@ mediaRouter.post(
 /**
  * Public file delivery. Registered ahead of the API rate limiter — a listing
  * grid loads dozens of thumbnails — and cached forever because ids never repeat.
+ * With an R2 public domain, old /api/v1/media links (saved in feed items, say)
+ * are sent there instead of streaming through this server.
  */
 export const serveMediaFile: RequestHandler = async (req, res) => {
   const parsed = mediaParamsSchema.safeParse(req.params);
   if (!parsed.success) throw AppError.notFound('File');
+  const publicUrl = publicObjectUrl(parsed.data.file);
+  if (publicUrl) {
+    res.set('Cache-Control', 'public, max-age=86400');
+    return res.redirect(302, publicUrl);
+  }
   const file = await storage.open(parsed.data.file);
   if (!file) throw AppError.notFound('File');
   res.set({

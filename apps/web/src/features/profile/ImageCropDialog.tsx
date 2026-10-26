@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent, type WheelEvent } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
+import { useT } from '@/i18n/I18nProvider';
 import { cx } from '@/lib/cx';
 import styles from './ImageCropDialog.module.css';
 
@@ -79,6 +80,7 @@ export function ImageCropDialog({
   onCancel: () => void;
   onConfirm: (image: Blob) => void;
 }) {
+  const t = useT();
   const [image, setImage] = useState<Loaded | null>(null);
   const [unreadable, setUnreadable] = useState(false);
   const [zoom, setZoom] = useState(1);
@@ -195,7 +197,7 @@ export function ImageCropDialog({
           <h2 id="crop-title" className={styles.title}>
             {title}
           </h2>
-          <button type="button" className={styles.close} onClick={onCancel} disabled={busy} aria-label="Cancel">
+          <button type="button" className={styles.close} onClick={onCancel} disabled={busy} aria-label={t.common.cancel}>
             <Icon name="close" size={18} />
           </button>
         </header>
@@ -203,7 +205,7 @@ export function ImageCropDialog({
         {unreadable ? (
           <p className={styles.fallback}>
             <Icon name="image" size={20} />
-            Your browser can&rsquo;t preview this format. It will be uploaded as is and centred automatically.
+            {t.profileEdit.cropUnreadable}
           </p>
         ) : (
           <div
@@ -218,9 +220,8 @@ export function ImageCropDialog({
             onKeyDown={onKeyDown}
             tabIndex={0}
             role="application"
-            aria-label="Image position. Drag or use the arrow keys to move, plus and minus to zoom."
+            aria-label={t.profileEdit.cropPosition}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element -- local object URL */}
             {image ? <img src={image.url} alt="" className={styles.source} style={imageStyle} draggable={false} /> : <span className={styles.loading} />}
             {spec.shape === 'circle' ? <span className={styles.mask} aria-hidden /> : null}
           </div>
@@ -229,7 +230,7 @@ export function ImageCropDialog({
         {!unreadable ? (
           <label className={styles.zoom}>
             <Icon name="image" size={14} />
-            <input type="range" min={1} max={MAX_ZOOM} step={0.01} value={zoom} onChange={(event) => zoomTo(Number(event.target.value))} aria-label="Zoom" disabled={!image} />
+            <input type="range" min={1} max={MAX_ZOOM} step={0.01} value={zoom} onChange={(event) => zoomTo(Number(event.target.value))} aria-label={t.profileEdit.zoom} disabled={!image} />
             <Icon name="image" size={20} />
           </label>
         ) : null}
@@ -242,10 +243,10 @@ export function ImageCropDialog({
 
         <footer className={styles.actions}>
           <Button variant="ghost" onClick={onCancel} disabled={busy}>
-            Cancel
+            {t.common.cancel}
           </Button>
           <Button onClick={confirm} loading={busy} disabled={!image && !unreadable} icon="check">
-            Save
+            {t.common.save}
           </Button>
         </footer>
       </div>

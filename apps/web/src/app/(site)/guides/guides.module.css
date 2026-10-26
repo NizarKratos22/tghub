@@ -1,0 +1,429 @@
+.languageNote {
+  margin-bottom: 14px;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  background: var(--surface-3);
+  color: var(--text-3);
+  font-size: 13px;
+}
+
+/* ───────────── Hub ───────────── */
+
+.hubLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: clamp(20px, 3vw, 32px);
+  align-items: start;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr));
+  gap: 14px;
+}
+
+.card {
+  --accent: var(--primary);
+  display: flex;
+  gap: 16px;
+  height: 100%;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+  transition:
+    transform 160ms var(--ease),
+    box-shadow 160ms var(--ease),
+    border-color 160ms var(--ease);
+}
+
+.card:hover,
+.card:focus-visible {
+  transform: translateY(-2px);
+  border-color: color-mix(in oklab, var(--accent) 50%, var(--line));
+  box-shadow: var(--shadow-2);
+}
+
+.cardCover {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 96px;
+  aspect-ratio: 3 / 4;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--font-num);
+  font-size: 28px;
+}
+
+.cardCover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.cardTitle {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.cardIntro {
+  color: var(--text-3);
+  font-size: 13.5px;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cardChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-3);
+  color: var(--text-2);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.cardFoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin-top: auto;
+  font-size: 12.5px;
+}
+
+.apps {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--purple-text);
+  font-weight: 700;
+}
+
+.read {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-inline-start: auto;
+  color: var(--primary-text);
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.overwolf {
+  position: sticky;
+  top: calc(var(--header-h) + 20px);
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.overwolf h2 {
+  font-size: 16px;
+}
+
+.overwolf p {
+  color: var(--text-3);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.overwolfIcon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius);
+  background: var(--purple-wash);
+  color: var(--purple-text);
+}
+
+.external {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  justify-self: start;
+  color: var(--primary-text);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.external:hover {
+  text-decoration: underline;
+}
+
+.small {
+  color: var(--text-4) !important;
+  font-size: 12px !important;
+}
+
+/* ───────────── One game's guide ───────────── */
+
+.hero {
+  --accent: var(--primary);
+  position: relative;
+  overflow: hidden;
+  background: #0f1113;
+  color: #fff;
+  isolation: isolate;
+}
+
+.heroArt {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.45;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(90deg, rgb(15 17 19 / 0.95) 0%, rgb(15 17 19 / 0.75) 45%, rgb(15 17 19 / 0.3) 100%),
+    linear-gradient(0deg, rgb(15 17 19 / 0.9), transparent 50%);
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 3px;
+  background: var(--accent);
+}
+
+.heroInner {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  padding-block: clamp(28px, 5vw, 56px);
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: rgb(255 255 255 / 0.75);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.back:hover {
+  color: #fff;
+}
+
+.heroCode {
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.heroTitle {
+  font-size: clamp(34px, 5vw, 56px);
+  line-height: 1.05;
+}
+
+.heroIntro {
+  max-width: 62ch;
+  color: rgb(255 255 255 / 0.82);
+  font-size: 15.5px;
+  line-height: 1.55;
+}
+
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-top: 6px;
+}
+
+.heroOutline {
+  color: #fff;
+  border-color: rgb(255 255 255 / 0.35);
+}
+
+.updated {
+  color: rgb(255 255 255 / 0.6);
+  font-size: 12.5px;
+}
+
+.guideLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: clamp(20px, 3vw, 32px);
+  align-items: start;
+}
+
+.sections {
+  display: grid;
+  gap: 18px;
+}
+
+.section {
+  padding: clamp(16px, 2.2vw, 24px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.section h2,
+.more h2 {
+  margin-bottom: 14px;
+  font-size: 18px;
+}
+
+.section ol {
+  display: grid;
+  gap: 14px;
+}
+
+.section li {
+  display: flex;
+  gap: 12px;
+}
+
+.itemNumber {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--primary-wash);
+  color: var(--primary-text);
+  font-family: var(--font-num);
+  font-size: 16px;
+}
+
+.section strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 14.5px;
+}
+
+.itemText {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.moreGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+  gap: 12px;
+}
+
+.side {
+  position: sticky;
+  top: calc(var(--header-h) + 20px);
+  display: grid;
+  gap: 20px;
+}
+
+.appsBox {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid color-mix(in oklab, var(--purple) 35%, var(--line));
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.appsBox h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  color: var(--purple-text);
+}
+
+.appsBox ul {
+  display: grid;
+  gap: 10px;
+}
+
+.appsBox li {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.appName {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.appText {
+  color: var(--text-3);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.moreApps {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--purple-text);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+@media (max-width: 1000px) {
+  .hubLayout,
+  .guideLayout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .overwolf,
+  .side {
+    position: static;
+  }
+}
+
+@media (max-width: 520px) {
+  .card {
+    flex-direction: column;
+  }
+
+  .cardCover {
+    width: 72px;
+  }
+}

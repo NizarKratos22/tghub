@@ -8,30 +8,32 @@ import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/primitives';
 import { RelativeTime } from '@/components/ui/time';
 import { useSession } from '@/features/auth/session';
+import { useFormat, useT } from '@/i18n/I18nProvider';
 import { api } from '@/lib/api/client';
 import { RatingBars, Stars, VerifiedSeller } from './reputation';
 import styles from './SellerReviews.module.css';
 
 function ReplyForm({ rating, onDone }: { rating: SellerRating; onDone: () => void }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [text, setText] = useState('');
   const reply = useMutation({ mutationFn: () => api.market.replyRating(rating.id, text), onSuccess: onDone });
   if (!open) {
     return (
       <button type="button" className={styles.replyLink} onClick={() => setOpen(true)}>
-        Reply
+        {t.reputation.reply}
       </button>
     );
   }
   return (
     <div className={styles.replyForm}>
-      <textarea value={text} onChange={(e) => setText(e.target.value)} maxLength={500} rows={2} placeholder="Thank them, or add context — you can reply once." aria-label="Reply" autoFocus />
+      <textarea value={text} onChange={(e) => setText(e.target.value)} maxLength={500} rows={2} placeholder={t.reputation.replyPlaceholder} aria-label={t.reputation.reply} autoFocus />
       <div>
         <Button size="sm" variant="ghost" onClick={() => setOpen(false)}>
-          Cancel
+          {t.common.cancel}
         </Button>
         <Button size="sm" onClick={() => reply.mutate()} loading={reply.isPending} disabled={!text.trim()}>
-          Post reply
+          {t.reputation.postReply}
         </Button>
       </div>
       {reply.error ? <p className={styles.error}>{reply.error.message}</p> : null}
@@ -41,6 +43,8 @@ function ReplyForm({ rating, onDone }: { rating: SellerRating; onDone: () => voi
 
 /** Marketplace reputation on a profile: summary, star bars and the reviews themselves. */
 export function SellerReviews({ username, reputation }: { username: string; reputation: SellerReputation }) {
+  const t = useT();
+  const format = useFormat();
   const { data: me } = useSession();
   const queryClient = useQueryClient();
   const key = ['market', 'ratings', username];
@@ -61,7 +65,7 @@ export function SellerReviews({ username, reputation }: { username: string; repu
           <strong>{reputation.average?.toFixed(1) ?? '—'}</strong>
           <Stars value={reputation.average ?? 0} size={18} />
           <span>
-            {reputation.count} rating{reputation.count === 1 ? '' : 's'} · {reputation.sales} sale{reputation.sales === 1 ? '' : 's'}
+            {format.fill(t.reputation.ratings, { count: reputation.count })} · {format.fill(t.reputation.sales, { count: reputation.sales })}
           </span>
           {reputation.verified ? <VerifiedSeller /> : null}
         </div>
@@ -79,13 +83,13 @@ export function SellerReviews({ username, reputation }: { username: string; repu
                 <Stars value={rating.stars} />
                 <RelativeTime iso={rating.createdAt} className={styles.time} />
               </div>
-              {rating.comment ? <p className={styles.comment}>{rating.comment}</p> : null}
+              {rating.comment ? <p className={styles.comment} dir="auto">{rating.comment}</p> : null}
               <p className={styles.listing}>
-                Bought <Link href={`/market/item/${rating.listing.id}`}>{rating.listing.title}</Link>
+                {t.reputation.bought} <Link href={`/market/item/${rating.listing.id}`}>{rating.listing.title}</Link>
               </p>
               {rating.reply ? (
                 <p className={styles.reply}>
-                  <strong>Seller&rsquo;s reply</strong> {rating.reply}
+                  <strong>{t.reputation.sellerReply}</strong> {rating.reply}
                 </p>
               ) : own ? (
                 <ReplyForm rating={rating} onDone={() => void queryClient.invalidateQueries({ queryKey: key })} />
@@ -94,11 +98,11 @@ export function SellerReviews({ username, reputation }: { username: string; repu
           ))}
         </ul>
       ) : reputation.count === 0 ? (
-        <p className={styles.empty}>No ratings yet. Buyers can rate a seller after a sale is confirmed.</p>
+        <p className={styles.empty}>{t.reputation.empty}</p>
       ) : null}
       {pages.hasNextPage ? (
         <Button variant="ghost" onClick={() => pages.fetchNextPage()} loading={pages.isFetchingNextPage}>
-          More ratings
+          {t.reputation.more}
         </Button>
       ) : null}
     </div>

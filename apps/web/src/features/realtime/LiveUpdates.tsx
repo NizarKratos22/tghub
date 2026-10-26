@@ -4,7 +4,7 @@ import type { ConversationSummary, Me, RealtimeEvent } from '@tgh/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useEffectEvent, useRef, useState, type CSSProperties } from 'react';
 import { Icon } from '@/components/ui/Icon';
 import { Avatar } from '@/components/ui/primitives';
 import { ALERTS_KEY, CATEGORY_ICONS } from '@/features/alerts/NotificationRow';
@@ -44,10 +44,11 @@ function ToastCard({ toast, onClose }: { toast: Toast; onClose: () => void }) {
     clearTimeout(timer.current);
     timer.current = setTimeout(dismiss, TOAST_MS);
   };
+  // Armed once on mount; hover pauses and re-arms.
+  const armOnMount = useEffectEvent(arm);
   useEffect(() => {
-    arm();
+    armOnMount();
     return () => clearTimeout(timer.current);
-    // Arm once on mount; hover pauses and re-arms.
   }, []);
 
   const content = (

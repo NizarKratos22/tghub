@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/Button';
 import { FormError } from '@/components/ui/Field';
 import { Icon } from '@/components/ui/Icon';
 import { Avatar, Skeleton } from '@/components/ui/primitives';
+import { fill } from '@/i18n/config';
+import { useT } from '@/i18n/I18nProvider';
 import { api, ApiError } from '@/lib/api/client';
 import { cx } from '@/lib/cx';
 import { LISTING_KEYS } from './meta';
@@ -18,6 +20,7 @@ const OUTSIDE = 'outside';
  * which is what builds a seller's reputation and verified badge.
  */
 export function SoldDialog({ listingId, title, onClose, onDone }: { listingId: string; title: string; onClose: () => void; onDone: () => void }) {
+  const t = useT();
   const viewer = useQuery({ queryKey: LISTING_KEYS.viewer(listingId), queryFn: () => api.market.viewer(listingId) });
   const [choice, setChoice] = useState<string | null>(null);
   const buyers = viewer.data?.buyers ?? [];
@@ -39,15 +42,13 @@ export function SoldDialog({ listingId, title, onClose, onDone }: { listingId: s
     <div className={styles.overlay} onClick={sell.isPending ? undefined : onClose}>
       <div className={styles.dialog} role="dialog" aria-modal="true" aria-labelledby="sold-title" onClick={(event) => event.stopPropagation()}>
         <h2 id="sold-title" className={styles.title}>
-          Who bought it?
+          {t.listing.whoBought}
         </h2>
-        <p className={styles.text}>
-          &ldquo;{title}&rdquo; — the buyer you pick gets to rate you. Ratings build your verified seller badge.
-        </p>
+        <p className={styles.text}>{fill(t.listing.whoBoughtText, { title })}</p>
         {viewer.isPending ? (
           <Skeleton height={120} />
         ) : (
-          <div className={styles.options} role="radiogroup" aria-label="Buyer">
+          <div className={styles.options} role="radiogroup" aria-label={t.listing.buyer}>
             {buyers.map((buyer) => (
               <button key={buyer.id} type="button" role="radio" aria-checked={selected === buyer.id} className={cx(styles.option, selected === buyer.id && styles.optionOn)} onClick={() => setChoice(buyer.id)}>
                 <Avatar name={buyer.displayName} color={buyer.avatarColor} src={buyer.avatarUrl} size={34} />
@@ -59,7 +60,7 @@ export function SoldDialog({ listingId, title, onClose, onDone }: { listingId: s
               <span className={styles.outsideIcon}>
                 <Icon name="user" size={16} />
               </span>
-              <span>Someone outside TG Hub</span>
+              <span>{t.listing.outside}</span>
               {selected === OUTSIDE ? <Icon name="check" size={16} /> : null}
             </button>
           </div>
@@ -67,10 +68,10 @@ export function SoldDialog({ listingId, title, onClose, onDone }: { listingId: s
         <FormError message={sell.error instanceof ApiError ? sell.error.message : null} />
         <div className={styles.actions}>
           <Button variant="ghost" onClick={onClose} disabled={sell.isPending}>
-            Cancel
+            {t.common.cancel}
           </Button>
           <Button icon="check" onClick={() => sell.mutate()} loading={sell.isPending} disabled={!selected}>
-            Mark as sold
+            {t.listing.markSold}
           </Button>
         </div>
       </div>

@@ -1,8 +1,31 @@
 .primary {
+  position: relative;
   display: flex;
   align-items: stretch;
   height: 100%;
   gap: 2px;
+}
+
+/* One underline that glides to the hovered or focused link and settles back under the current page. */
+.bar {
+  position: absolute;
+  /* Physical left on purpose: the bar is placed with offsetLeft, which is physical in both directions. */
+  left: 0;
+  bottom: -1px;
+  width: 0;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: var(--primary);
+  pointer-events: none;
+  transition:
+    transform 280ms var(--ease),
+    width 280ms var(--ease),
+    background-color 160ms var(--ease);
+}
+
+/* Pointing at another page: a lighter bar, so the current page still reads as current. */
+.barPointing {
+  background: color-mix(in oklab, var(--primary) 45%, transparent);
 }
 
 .link {
@@ -14,6 +37,7 @@
   font-size: 13.5px;
   font-weight: 700;
   color: var(--text-3);
+  white-space: nowrap;
   transition: color 120ms var(--ease);
 }
 
@@ -23,6 +47,11 @@
 
 .active {
   color: var(--text);
+}
+
+/* Shown until the gliding bar has measured itself (first paint, no JavaScript). */
+.barReady .active::after {
+  display: none;
 }
 
 .active::after {
@@ -285,6 +314,23 @@
   margin-top: 24px;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .bar {
+    transition: none;
+  }
+}
+
+/* Eight sections plus the account tools: a little less room per link on mid-size screens. */
+@media (max-width: 1440px) {
+  .link {
+    padding: 0 10px;
+  }
+
+  .active::after {
+    inset-inline: 10px;
+  }
+}
+
 @media (max-width: 1180px) {
   .primary {
     display: none;
@@ -322,5 +368,38 @@
 @media (max-width: 480px) {
   .guest .signIn {
     display: none;
+  }
+}
+
+/* Unread messages while the messages icon lives in the drawer (narrow phones). */
+.menuDot {
+  display: none;
+  position: absolute;
+  top: 6px;
+  inset-inline-end: 5px;
+  width: 8px;
+  height: 8px;
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  background: var(--brand);
+  box-sizing: content-box;
+}
+
+@media (max-width: 360px) {
+  /* 360 px Androids and the iPhone SE: the messages link moves into the drawer, which shows its count. */
+  .narrowHide {
+    display: none;
+  }
+
+  .menuDot {
+    display: block;
+  }
+
+  .tools {
+    gap: 2px;
+  }
+
+  .account {
+    margin-inline-start: 2px;
   }
 }

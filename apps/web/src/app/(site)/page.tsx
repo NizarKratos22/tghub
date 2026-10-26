@@ -1,49 +1,24 @@
 import Link from 'next/link';
-import { RESOURCE_KIND_LABELS, type HomeFeed, type Resource } from '@tgh/shared';
-import type { CSSProperties } from 'react';
+import type { HomeFeed } from '@tgh/shared';
 import { ButtonLink } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { EmptyState, StatusBadge } from '@/components/ui/primitives';
 import { SectionHeader } from '@/components/ui/SectionHeader';
-import { RelativeTime } from '@/components/ui/time';
-import { GameGrid } from '@/features/games/GameCover';
+import { DefendrBand } from '@/components/layout/Defendr';
+import { GameRail } from '@/features/games/GameRail';
 import { ListingGrid } from '@/features/market/ListingCard';
+import { SpotlightStory } from '@/features/radar/RadarCards';
 import { DealLine, NewsLine } from '@/features/radar/ResourceRow';
 import { TournamentLine } from '@/features/tournaments/TournamentRow';
 import { Leaderboard, PulseCard } from '@/features/universe/standings';
 import { getT } from '@/i18n/server';
 import { serverApi } from '@/lib/api/server';
-import { isExternal } from '@/lib/format';
 import styles from './home.module.css';
 
 // Rendered per request (the feed itself is cached for 30s) so `next build` never depends on a live API.
 export const dynamic = 'force-dynamic';
 
 const QUICK_SEARCHES = ['cs2', 'efootball', 'valorant', 'lol', 'patch notes'];
-
-function LeadStory({ resource }: { resource: Resource }) {
-  const external = isExternal(resource.url);
-  return (
-    <a
-      href={resource.url}
-      {...(external ? { target: '_blank', rel: 'noreferrer' } : {})}
-      className={styles.lead}
-      style={{ '--accent': resource.game?.accent ?? 'var(--primary)' } as CSSProperties}
-    >
-      <span className={styles.leadMeta}>
-        <span className={styles.leadKind}>{RESOURCE_KIND_LABELS[resource.kind]}</span>
-        {resource.game ? <span>{resource.game.title}</span> : null}
-        <RelativeTime iso={resource.publishedAt} />
-      </span>
-      <span className={styles.leadTitle}>{resource.title}</span>
-      {resource.summary ? <span className={styles.leadSummary}>{resource.summary}</span> : null}
-      <span className={styles.leadSource}>
-        {resource.sourceName}
-        <Icon name={external ? 'arrowUpRight' : 'arrowRight'} size={14} />
-      </span>
-    </a>
-  );
-}
 
 export default async function HomePage() {
   const t = await getT();
@@ -84,10 +59,9 @@ export default async function HomePage() {
       </section>
 
       <div className="container page stack">
-        <section>
-          <SectionHeader title={t.home.featuredGames} action={{ href: '/games', label: t.home.catalogue }} />
-          <GameGrid games={feed.featured} />
-        </section>
+        <GameRail title={t.home.featuredGames} action={{ href: '/games', label: t.home.catalogue }} games={feed.featured} />
+
+        <DefendrBand kicker={t.home.defendrKicker} title={t.home.defendrTitle} text={t.home.defendrText} cta={t.home.defendrCta} />
 
         {listings.length > 0 ? (
           <section>
@@ -105,7 +79,7 @@ export default async function HomePage() {
             <SectionHeader title={t.home.latestRadar} action={{ href: '/radar', label: t.home.openRadar }} />
             {lead ? (
               <>
-                <LeadStory resource={lead} />
+                <SpotlightStory resource={lead} lead />
                 <div className={styles.newsList}>
                   {latest.map((resource) => (
                     <NewsLine key={resource.id} resource={resource} />

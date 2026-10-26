@@ -7,10 +7,10 @@ import { Skeleton } from '@/components/ui/primitives';
 import { ClanDirectory } from '@/features/squads/ClanDirectory';
 import { SquadsTabs } from '@/features/squads/shared';
 
-export const metadata: Metadata = {
-  title: 'Clans',
-  description: 'Player-run clans and the season standings: members pool their XP and race for the top spot.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t.squads.clansTitle, description: t.clan.metaDescription };
+}
 
 export default async function ClansPage() {
   const t = await getT();

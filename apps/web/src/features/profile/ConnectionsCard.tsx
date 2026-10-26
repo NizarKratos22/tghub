@@ -4,12 +4,14 @@ import type { Connections } from '@tgh/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useEffectEvent, useState, type CSSProperties } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { Skeleton } from '@/components/ui/primitives';
 import { RelativeTime } from '@/components/ui/time';
 import { DiscordLogo, discordStartUrl, oauthErrorMessage, steamStartUrl } from '@/features/auth/oauth';
+import { fill } from '@/i18n/config';
+import { useFormat, useT } from '@/i18n/I18nProvider';
 import { api } from '@/lib/api/client';
 import { cx } from '@/lib/cx';
 import shared from './SecuritySettings.module.css';
@@ -19,22 +21,26 @@ const CONNECTIONS_KEY = ['me', 'connections'] as const;
 
 /** Reads ?connected= / ?auth_error= left by the OAuth redirect once, then tidies the URL. */
 function useFlash(): { kind: 'ok' | 'error'; text: string } | null {
+  const t = useT();
   const params = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
   const [flash] = useState(() => {
     const connected = params.get('connected');
-    if (connected) return { kind: 'ok' as const, text: `${connected === 'steam' ? 'Steam' : 'Discord'} is connected.` };
-    const error = oauthErrorMessage(params.get('auth_error'));
+    if (connected) return { kind: 'ok' as const, text: fill(t.security.connected, { provider: connected === 'steam' ? 'Steam' : 'Discord' }) };
+    const error = oauthErrorMessage(params.get('auth_error'), t);
     return error ? { kind: 'error' as const, text: error } : null;
   });
-  useEffect(() => {
+  const tidyUrl = useEffectEvent(() => {
     if (params.has('connected') || params.has('auth_error')) router.replace(pathname, { scroll: false });
-  }, []);
+  });
+  useEffect(() => tidyUrl(), []);
   return flash;
 }
 
 export function ConnectionsCard() {
+  const t = useT();
+  const format = useFormat();
   const queryClient = useQueryClient();
   const flash = useFlash();
   const connections = useQuery({ queryKey: CONNECTIONS_KEY, queryFn: api.me.connections });
@@ -53,8 +59,8 @@ export function ConnectionsCard() {
           <Icon name="link" size={18} />
         </span>
         <div>
-          <h3>Connected accounts</h3>
-          <p>Sign in with Discord, show your Steam library, and use the TG Hub bot on your server.</p>
+          <h3>{t.security.connections}</h3>
+          <p>{t.security.connectionsText}</p>
         </div>
       </header>
       {flash ? <p className={flash.kind === 'ok' ? shared.ok : shared.error}>{flash.text}</p> : null}
@@ -68,27 +74,27 @@ export function ConnectionsCard() {
             <strong>Discord</strong>
             {discord ? (
               <span>
-                @{discord.username} · linked <RelativeTime iso={discord.connectedAt} />
+                @{discord.username} · {t.security.linked} <RelativeTime iso={discord.connectedAt} />
               </span>
             ) : (
-              <span>Sign in with Discord and get your profile from the bot with /tgh profile.</span>
+              <span>{t.security.discordPitch}</span>
             )}
           </span>
           {discord ? (
             <Button size="sm" variant="ghost" onClick={() => unlink.mutate('discord')} loading={unlink.isPending && unlink.variables === 'discord'} disabled={!connections.data.canUnlinkDiscord}>
-              Disconnect
+              {t.security.disconnect}
             </Button>
           ) : providers.data?.discord ? (
             <a href={discordStartUrl('link', '/settings')} className={styles.connect}>
-              Connect
+              {t.security.connect}
             </a>
           ) : (
-            <span className={styles.soon}>Coming soon</span>
+            <span className={styles.soon}>{t.security.comingSoon}</span>
           )}
         </li>
         {discord && !connections.data.canUnlinkDiscord ? (
           <li className={styles.note}>
-            You signed up with Discord. Set a password with <Link href="/forgot-password">Forgot password</Link> before disconnecting it.
+            {t.security.discordOnly} <Link href="/forgot-password">{t.security.discordOnlyLink}</Link> {t.security.discordOnlyRest}
           </li>
         ) : null}
 
@@ -103,19 +109,19 @@ export function ConnectionsCard() {
                 <a href={steam.profileUrl} target="_blank" rel="noopener noreferrer">
                   {steam.personaName ?? `Steam ${steam.id.slice(-6)}`}
                 </a>{' '}
-                · linked <RelativeTime iso={steam.connectedAt} />
+                · {t.security.linked} <RelativeTime iso={steam.connectedAt} />
               </span>
             ) : (
-              <span>Show your Steam profile and the catalogue games you play.</span>
+              <span>{t.security.steamPitch}</span>
             )}
           </span>
           {steam ? (
             <Button size="sm" variant="ghost" onClick={() => unlink.mutate('steam')} loading={unlink.isPending && unlink.variables === 'steam'}>
-              Disconnect
+              {t.security.disconnect}
             </Button>
           ) : providers.data?.steam ? (
             <a href={steamStartUrl('/settings')} className={styles.connect}>
-              Connect
+              {t.security.connect}
             </a>
           ) : null}
         </li>
@@ -123,16 +129,16 @@ export function ConnectionsCard() {
           <li className={styles.games}>
             <div className={styles.gamesHead}>
               <span>
-                {steam.games.length > 0 ? `${steam.games.length} of your Steam games are on TG Hub` : 'No catalogue games found in your library yet'}
+                {steam.games.length > 0 ? format.fill(t.security.steamGames, { count: steam.games.length }) : t.security.noSteamGames}
                 {steam.gamesSyncedAt ? (
                   <>
                     {' '}
-                    · synced <RelativeTime iso={steam.gamesSyncedAt} />
+                    · {t.security.synced} <RelativeTime iso={steam.gamesSyncedAt} />
                   </>
                 ) : null}
               </span>
               <Button size="sm" variant="ghost" icon="refresh" onClick={() => sync.mutate()} loading={sync.isPending}>
-                Refresh
+                {t.security.refresh}
               </Button>
             </div>
             {steam.games.length > 0 ? (
@@ -142,13 +148,13 @@ export function ConnectionsCard() {
                     <Link href={`/games/${game.slug}`} className={styles.chip} style={{ '--accent': game.accent } as CSSProperties}>
                       <i aria-hidden>{game.monogram}</i>
                       {game.title}
-                      {hours > 0 ? <span>{hours}h</span> : null}
+                      {hours > 0 ? <span>{fill(t.security.hoursShort, { hours })}</span> : null}
                     </Link>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className={styles.hint}>Private Steam profiles hide their library — set “Game details” to public on Steam, then refresh.</p>
+              <p className={styles.hint}>{t.security.privateSteam}</p>
             )}
           </li>
         ) : null}

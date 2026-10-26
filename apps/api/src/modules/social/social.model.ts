@@ -33,7 +33,10 @@ export interface ActivityDoc {
   _id: Types.ObjectId;
   actorId: Types.ObjectId;
   type: ActivityType;
+  /** English sentence, kept for the bot and old clients; the site words it per language from `type` and `value`. */
   text: string;
+  /** The number in the sentence: level reached, players wanted, listing price. */
+  value: number | null;
   target: { label: string; href: string } | null;
   detail: string | null;
   visual: ActivityVisual;
@@ -47,6 +50,7 @@ const activitySchema = new Schema<ActivityDoc>(
     actorId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     type: { type: String, enum: ACTIVITY_TYPES, required: true },
     text: { type: String, required: true },
+    value: { type: Number, default: null },
     target: { type: new Schema({ label: String, href: String }, { _id: false }), default: null },
     detail: { type: String, default: null },
     visual: { type: Schema.Types.Mixed, default: null },

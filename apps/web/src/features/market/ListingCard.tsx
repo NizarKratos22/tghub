@@ -3,15 +3,15 @@
 import Link from 'next/link';
 import type { ListingCard as ListingCardData } from '@tgh/shared';
 import { Icon } from '@/components/ui/Icon';
-import { useT } from '@/i18n/I18nProvider';
+import { useFormat, useT } from '@/i18n/I18nProvider';
 import { cx } from '@/lib/cx';
-import { formatTnd } from '@/lib/format';
 import { CATEGORY_ICONS, listingSubline } from './meta';
 import styles from './ListingCard.module.css';
 
 /** Marketplace tile: square photo, price first, then title and where it is. */
 export function ListingCard({ listing, priority = false }: { listing: ListingCardData; priority?: boolean }) {
   const t = useT();
+  const format = useFormat();
   const closed = listing.status === 'sold' || listing.status === 'pending';
   return (
     <Link href={`/market/item/${listing.id}`} className={styles.card}>
@@ -41,9 +41,11 @@ export function ListingCard({ listing, priority = false }: { listing: ListingCar
         ) : null}
       </span>
       <span className={styles.body}>
-        <span className={cx(styles.price, listing.price === 0 && styles.free)}>{formatTnd(listing.price)}</span>
-        <span className={styles.title}>{listing.title}</span>
-        <span className={styles.sub}>{listingSubline(listing)}</span>
+        <span className={cx(styles.price, listing.price === 0 && styles.free)}>{format.tnd(listing.price)}</span>
+        <span className={styles.title}>
+          <bdi>{listing.title}</bdi>
+        </span>
+        <span className={styles.sub}>{listingSubline(listing, t)}</span>
       </span>
     </Link>
   );

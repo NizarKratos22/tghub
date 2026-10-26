@@ -1,29 +1,25 @@
 'use client';
 
-import { CLAN_JOIN_POLICY_META, MAX_CLAN_MEMBERS, type ClanListQuery, type ClanSummary } from '@tgh/shared';
+import { MAX_CLAN_MEMBERS, type ClanListQuery, type ClanSummary } from '@tgh/shared';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useEffectEvent, useState, type CSSProperties } from 'react';
 import { ButtonLink } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { EmptyState, Pagination, Skeleton } from '@/components/ui/primitives';
 import { useSession } from '@/features/auth/session';
+import { useFormat, useT } from '@/i18n/I18nProvider';
 import { api } from '@/lib/api/client';
 import { cx } from '@/lib/cx';
-import { formatNumber } from '@/lib/format';
 import { ClanEmblem, Flag, RoleBadge, SQUAD_KEYS, useGameOptions } from './shared';
 import styles from './ClanDirectory.module.css';
 
-const SORT_LABELS: Record<ClanListQuery['sort'], string> = {
-  season: 'Season XP',
-  xp: 'All-time XP',
-  members: 'Most members',
-  new: 'Newest',
-};
+const SORTS: Array<ClanListQuery['sort']> = ['season', 'xp', 'members', 'new'];
 const PAGE_SIZE = 20;
 
 function MyClanBar() {
+  const t = useT();
   const { data: me } = useSession();
   const mine = useQuery({ queryKey: SQUAD_KEYS.myClan, queryFn: api.clans.mine, enabled: Boolean(me) });
   const clan = mine.data?.clan;
@@ -35,11 +31,11 @@ function MyClanBar() {
           <Icon name="shield" size={22} />
         </span>
         <div>
-          <strong>Start your own clan</strong>
-          <span>Pick a tag, recruit your squad, and climb the season standings together.</span>
+          <strong>{t.clan.startTitle}</strong>
+          <span>{t.clan.startText}</span>
         </div>
         <ButtonLink href="/clans/new" icon="plus">
-          Create a clan
+          {t.squads.createClan}
         </ButtonLink>
       </div>
     );
@@ -48,7 +44,7 @@ function MyClanBar() {
     <Link href={`/clans/${clan.tag}`} className={styles.myClan}>
       <ClanEmblem tag={clan.tag} color={clan.color} size={44} />
       <span className={styles.myClanText}>
-        <span className={styles.myClanLabel}>Your clan</span>
+        <span className={styles.myClanLabel}>{t.clan.yourClan}</span>
         <strong>{clan.name}</strong>
       </span>
       <RoleBadge role={clan.role} />
@@ -58,7 +54,9 @@ function MyClanBar() {
 }
 
 function ClanRow({ clan, rank }: { clan: ClanSummary; rank: number | null }) {
-  const policy = CLAN_JOIN_POLICY_META[clan.joinPolicy];
+  const t = useT();
+  const format = useFormat();
+  const policy = t.labels.clanPolicy[clan.joinPolicy];
   const full = clan.memberCount >= MAX_CLAN_MEMBERS;
   return (
     <li>
@@ -69,7 +67,7 @@ function ClanRow({ clan, rank }: { clan: ClanSummary; rank: number | null }) {
           <span className={styles.name}>
             {clan.name} <span className={styles.tag}>[{clan.tag}]</span> <Flag country={clan.country} />
           </span>
-          {clan.description ? <span className={styles.description}>{clan.description}</span> : null}
+          {clan.description ? <span className={styles.description} dir="auto">{clan.description}</span> : null}
           <span className={styles.games}>
             {clan.games.map((game) => (
               <span key={game.id} className={styles.game} style={{ '--accent': game.accent } as CSSProperties} title={game.title}>
@@ -83,13 +81,13 @@ function ClanRow({ clan, rank }: { clan: ClanSummary; rank: number | null }) {
             {clan.memberCount}
             <small>/{MAX_CLAN_MEMBERS}</small>
           </strong>
-          <span>members</span>
+          <span>{t.clan.members}</span>
         </span>
         <span className={cx(styles.stat, styles.statXp)}>
-          <strong>{formatNumber(clan.seasonXp)}</strong>
-          <span>season XP</span>
+          <strong>{format.number(clan.seasonXp)}</strong>
+          <span>{t.clan.seasonXp}</span>
         </span>
-        <span className={cx(styles.policy, styles[`policy_${full ? 'closed' : clan.joinPolicy}`])}>{full ? 'Full' : policy.label}</span>
+        <span className={cx(styles.policy, styles[`policy_${full ? 'closed' : clan.joinPolicy}`])}>{full ? t.clan.full : policy.label}</span>
       </Link>
     </li>
   );
@@ -97,6 +95,7 @@ function ClanRow({ clan, rank }: { clan: ClanSummary; rank: number | null }) {
 
 /** Directory and season standings in one list — sorted by season XP, it is the leaderboard. */
 export function ClanDirectory() {
+  const t = useT();
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -121,10 +120,12 @@ export function ClanDirectory() {
   };
 
   // Search as you type, without a request per keystroke.
+  const commitSearch = useEffectEvent((value: string | undefined) => {
+    if (value !== query.q) setParam('q', value);
+  });
   useEffect(() => {
     const value = search.trim() || undefined;
-    if (value === query.q) return;
-    const timer = setTimeout(() => setParam('q', value), 300);
+    const timer = setTimeout(() => commitSearch(value), 300);
     return () => clearTimeout(timer);
   }, [search]);
 
@@ -143,10 +144,10 @@ export function ClanDirectory() {
       <div className={styles.filters}>
         <label className={styles.search}>
           <Icon name="search" size={16} />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search clans or tags" aria-label="Search clans" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t.clan.searchPlaceholder} aria-label={t.clan.searchLabel} />
         </label>
-        <select className={styles.select} value={query.gameId ?? ''} onChange={(e) => setParam('game', e.target.value || undefined)} aria-label="Game">
-          <option value="">All games</option>
+        <select className={styles.select} value={query.gameId ?? ''} onChange={(e) => setParam('game', e.target.value || undefined)} aria-label={t.lfg.game}>
+          <option value="">{t.lfg.allGames}</option>
           {games.map((game) => (
             <option key={game.id} value={game.id}>
               {game.title}
@@ -154,14 +155,14 @@ export function ClanDirectory() {
           ))}
         </select>
         <button type="button" className={cx(styles.toggle, query.recruiting && styles.toggleOn)} onClick={() => setParam('recruiting', query.recruiting ? undefined : 'true')} aria-pressed={Boolean(query.recruiting)}>
-          <Icon name="users" size={15} /> Recruiting
+          <Icon name="users" size={15} /> {t.clan.recruiting}
         </button>
         <label className={styles.sort}>
-          Sort
+          {t.clan.sortLabel}
           <select className={styles.select} value={query.sort} onChange={(e) => setParam('sort', e.target.value === 'season' ? undefined : e.target.value)}>
-            {Object.entries(SORT_LABELS).map(([value, label]) => (
+            {SORTS.map((value) => (
               <option key={value} value={value}>
-                {label}
+                {t.clan.sort[value]}
               </option>
             ))}
           </select>
@@ -175,8 +176,8 @@ export function ClanDirectory() {
           ))}
         </div>
       ) : (clans.data?.items.length ?? 0) === 0 ? (
-        <EmptyState icon="shield" title={query.q || query.gameId || query.recruiting ? 'No clans match' : 'No clans yet'} action={<ButtonLink href="/clans/new" icon="plus">Create the first one</ButtonLink>}>
-          Clans pool their members&rsquo; XP and race the season standings.
+        <EmptyState icon="shield" title={query.q || query.gameId || query.recruiting ? t.clan.noMatch : t.clan.none} action={<ButtonLink href="/clans/new" icon="plus">{t.clan.createFirst}</ButtonLink>}>
+          {t.clan.emptyText}
         </EmptyState>
       ) : (
         <>

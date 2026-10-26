@@ -1,6 +1,8 @@
 {
   "name": "tunisian-gaming-hub",
   "private": true,
+  "author": "Defendr.gg (https://defendr.gg/)",
+  "license": "UNLICENSED",
   "workspaces": [
     "packages/*",
     "apps/*"
@@ -12,11 +14,20 @@
     "seed": "npm run seed -w @tgh/api",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "build": "npm run build -w @tgh/api && npm run build -w @tgh/web",
-    "test": "npm run test --workspaces --if-present"
+    "test": "npm run test --workspaces --if-present",
+    "lint": "eslint . --max-warnings 0",
+    "lint:fix": "eslint . --fix",
+    "check": "npm run lint && npm run typecheck && npm test"
   },
   "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@next/eslint-plugin-next": "16.4.3",
     "concurrently": "^9.2.1",
-    "typescript": "5.9.3"
+    "eslint": "10.12.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "globals": "17.13.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.71.1"
   },
   "engines": {
     "node": ">=20.19"

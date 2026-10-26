@@ -12,6 +12,7 @@ import { EmptyState, Skeleton } from '@/components/ui/primitives';
 import { RelativeTime } from '@/components/ui/time';
 import { useSession, useSignInHref } from '@/features/auth/session';
 import { api, ApiError } from '@/lib/api/client';
+import { fill } from '@/i18n/config';
 import { useT } from '@/i18n/I18nProvider';
 import { cx } from '@/lib/cx';
 import styles from './SavedSearches.module.css';
@@ -59,12 +60,13 @@ export function SaveSearchButton({ criteria }: { criteria: SearchCriteria }) {
       <button type="button" className={styles.saveButton} onClick={() => save.mutate()} disabled={save.isPending}>
         <Icon name="bell" size={15} /> {save.isPending ? t.market.saving : t.market.saveSearch}
       </button>
-      {save.error ? <span className={styles.saveError}>{save.error instanceof ApiError ? save.error.message : 'Could not save'}</span> : null}
+      {save.error ? <span className={styles.saveError}>{save.error instanceof ApiError ? save.error.message : t.selling.couldNotSave}</span> : null}
     </span>
   );
 }
 
 function SearchRow({ search }: { search: SavedSearch }) {
+  const t = useT();
   const router = useRouter();
   const queryClient = useQueryClient();
   const [renaming, setRenaming] = useState(false);
@@ -80,7 +82,7 @@ function SearchRow({ search }: { search: SavedSearch }) {
 
   return (
     <li className={styles.row}>
-      <button type="button" className={styles.open} onClick={open} aria-label={`Open ${search.name}`}>
+      <button type="button" className={styles.open} onClick={open} aria-label={fill(t.selling.openSearch, { name: search.name })}>
         <span className={styles.searchIcon}>
           <Icon name="search" size={18} />
           {search.newCount > 0 ? <span className={styles.newBadge}>{search.newCount > 99 ? '99+' : search.newCount}</span> : null}
@@ -95,10 +97,10 @@ function SearchRow({ search }: { search: SavedSearch }) {
               update.mutate({ name }, { onSuccess: () => setRenaming(false) });
             }}
           >
-            <input value={name} onChange={(e) => setName(e.target.value)} maxLength={60} aria-label="Search name" autoFocus />
-            <button type="submit">Save</button>
+            <input value={name} onChange={(e) => setName(e.target.value)} maxLength={60} aria-label={t.selling.searchName} autoFocus />
+            <button type="submit">{t.common.save}</button>
             <button type="button" onClick={() => setRenaming(false)}>
-              Cancel
+              {t.common.cancel}
             </button>
           </form>
         ) : (
@@ -107,7 +109,7 @@ function SearchRow({ search }: { search: SavedSearch }) {
           </button>
         )}
         <p className={styles.meta}>
-          {search.newCount > 0 ? <strong>{search.newCount} new</strong> : 'Nothing new'} · saved <RelativeTime iso={search.createdAt} />
+          {search.newCount > 0 ? <strong>{fill(t.selling.newCount, { count: search.newCount })}</strong> : t.selling.nothingNew} · {t.selling.savedAgo} <RelativeTime iso={search.createdAt} />
         </p>
         <FormError message={update.error?.message ?? remove.error?.message} />
       </div>
@@ -117,14 +119,14 @@ function SearchRow({ search }: { search: SavedSearch }) {
           className={cx(styles.alertToggle, search.notify && styles.alertOn)}
           onClick={() => update.mutate({ notify: !search.notify })}
           aria-pressed={search.notify}
-          title={search.notify ? 'Alerts on — tap to mute' : 'Alerts off — tap to turn on'}
+          title={search.notify ? t.selling.alertsOnTitle : t.selling.alertsOffTitle}
         >
-          <Icon name="bell" size={16} filled={search.notify} /> {search.notify ? 'Alerts on' : 'Muted'}
+          <Icon name="bell" size={16} filled={search.notify} /> {search.notify ? t.selling.alertsOn : t.selling.muted}
         </button>
-        <button type="button" className={styles.iconButton} onClick={() => setRenaming(true)} aria-label="Rename">
+        <button type="button" className={styles.iconButton} onClick={() => setRenaming(true)} aria-label={t.selling.rename}>
           <Icon name="edit" size={16} />
         </button>
-        <button type="button" className={styles.iconButton} onClick={() => remove.mutate()} aria-label="Delete saved search">
+        <button type="button" className={styles.iconButton} onClick={() => remove.mutate()} aria-label={t.selling.deleteSearch}>
           <Icon name="trash" size={16} />
         </button>
       </div>
@@ -133,15 +135,16 @@ function SearchRow({ search }: { search: SavedSearch }) {
 }
 
 export function SavedSearchList() {
+  const t = useT();
   const { data: me, isPending } = useSession();
   const searches = useQuery({ queryKey: SEARCHES_KEY, queryFn: api.market.searches, enabled: Boolean(me) });
   if (isPending || (me && searches.isPending)) return <Skeleton height={200} />;
-  if (!me) return <EmptyState icon="bell" title="Sign in to save searches" action={<ButtonLink href="/login?next=/market/searches">Sign in</ButtonLink>} />;
+  if (!me) return <EmptyState icon="bell" title={t.selling.signInSearches} action={<ButtonLink href="/login?next=/market/searches">{t.common.signIn}</ButtonLink>} />;
   const items = searches.data ?? [];
   if (items.length === 0) {
     return (
-      <EmptyState icon="bell" title="No saved searches yet" action={<ButtonLink href="/market">Browse the marketplace</ButtonLink>}>
-        Filter the marketplace — a GPU under 1,500 TND, a QBCore script — then tap “Save search”. We&rsquo;ll alert you the moment a match is listed.
+      <EmptyState icon="bell" title={t.selling.noSearches} action={<ButtonLink href="/market">{t.selling.browse}</ButtonLink>}>
+        {t.selling.noSearchesText}
       </EmptyState>
     );
   }

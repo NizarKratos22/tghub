@@ -1,12 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import {
-  FIVEM_FRAMEWORK_LABELS,
-  MARKET_CATEGORY_META,
-  MARKET_CONDITION_LABELS,
   MARKET_SORTS,
   MARKET_SUBCATEGORIES,
-  MARKET_SUBCATEGORY_LABELS,
   marketListQuerySchema,
   type ListingCard,
   type MarketCategoryCount,
@@ -21,20 +17,20 @@ import { ListingGrid } from '@/features/market/ListingCard';
 import { MarketSidebar } from '@/features/market/MarketSidebar';
 import { SaveSearchButton } from '@/features/market/SavedSearches';
 import { fill } from '@/i18n/config';
-import { getT } from '@/i18n/server';
+import { regionName } from '@/i18n/places';
+import { getFormat, getT } from '@/i18n/server';
 import { serverApi, serverApiOr } from '@/lib/api/server';
 import { cx } from '@/lib/cx';
-import { formatNumber } from '@/lib/format';
 import { hrefWith, parseParams } from '@/lib/search-params';
 import styles from './market.module.css';
 
-export const metadata: Metadata = {
-  title: 'Marketplace',
-  description: 'Buy and sell gaming PCs, parts, consoles and FiveM assets with players across Tunisia.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t.nav.market, description: t.marketBrowse.metaDescription };
+}
 
 export default async function MarketPage(props: PageProps<'/market'>) {
-  const t = await getT();
+  const [t, format] = await Promise.all([getT(), getFormat()]);
   const SORT_LABELS: Record<MarketSort, string> = { newest: t.market.sortNewest, 'price-asc': t.market.sortPriceAsc, 'price-desc': t.market.sortPriceDesc };
   const query = parseParams(marketListQuerySchema, await props.searchParams);
   // The paid row shows on the first page of browsing, not inside searches.
@@ -65,12 +61,12 @@ export default async function MarketPage(props: PageProps<'/market'>) {
 
   const heading = query.q ? fill(t.market.resultsFor, { q: query.q }) : query.category ? t.market.categoryNames[query.category] : t.market.todaysPicks;
   const chips = [
-    query.region ? { label: query.region, clear: { region: null } } : null,
-    query.condition ? { label: MARKET_CONDITION_LABELS[query.condition], clear: { condition: null } } : null,
-    query.framework ? { label: FIVEM_FRAMEWORK_LABELS[query.framework], clear: { framework: null } } : null,
-    query.minPrice !== undefined ? { label: `From ${formatNumber(query.minPrice)} TND`, clear: { minPrice: null } } : null,
-    query.maxPrice !== undefined ? { label: `Up to ${formatNumber(query.maxPrice)} TND`, clear: { maxPrice: null } } : null,
-    query.shipping ? { label: 'Delivery available', clear: { shipping: null } } : null,
+    query.region ? { label: regionName(query.region, t), clear: { region: null } } : null,
+    query.condition ? { label: t.labels.condition[query.condition], clear: { condition: null } } : null,
+    query.framework ? { label: t.labels.framework[query.framework], clear: { framework: null } } : null,
+    query.minPrice !== undefined ? { label: fill(t.marketBrowse.fromPrice, { amount: format.number(query.minPrice) }), clear: { minPrice: null } } : null,
+    query.maxPrice !== undefined ? { label: fill(t.marketBrowse.upToPrice, { amount: format.number(query.maxPrice) }), clear: { maxPrice: null } } : null,
+    query.shipping ? { label: t.market.deliveryAvailable, clear: { shipping: null } } : null,
     query.q ? { label: `“${query.q}”`, clear: { q: null } } : null,
   ].filter((chip) => chip !== null);
 
@@ -83,8 +79,8 @@ export default async function MarketPage(props: PageProps<'/market'>) {
           <div className={styles.heading}>
             <h2 id="market-heading">{heading}</h2>
             <p className={styles.meta}>
-              <strong>{data.total === 1 ? t.market.listingCountOne : fill(t.market.listingCount, { count: formatNumber(data.total) })}</strong>
-              {query.category ? ` · ${MARKET_CATEGORY_META[query.category].description}` : ` ${t.market.acrossTunisia}`}
+              <strong>{data.total === 1 ? t.market.listingCountOne : fill(t.market.listingCount, { count: format.number(data.total) })}</strong>
+              {query.category ? ` · ${t.labels.categoryDescription[query.category]}` : ` ${t.market.acrossTunisia}`}
             </p>
           </div>
           <div className={styles.topTools}>
@@ -94,13 +90,13 @@ export default async function MarketPage(props: PageProps<'/market'>) {
         </div>
 
         {query.category && MARKET_SUBCATEGORIES[query.category].length > 0 ? (
-          <nav className={styles.subs} aria-label="Types">
+          <nav className={styles.subs} aria-label={t.marketBrowse.types}>
             <Link href={link({ sub: null })} className={cx(styles.sub, !query.sub && styles.subOn)} scroll={false}>
               {t.common.all}
             </Link>
             {MARKET_SUBCATEGORIES[query.category].map((sub) => (
               <Link key={sub} href={link({ sub })} className={cx(styles.sub, query.sub === sub && styles.subOn)} scroll={false}>
-                {MARKET_SUBCATEGORY_LABELS[sub]}
+                {t.labels.subcategory[sub]}
               </Link>
             ))}
           </nav>
@@ -109,7 +105,7 @@ export default async function MarketPage(props: PageProps<'/market'>) {
         {chips.length > 0 ? (
           <div className={styles.chips}>
             {chips.map((chip) => (
-              <Link key={chip.label} href={link(chip.clear)} className={styles.chip} aria-label={`Remove filter ${chip.label}`}>
+              <Link key={chip.label} href={link(chip.clear)} className={styles.chip} aria-label={fill(t.marketBrowse.removeFilter, { label: chip.label })}>
                 {chip.label} <Icon name="close" size={12} />
               </Link>
             ))}
@@ -120,8 +116,7 @@ export default async function MarketPage(props: PageProps<'/market'>) {
           <p className={styles.notice}>
             <Icon name="shield" size={18} />
             <span>
-              <strong>Buying FiveM assets?</strong> Prefer Keymaster transfers or Tebex for escrowed resources, ask for a preview video, and report
-              leaked or resold work — sellers confirm they own the rights to every digital listing.
+              <strong>{t.marketBrowse.fivemNoticeTitle}</strong> {t.marketBrowse.fivemNotice}
             </span>
           </p>
         ) : null}

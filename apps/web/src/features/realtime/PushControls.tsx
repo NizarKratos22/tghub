@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { Icon } from '@/components/ui/Icon';
 import { Toggle } from '@/components/ui/Toggle';
 import { useT } from '@/i18n/I18nProvider';
@@ -9,17 +9,19 @@ import { currentPushState, disablePush, enablePush, type PushState } from './pus
 import styles from './PushControls.module.css';
 
 const PROMPT_DISMISSED_KEY = 'tgh-push-prompt-dismissed';
-
-const DESCRIPTIONS: Record<PushState, string> = {
-  on: "On for this device. Chats, level-ups and alerts reach you while TG Hub isn't open.",
-  off: 'Get chat messages, level-ups and alerts on this device, even when TG Hub is closed.',
-  denied: 'Blocked in this browser. Allow notifications for this site in its settings, then come back.',
-  'needs-install': 'On iPhone and iPad: tap Share → Add to Home Screen, open TG Hub from there, then turn this on.',
-  unsupported: "This browser can't show notifications.",
-  unavailable: 'Not available on this server yet.',
+const neverChanges = () => () => {};
+const readDismissed = () => {
+  try {
+    return localStorage.getItem(PROMPT_DISMISSED_KEY) === '1';
+  } catch {
+    return false;
+  }
 };
+// Hidden in the server render, so it never flashes before the stored answer is known.
+const serverDismissed = () => true;
 
 export function usePush() {
+  const t = useT();
   const [state, setState] = useState<PushState | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +36,7 @@ export function usePush() {
     try {
       setState(await (on ? enablePush() : disablePush()));
     } catch (failure) {
-      setError(failure instanceof ApiError ? failure.message : "Couldn't change notifications on this device — try again");
+      setError(failure instanceof ApiError ? failure.message : t.alerts.pushFailed);
       setState(await currentPushState());
     } finally {
       setBusy(false);
@@ -45,12 +47,13 @@ export function usePush() {
 
 /** The settings switch for this browser's notifications. */
 export function PushToggle() {
+  const t = useT();
   const { state, busy, error, set } = usePush();
   if (!state) return null;
   const blocked = state !== 'on' && state !== 'off';
   return (
     <div className={styles.toggle}>
-      <Toggle label="Notifications on this device" description={DESCRIPTIONS[state]} checked={state === 'on'} disabled={busy || blocked} onChange={(on) => void set(on)} />
+      <Toggle label={t.alerts.pushLabel} description={t.alerts.push[state]} checked={state === 'on'} disabled={busy || blocked} onChange={(on) => void set(on)} />
       {error ? (
         <p className={styles.error} role="alert">
           {error}
@@ -64,15 +67,9 @@ export function PushToggle() {
 export function PushPrompt() {
   const t = useT();
   const { state, busy, error, set } = usePush();
-  const [dismissed, setDismissed] = useState(true);
-
-  useEffect(() => {
-    try {
-      setDismissed(localStorage.getItem(PROMPT_DISMISSED_KEY) === '1');
-    } catch {
-      setDismissed(false);
-    }
-  }, []);
+  const dismissedBefore = useSyncExternalStore(neverChanges, readDismissed, serverDismissed);
+  const [dismissedNow, setDismissed] = useState(false);
+  const dismissed = dismissedBefore || dismissedNow;
 
   if (state !== 'off' || dismissed) return null;
   const dismiss = () => {

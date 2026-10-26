@@ -66,6 +66,10 @@ export async function startSession(user: SessionUser, meta: ClientMeta): Promise
   };
 }
 
+export async function usernameAvailable(username: string): Promise<boolean> {
+  return !(await User.exists({ usernameLower: username.toLowerCase() }));
+}
+
 export async function register(input: RegisterInput, meta: ClientMeta): Promise<IssuedSession & { verification: EmailVerificationStatus | null }> {
   const usernameLower = input.username.toLowerCase();
   const clash = await User.findOne({ $or: [{ email: input.email }, { usernameLower }] }).select('email').lean();

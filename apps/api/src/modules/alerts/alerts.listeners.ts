@@ -4,12 +4,16 @@ import { refreshSellerBadge } from '../market/reputation.service';
 import { alertMatchingSearches } from '../market/searches.service';
 import { publishAlert } from './alerts.service';
 import { ensurePreferences, followGame } from './preferences.service';
+import { ensureSteamNewsSource } from './sources/sources.service';
 
 export function registerAlertListeners(): void {
   bus.on('user.registered', ({ userId }) => ensurePreferences(userId));
 
   // Favouriting a game means you want its patch notes.
   bus.on('game.favorited', ({ userId, gameId }) => followGame(userId, gameId));
+
+  // A new game on Steam gets its own Radar feed.
+  bus.on('game.on_steam', ({ gameId }) => ensureSteamNewsSource(gameId));
 
   bus.on('progression.level_up', ({ userId, level }) =>
     publishAlert(

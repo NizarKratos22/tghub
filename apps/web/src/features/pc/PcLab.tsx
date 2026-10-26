@@ -9,10 +9,14 @@ import { Button } from '@/components/ui/Button';
 import { FormError, SelectField, TextField } from '@/components/ui/Field';
 import { EmptyState, Skeleton, StatusBadge, Tag } from '@/components/ui/primitives';
 import { SESSION_KEY, useSession, useSignInHref } from '@/features/auth/session';
+import { fill } from '@/i18n/config';
+import type { Dictionary } from '@/i18n/dictionaries';
+import { useT } from '@/i18n/I18nProvider';
 import { api, ApiError } from '@/lib/api/client';
 import { cx } from '@/lib/cx';
 import { ComponentPicker } from './ComponentPicker';
 import { CompatResultView } from './CompatResultView';
+import { DetectPc } from './DetectPc';
 import { componentName, isComplete, RAM_OPTIONS, rigFromSpec, toHardware, useRigDraft } from './rig';
 import styles from './PcLab.module.css';
 
@@ -25,6 +29,7 @@ function SavedRigs({
   activeId: string | null;
   onLoad: (spec: PcSpec) => void;
 }) {
+  const t = useT();
   const queryClient = useQueryClient();
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['pc', 'specs'] });
   const makePrimary = useMutation({ mutationFn: (id: string) => api.pc.updateSpec(id, { isPrimary: true }), onSuccess: refresh });
@@ -33,26 +38,26 @@ function SavedRigs({
   return (
     <div className={styles.saved}>
       <p className="label">
-        Saved rigs · {specs.length}/{MAX_PC_SPECS_PER_USER}
+        {fill(t.pc.savedRigs, { count: specs.length, max: MAX_PC_SPECS_PER_USER })}
       </p>
       <ul>
         {specs.map((spec) => (
           <li key={spec.id} className={cx(styles.savedRow, spec.id === activeId && styles.savedActive)}>
             <button type="button" className={styles.savedMain} onClick={() => onLoad(spec)}>
               <span className={styles.savedName}>
-                {spec.name} {spec.isPrimary ? <Tag tone="primary">Primary</Tag> : null}
+                {spec.name} {spec.isPrimary ? <Tag tone="primary">{t.pc.primary}</Tag> : null}
               </span>
               <span className={styles.savedParts}>
-                {spec.cpu.model} · {spec.gpu.model} · {spec.ramGb} GB
+                {spec.cpu.model} · {spec.gpu.model} · {fill(t.pc.gbValue, { value: spec.ramGb })}
               </span>
             </button>
             <span className={styles.savedActions}>
               {!spec.isPrimary ? (
                 <Button size="sm" variant="ghost" onClick={() => makePrimary.mutate(spec.id)} disabled={makePrimary.isPending}>
-                  Make primary
+                  {t.pc.makePrimary}
                 </Button>
               ) : null}
-              <Button size="sm" variant="ghost" icon="trash" aria-label={`Delete ${spec.name}`} onClick={() => remove.mutate(spec.id)} disabled={remove.isPending} />
+              <Button size="sm" variant="ghost" icon="trash" aria-label={fill(t.pc.deleteRig, { name: spec.name })} onClick={() => remove.mutate(spec.id)} disabled={remove.isPending} />
             </span>
           </li>
         ))}
@@ -61,33 +66,43 @@ function SavedRigs({
   );
 }
 
+/** Known presets are worded per language; a new one shows the API's English until it's added. */
+function presetWords(preset: RigPreset, t: Dictionary): { name: string; description: string } {
+  return (t.pc.presetNames as Record<string, { name: string; description: string } | undefined>)[preset.id] ?? preset;
+}
+
 /** One click to try a typical machine instead of searching part by part. */
 function Presets({ onPick }: { onPick: (preset: RigPreset) => void }) {
+  const t = useT();
   const presets = useQuery({ queryKey: ['pc', 'presets'], queryFn: api.pc.presets, staleTime: 60 * 60_000 });
   if (!presets.data || presets.data.length === 0) return null;
   return (
     <div className={styles.presets}>
-      <p className="label">Start from a common setup</p>
+      <p className="label">{t.pc.presets}</p>
       <ul>
-        {presets.data.map((preset) => (
-          <li key={preset.id}>
-            <button type="button" className={styles.preset} onClick={() => onPick(preset)} aria-describedby={`preset-${preset.id}`}>
-              <span className={styles.presetName}>{preset.name}</span>
-              <span className={styles.presetParts}>
-                {preset.cpu.model} · {preset.gpu.model} · {preset.ramGb} GB
-              </span>
-              <span id={`preset-${preset.id}`} className="visually-hidden">
-                {preset.description}
-              </span>
-            </button>
-          </li>
-        ))}
+        {presets.data.map((preset) => {
+          const words = presetWords(preset, t);
+          return (
+            <li key={preset.id}>
+              <button type="button" className={styles.preset} onClick={() => onPick(preset)} aria-describedby={`preset-${preset.id}`}>
+                <span className={styles.presetName}>{words.name}</span>
+                <span className={styles.presetParts}>
+                  {preset.cpu.model} · {preset.gpu.model} · {fill(t.pc.gbValue, { value: preset.ramGb })}
+                </span>
+                <span id={`preset-${preset.id}`} className="visually-hidden">
+                  {words.description}
+                </span>
+              </button>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
 }
 
-function GameColumn({ title, status, games }: { title: string; status: CompatResult['overall']; games: GameSummary[] }) {
+function GameColumn({ status, games }: { status: CompatResult['overall']; games: GameSummary[] }) {
+  const t = useT();
   return (
     <div className={styles.column}>
       <div className={styles.columnHead}>
@@ -106,7 +121,7 @@ function GameColumn({ title, status, games }: { title: string; status: CompatRes
           ))}
         </ul>
       ) : (
-        <p className={styles.columnEmpty}>None {title.toLowerCase()}.</p>
+        <p className={styles.columnEmpty}>{t.pc.noneIn[status]}</p>
       )}
     </div>
   );
@@ -115,22 +130,23 @@ function GameColumn({ title, status, games }: { title: string; status: CompatRes
 function CompatibleGamesView({ data }: { data: CompatibleGames }) {
   return (
     <div className={styles.columns}>
-      <GameColumn title="At recommended" status="recommended" games={data.recommended} />
-      <GameColumn title="At minimum" status="minimum" games={data.minimum} />
-      <GameColumn title="Below minimum" status="below" games={data.below} />
-      {data.unknown.length > 0 ? <GameColumn title="Without data" status="unknown" games={data.unknown} /> : null}
+      <GameColumn status="recommended" games={data.recommended} />
+      <GameColumn status="minimum" games={data.minimum} />
+      <GameColumn status="below" games={data.below} />
+      {data.unknown.length > 0 ? <GameColumn status="unknown" games={data.unknown} /> : null}
     </div>
   );
 }
 
 export function PcLab({ initialGame }: { initialGame?: string }) {
+  const t = useT();
   const { data: me } = useSession();
   const signInHref = useSignInHref();
   const queryClient = useQueryClient();
   const { rig, update, loaded } = useRigDraft();
   const [gameSlug, setGameSlug] = useState(initialGame ?? '');
   const [activeSpecId, setActiveSpecId] = useState<string | null>(null);
-  const [rigName, setRigName] = useState('Main rig');
+  const [rigName, setRigName] = useState(t.pc.defaultRigName);
 
   const specs = useQuery({ queryKey: ['pc', 'specs'], queryFn: api.pc.specs, enabled: Boolean(me) });
   const games = useQuery({
@@ -195,56 +211,63 @@ export function PcLab({ initialGame }: { initialGame?: string }) {
       <div className={styles.lab}>
         <section className={styles.panel} aria-labelledby="rig-title">
           <h2 id="rig-title" className={styles.step}>
-            <span>A</span> Your rig
+            <span>A</span> {t.pc.stepRig}
           </h2>
+          <DetectPc
+            rig={rig}
+            onApply={(changes) => {
+              update(changes);
+              setActiveSpecId(null);
+            }}
+          />
           <Presets
             onPick={(preset) => {
               update({ cpu: preset.cpu, gpu: preset.gpu, ramGb: preset.ramGb });
               setActiveSpecId(null);
-              setRigName(preset.name);
+              setRigName(presetWords(preset, t).name);
             }}
           />
           <div className={styles.fields}>
-            <ComponentPicker type="cpu" label="Processor" value={rig.cpu} onChange={(cpu) => update({ cpu })} placeholder="Search — e.g. 5600, i5 12400" />
-            <ComponentPicker type="gpu" label="Graphics card" value={rig.gpu} onChange={(gpu) => update({ gpu })} placeholder="Search — e.g. 3060, rx 580, 1650" />
+            <ComponentPicker type="cpu" label={t.pc.processor} value={rig.cpu} onChange={(cpu) => update({ cpu })} placeholder={t.pc.cpuPlaceholder} />
+            <ComponentPicker type="gpu" label={t.pc.graphics} value={rig.gpu} onChange={(gpu) => update({ gpu })} placeholder={t.pc.gpuPlaceholder} />
             <div className={styles.ram}>
-              <span className="label">Memory</span>
-              <div className={styles.ramOptions} role="radiogroup" aria-label="Memory">
+              <span className="label">{t.pc.memory}</span>
+              <div className={styles.ramOptions} role="radiogroup" aria-label={t.pc.memory}>
                 {RAM_OPTIONS.map((gb) => (
                   <button key={gb} type="button" role="radio" aria-checked={rig.ramGb === gb} className={cx(styles.ramOption, rig.ramGb === gb && styles.ramOn)} onClick={() => update({ ramGb: gb })}>
                     {gb}
-                    <small>GB</small>
+                    <small>{t.pc.gb}</small>
                   </button>
                 ))}
               </div>
             </div>
             <TextField
-              label="Free storage (GB)"
+              label={t.pc.storage}
               type="number"
               inputMode="numeric"
               min={0}
-              placeholder="Optional"
+              placeholder={t.pc.optional}
               value={rig.storageGb ?? ''}
               onChange={(event) => update({ storageGb: event.target.value === '' ? null : Math.max(0, Math.floor(Number(event.target.value))) })}
-              hint="Leave empty if you're not sure — we'll skip the storage check."
+              hint={t.pc.storageHint}
             />
           </div>
 
           {me ? (
             <div className={styles.saveRow}>
-              <TextField label="Rig name" value={rigName} onChange={(event) => setRigName(event.target.value)} error={saveError?.fields.name} wrapperClassName={styles.nameField} />
+              <TextField label={t.pc.rigName} value={rigName} onChange={(event) => setRigName(event.target.value)} error={saveError?.fields.name} wrapperClassName={styles.nameField} />
               <Button onClick={() => save.mutate()} disabled={!hardware || !rigName.trim()} loading={save.isPending} icon="check">
-                {activeSpecId ? 'Update rig' : 'Save rig'}
+                {activeSpecId ? t.pc.updateRig : t.pc.saveRig}
               </Button>
               {activeSpecId ? (
                 <Button variant="ghost" onClick={() => setActiveSpecId(null)}>
-                  Save as new
+                  {t.pc.saveAsNew}
                 </Button>
               ) : null}
             </div>
           ) : (
             <p className={styles.note}>
-              Your rig is kept in this browser. <Link href={signInHref}>Sign in</Link> to save it to your profile and earn the “Build your rig” mission.
+              {t.pc.guestNote} <Link href={signInHref}>{t.pc.guestSignIn}</Link> {t.pc.guestNoteRest}
             </p>
           )}
           <FormError message={save.error && !saveError?.fields.name ? save.error.message : null} />
@@ -254,10 +277,10 @@ export function PcLab({ initialGame }: { initialGame?: string }) {
 
         <section className={styles.panel} aria-labelledby="check-title">
           <h2 id="check-title" className={styles.step}>
-            <span>B</span> Pick a game
+            <span>B</span> {t.pc.stepGame}
           </h2>
-          <SelectField label="Game" value={gameSlug} onChange={(event) => setGameSlug(event.target.value)}>
-            <option value="">Choose a PC game…</option>
+          <SelectField label={t.pc.game} value={gameSlug} onChange={(event) => setGameSlug(event.target.value)}>
+            <option value="">{t.pc.chooseGame}</option>
             {pcGames.map((game) => (
               <option key={game.slug} value={game.slug}>
                 {game.title}
@@ -266,12 +289,12 @@ export function PcLab({ initialGame }: { initialGame?: string }) {
           </SelectField>
           <div className={styles.result}>
             {!hardware ? (
-              <EmptyState icon="cpu" title="Start with your parts">
-                Pick a processor and a graphics card on the left.
+              <EmptyState icon="cpu" title={t.pc.startParts}>
+                {t.pc.startPartsText}
               </EmptyState>
             ) : !gameSlug ? (
-              <EmptyState icon="gamepad" title="Now pick a game">
-                Checking with {componentName(rig.cpu!)} and {componentName(rig.gpu!)}, {rig.ramGb} GB RAM.
+              <EmptyState icon="gamepad" title={t.pc.pickGame}>
+                {fill(t.pc.checkingWith, { cpu: componentName(rig.cpu!), gpu: componentName(rig.gpu!), ram: rig.ramGb })}
               </EmptyState>
             ) : check.data ? (
               <CompatResultView result={check.data} />
@@ -286,10 +309,10 @@ export function PcLab({ initialGame }: { initialGame?: string }) {
 
       <section className={styles.runs} aria-labelledby="runs-title">
         <h2 id="runs-title" className={styles.step}>
-          <span>C</span> What this rig runs
+          <span>C</span> {t.pc.stepRuns}
         </h2>
         {!hardware ? (
-          <p className={styles.note}>Complete your rig to see every game in the catalogue sorted by verdict.</p>
+          <p className={styles.note}>{t.pc.completeRig}</p>
         ) : compatible.data ? (
           <CompatibleGamesView data={compatible.data} />
         ) : (

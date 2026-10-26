@@ -4,6 +4,8 @@ import type { MarketPhoto } from '@tgh/shared';
 import { MAX_LISTING_PHOTOS } from '@tgh/shared';
 import { useEffect, useRef, useState } from 'react';
 import { Icon } from '@/components/ui/Icon';
+import { fill } from '@/i18n/config';
+import { useT } from '@/i18n/I18nProvider';
 import { api, ApiError } from '@/lib/api/client';
 import { cx } from '@/lib/cx';
 import styles from './PhotoUploader.module.css';
@@ -29,6 +31,7 @@ export function slotsFromPhotos(photos: MarketPhoto[]): PhotoSlot[] {
  * photo is the cover; arrows reorder, × removes. Uploads run two at a time.
  */
 export function PhotoUploader({ slots, onChange, error }: { slots: PhotoSlot[]; onChange: (update: (slots: PhotoSlot[]) => PhotoSlot[]) => void; error?: string }) {
+  const t = useT();
   const input = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const objectUrls = useRef(new Set<string>());
@@ -43,7 +46,7 @@ export function PhotoUploader({ slots, onChange, error }: { slots: PhotoSlot[]; 
       const photo = await api.market.uploadPhoto(file);
       onChange((current) => current.map((slot) => (slot.key === key ? { ...slot, status: 'done', photo } : slot)));
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : 'Upload failed';
+      const message = err instanceof ApiError ? err.message : t.sell.uploadFailed;
       onChange((current) => current.map((slot) => (slot.key === key ? { ...slot, status: 'error', error: message } : slot)));
     }
   };
@@ -82,18 +85,18 @@ export function PhotoUploader({ slots, onChange, error }: { slots: PhotoSlot[]; 
     <div className={styles.uploader}>
       <div className={styles.head}>
         <span className={styles.title}>
-          Photos · {slots.length}/{MAX_LISTING_PHOTOS}
+          {fill(t.sell.photos, { count: slots.length, max: MAX_LISTING_PHOTOS })}
         </span>
-        <span className={styles.hint}>The first photo is the cover. Location data is removed from every upload.</span>
+        <span className={styles.hint}>{t.sell.photosHint}</span>
       </div>
       <ul className={styles.tiles}>
         {slots.map((slot, index) => (
           <li key={slot.key} className={cx(styles.tile, slot.status === 'error' && styles.failed)}>
-            <img src={slot.status === 'done' && slot.photo ? slot.photo.thumbUrl : slot.src} alt={`Photo ${index + 1}`} />
-            {index === 0 ? <span className={styles.cover}>Cover</span> : null}
+            <img src={slot.status === 'done' && slot.photo ? slot.photo.thumbUrl : slot.src} alt={fill(t.sell.photo, { n: index + 1 })} />
+            {index === 0 ? <span className={styles.cover}>{t.sell.cover}</span> : null}
             {slot.status === 'uploading' ? (
               <span className={styles.overlay}>
-                <span className={styles.spinner} aria-label="Uploading" />
+                <span className={styles.spinner} aria-label={t.sell.uploading} />
               </span>
             ) : null}
             {slot.status === 'error' ? (
@@ -103,13 +106,13 @@ export function PhotoUploader({ slots, onChange, error }: { slots: PhotoSlot[]; 
               </span>
             ) : null}
             <span className={styles.controls}>
-              <button type="button" onClick={() => move(index, -1)} disabled={index === 0} aria-label="Move earlier">
+              <button type="button" onClick={() => move(index, -1)} disabled={index === 0} aria-label={t.sell.moveEarlier}>
                 <Icon name="chevronLeft" size={14} />
               </button>
-              <button type="button" onClick={() => move(index, 1)} disabled={index === slots.length - 1} aria-label="Move later">
+              <button type="button" onClick={() => move(index, 1)} disabled={index === slots.length - 1} aria-label={t.sell.moveLater}>
                 <Icon name="chevronRight" size={14} />
               </button>
-              <button type="button" onClick={() => remove(slot.key)} aria-label="Remove photo">
+              <button type="button" onClick={() => remove(slot.key)} aria-label={t.sell.removePhoto}>
                 <Icon name="close" size={14} />
               </button>
             </span>
@@ -133,8 +136,8 @@ export function PhotoUploader({ slots, onChange, error }: { slots: PhotoSlot[]; 
               }}
             >
               <Icon name="camera" size={26} />
-              <span>{slots.length === 0 ? 'Add photos' : 'Add more'}</span>
-              <small>or drag them here</small>
+              <span>{slots.length === 0 ? t.sell.addPhotos : t.sell.addMore}</span>
+              <small>{t.sell.dragHere}</small>
             </button>
           </li>
         ) : null}

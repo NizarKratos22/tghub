@@ -3,9 +3,7 @@
 import {
   CLAN_COLORS,
   CLAN_JOIN_POLICIES,
-  CLAN_JOIN_POLICY_META,
   COUNTRY_CODES,
-  countryName,
   MAX_CLAN_GAMES,
   SUGGESTED_COUNTRIES,
   type ClanDetail,
@@ -20,12 +18,13 @@ import { FormError, SelectField, TextAreaField, TextField } from '@/components/u
 import { Icon } from '@/components/ui/Icon';
 import { SignedIn } from '@/features/auth/session';
 import { VerifyEmailNotice } from '@/features/auth/VerifyEmailBanner';
+import { fill } from '@/i18n/config';
+import { useLocale, useT } from '@/i18n/I18nProvider';
+import { byName, countryName } from '@/i18n/places';
 import { api, ApiError } from '@/lib/api/client';
 import { cx } from '@/lib/cx';
 import { ClanEmblem, SQUAD_KEYS, useGameOptions } from './shared';
 import styles from './forms.module.css';
-
-const OTHER_COUNTRIES = COUNTRY_CODES.filter((code) => !SUGGESTED_COUNTRIES.includes(code)).sort((a, b) => countryName(a).localeCompare(countryName(b)));
 
 interface Values {
   tag: string;
@@ -39,6 +38,10 @@ interface Values {
 
 /** Create a clan, or edit one (the tag is permanent once created). */
 export function ClanFields({ initial, onSaved, submitLabel }: { initial?: ClanDetail; onSaved: (clan: ClanDetail) => void; submitLabel: string }) {
+  const t = useT();
+  const locale = useLocale();
+  const nameOf = (code: CountryCode) => countryName(code, locale);
+  const otherCountries = COUNTRY_CODES.filter((code) => !SUGGESTED_COUNTRIES.includes(code)).sort((a, b) => byName(nameOf(a), nameOf(b)));
   const queryClient = useQueryClient();
   const games = useGameOptions();
   const editing = Boolean(initial);
@@ -82,62 +85,62 @@ export function ClanFields({ initial, onSaved, submitLabel }: { initial?: ClanDe
   return (
     <form className={styles.form} onSubmit={submit}>
       <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Identity</h2>
+        <h2 className={styles.sectionTitle}>{t.clan.identity}</h2>
         <div className={styles.identity}>
           <ClanEmblem tag={tag || 'TAG'} color={values.color} size={76} />
           <div className={styles.row}>
           {editing ? (
-            <TextField label="Tag" value={tag} disabled hint="Tags are permanent." />
+            <TextField label={t.clan.tag} value={tag} disabled hint={t.clan.tagPermanent} />
           ) : (
-            <TextField label="Tag" placeholder="TGH" value={tag} maxLength={5} onChange={(e) => set('tag', e.target.value)} error={fields.tag} hint="2–5 letters or digits, shown as [TAG]." required />
+            <TextField label={t.clan.tag} placeholder="TGH" value={tag} maxLength={5} onChange={(e) => set('tag', e.target.value)} error={fields.tag} hint={t.clan.tagHint} required />
           )}
-          <TextField label="Clan name" placeholder="Carthage Wolves" value={values.name} maxLength={32} onChange={(e) => set('name', e.target.value)} error={fields.name} required />
+          <TextField label={t.clan.name} placeholder={t.clan.namePlaceholder} value={values.name} maxLength={32} onChange={(e) => set('name', e.target.value)} error={fields.name} required />
           </div>
         </div>
         <div className={styles.group}>
-          <span className={styles.groupLabel}>Colour</span>
+          <span className={styles.groupLabel}>{t.clan.colour}</span>
           <div className={styles.swatches}>
             {CLAN_COLORS.map((color) => (
-              <button key={color} type="button" className={cx(styles.swatch, values.color === color && styles.swatchOn)} style={{ background: color }} onClick={() => set('color', color)} aria-label={`Colour ${color}`} aria-pressed={values.color === color} />
+              <button key={color} type="button" className={cx(styles.swatch, values.color === color && styles.swatchOn)} style={{ background: color }} onClick={() => set('color', color)} aria-label={fill(t.clan.colourOption, { color })} aria-pressed={values.color === color} />
             ))}
           </div>
         </div>
-        <TextAreaField label="About the clan" placeholder="What you play, when you play, what you expect from members…" value={values.description} maxLength={500} rows={4} onChange={(e) => set('description', e.target.value)} error={fields.description} hint={`${values.description.length}/500`} />
+        <TextAreaField label={t.clan.about} placeholder={t.clan.aboutPlaceholder} value={values.description} maxLength={500} rows={4} onChange={(e) => set('description', e.target.value)} error={fields.description} hint={`${values.description.length}/500`} />
       </section>
 
       <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Recruiting</h2>
-        <div className={styles.cards} role="radiogroup" aria-label="Who can join">
+        <h2 className={styles.sectionTitle}>{t.clan.recruitingSection}</h2>
+        <div className={styles.cards} role="radiogroup" aria-label={t.clan.whoCanJoin}>
           {CLAN_JOIN_POLICIES.map((policy) => (
             <button key={policy} type="button" role="radio" aria-checked={values.joinPolicy === policy} className={cx(styles.card, values.joinPolicy === policy && styles.cardOn)} onClick={() => set('joinPolicy', policy)}>
-              <strong>{CLAN_JOIN_POLICY_META[policy].label}</strong>
-              <span>{CLAN_JOIN_POLICY_META[policy].description}</span>
+              <strong>{t.labels.clanPolicy[policy].label}</strong>
+              <span>{t.labels.clanPolicy[policy].description}</span>
             </button>
           ))}
         </div>
         <div className={styles.row}>
-          <SelectField label="Based in" value={values.country} onChange={(e) => set('country', e.target.value as CountryCode | '')} error={fields.country}>
-            <option value="">Worldwide</option>
+          <SelectField label={t.clan.basedIn} value={values.country} onChange={(e) => set('country', e.target.value as CountryCode | '')} error={fields.country}>
+            <option value="">{t.clan.worldwide}</option>
             {SUGGESTED_COUNTRIES.map((code) => (
               <option key={code} value={code}>
-                {countryName(code)}
+                {nameOf(code)}
               </option>
             ))}
             <option disabled>──────────</option>
-            {OTHER_COUNTRIES.map((code) => (
+            {otherCountries.map((code) => (
               <option key={code} value={code}>
-                {countryName(code)}
+                {nameOf(code)}
               </option>
             ))}
           </SelectField>
           <SelectField
-            label={`Main games (up to ${MAX_CLAN_GAMES})`}
+            label={fill(t.clan.mainGames, { max: MAX_CLAN_GAMES })}
             value=""
             onChange={(e) => e.target.value && values.gameIds.length < MAX_CLAN_GAMES && set('gameIds', [...values.gameIds, e.target.value])}
             disabled={values.gameIds.length >= MAX_CLAN_GAMES}
             error={fields.gameIds}
           >
-            <option value="">{values.gameIds.length >= MAX_CLAN_GAMES ? 'Remove one to add another' : '+ Add a game…'}</option>
+            <option value="">{values.gameIds.length >= MAX_CLAN_GAMES ? t.clan.removeOne : t.clan.addGame}</option>
             {games
               .filter((game) => !values.gameIds.includes(game.id))
               .map((game) => (
@@ -152,7 +155,7 @@ export function ClanFields({ initial, onSaved, submitLabel }: { initial?: ClanDe
             {values.gameIds.map((id) => {
               const game = games.find((g) => g.id === id);
               return (
-                <button key={id} type="button" className={styles.gameChip} style={{ '--accent': game?.accent } as CSSProperties} onClick={() => set('gameIds', values.gameIds.filter((g) => g !== id))} aria-label={`Remove ${game?.title ?? 'game'}`}>
+                <button key={id} type="button" className={styles.gameChip} style={{ '--accent': game?.accent } as CSSProperties} onClick={() => set('gameIds', values.gameIds.filter((g) => g !== id))} aria-label={fill(t.clan.removeGame, { game: game?.title ?? '' })}>
                   <i aria-hidden />
                   {game?.title ?? '…'}
                   <Icon name="close" size={12} />
@@ -174,14 +177,15 @@ export function ClanFields({ initial, onSaved, submitLabel }: { initial?: ClanDe
 }
 
 export function CreateClanForm() {
+  const t = useT();
   const router = useRouter();
   return (
-    <SignedIn prompt="Sign in to create a clan">
+    <SignedIn prompt={t.clan.signInToCreate}>
       {(me) =>
         me.emailVerified ? (
-          <ClanFields submitLabel="Create clan" onSaved={(clan) => router.push(`/clans/${clan.tag}`)} />
+          <ClanFields submitLabel={t.clan.createButton} onSaved={(clan) => router.push(`/clans/${clan.tag}`)} />
         ) : (
-          <VerifyEmailNotice action="create a clan" />
+          <VerifyEmailNotice text={t.clan.verifyToCreate} />
         )
       }
     </SignedIn>

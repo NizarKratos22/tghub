@@ -1,18 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import {
-  ASSET_DELIVERY_LABELS,
-  ASSET_SOURCE_LABELS,
-  FIVEM_FRAMEWORK_LABELS,
-  LISTING_STATUS_LABELS,
-  MARKET_CATEGORY_META,
-  MARKET_CONDITION_LABELS,
-  MARKET_SUBCATEGORY_LABELS,
-  type ListingCard,
-  type ListingDetail,
-  type Page,
-} from '@tgh/shared';
+import type { ListingCard, ListingDetail, Page } from '@tgh/shared';
 import { Icon } from '@/components/ui/Icon';
 import { Avatar, Tag } from '@/components/ui/primitives';
 import { SectionHeader } from '@/components/ui/SectionHeader';
@@ -21,22 +10,26 @@ import { Gallery } from '@/features/market/Gallery';
 import { ListingActions } from '@/features/market/ListingActions';
 import { ListingGrid } from '@/features/market/ListingCard';
 import { ReputationLine } from '@/features/market/reputation';
+import { fill } from '@/i18n/config';
+import { regionName } from '@/i18n/places';
+import { getFormat, getT } from '@/i18n/server';
 import { serverApi, serverApiOr } from '@/lib/api/server';
-import { formatDateYear, formatTnd } from '@/lib/format';
 import styles from './listing.module.css';
 
 export async function generateMetadata(props: PageProps<'/market/item/[id]'>): Promise<Metadata> {
   const { id } = await props.params;
-  if (!/^[a-f\d]{24}$/i.test(id)) return { title: 'Listing not found' };
+  const [t, format] = await Promise.all([getT(), getFormat()]);
+  if (!/^[a-f\d]{24}$/i.test(id)) return { title: t.listing.notFound };
   const listing = await serverApiOr<ListingDetail | null>(`/market/listings/${id}`, null);
   return listing
-    ? { title: `${listing.title} — ${formatTnd(listing.price)}`, description: listing.description.slice(0, 160) }
-    : { title: 'Listing not found' };
+    ? { title: `${listing.title} — ${format.tnd(listing.price)}`, description: listing.description.slice(0, 160) }
+    : { title: t.listing.notFound };
 }
 
 export default async function ListingPage(props: PageProps<'/market/item/[id]'>) {
   const { id } = await props.params;
   if (!/^[a-f\d]{24}$/i.test(id)) notFound();
+  const [t, format] = await Promise.all([getT(), getFormat()]);
   const listing = await serverApi<ListingDetail>(`/market/listings/${id}`);
   const [fromSeller, similar] = await Promise.all([
     serverApiOr<Page<ListingCard> | null>('/market/listings', null, { query: { seller: listing.seller.username, pageSize: 7 } }),
@@ -49,26 +42,26 @@ export default async function ListingPage(props: PageProps<'/market/item/[id]'>)
   const similarOthers = others(similar).filter((item) => !sellerOthers.some((own) => own.id === item.id));
 
   const digital = listing.digitalInfo;
+  const categoryName = t.market.categoryNames[listing.category];
+  const handOver = listing.meetup && listing.shipping ? t.listing.meetupOrShipping : listing.meetup ? t.listing.meetup : t.listing.shipping;
   const details: Array<[string, string]> = [
-    ['Category', listing.subcategory ? `${MARKET_CATEGORY_META[listing.category].label} › ${MARKET_SUBCATEGORY_LABELS[listing.subcategory]}` : MARKET_CATEGORY_META[listing.category].label],
-    ...(listing.condition ? [['Condition', MARKET_CONDITION_LABELS[listing.condition]] as [string, string]] : []),
-    ...(digital?.framework ? [['Framework', FIVEM_FRAMEWORK_LABELS[digital.framework]] as [string, string]] : []),
-    ...(digital ? [['Delivery', ASSET_DELIVERY_LABELS[digital.delivery]] as [string, string], ['Source', ASSET_SOURCE_LABELS[digital.source]] as [string, string]] : []),
-    ...(!digital
-      ? [['Hand-over', [listing.meetup ? 'Meet-up' : null, listing.shipping ? 'Delivery' : null].filter(Boolean).join(' or ')] as [string, string]]
-      : []),
+    [t.listing.category, listing.subcategory ? `${categoryName} › ${t.labels.subcategory[listing.subcategory]}` : categoryName],
+    ...(listing.condition ? [[t.listing.condition, t.labels.condition[listing.condition]] as [string, string]] : []),
+    ...(digital?.framework ? [[t.listing.framework, t.labels.framework[digital.framework]] as [string, string]] : []),
+    ...(digital ? [[t.listing.delivery, t.labels.delivery[digital.delivery]] as [string, string], [t.listing.source, t.labels.source[digital.source]] as [string, string]] : []),
+    ...(!digital ? [[t.listing.handOver, handOver] as [string, string]] : []),
   ];
 
   return (
     <div className="container page">
-      <nav className={styles.crumbs} aria-label="Breadcrumb">
-        <Link href="/market">Marketplace</Link>
+      <nav className={styles.crumbs} aria-label={t.listing.breadcrumb}>
+        <Link href="/market">{t.nav.market}</Link>
         <Icon name="chevronRight" size={12} />
-        <Link href={`/market?category=${listing.category}`}>{MARKET_CATEGORY_META[listing.category].label}</Link>
+        <Link href={`/market?category=${listing.category}`}>{categoryName}</Link>
         {listing.subcategory ? (
           <>
             <Icon name="chevronRight" size={12} />
-            <Link href={`/market?category=${listing.category}&sub=${listing.subcategory}`}>{MARKET_SUBCATEGORY_LABELS[listing.subcategory]}</Link>
+            <Link href={`/market?category=${listing.category}&sub=${listing.subcategory}`}>{t.labels.subcategory[listing.subcategory]}</Link>
           </>
         ) : null}
       </nav>
@@ -79,19 +72,21 @@ export default async function ListingPage(props: PageProps<'/market/item/[id]'>)
         <div className={styles.info}>
           <header className={styles.head}>
             <div className={styles.tags}>
-              {listing.status !== 'active' ? <Tag tone={listing.status === 'sold' ? 'solid' : 'gold'}>{LISTING_STATUS_LABELS[listing.status]}</Tag> : null}
-              {listing.digital ? <Tag tone="purple">Digital asset</Tag> : null}
-              {listing.negotiable ? <Tag tone="primary">Negotiable</Tag> : null}
-              {listing.openToTrades ? <Tag tone="success">Open to trades</Tag> : null}
+              {listing.status !== 'active' ? <Tag tone={listing.status === 'sold' ? 'solid' : 'gold'}>{t.labels.listingStatus[listing.status]}</Tag> : null}
+              {listing.digital ? <Tag tone="purple">{t.listing.digitalAsset}</Tag> : null}
+              {listing.negotiable ? <Tag tone="primary">{t.listing.negotiable}</Tag> : null}
+              {listing.openToTrades ? <Tag tone="success">{t.listing.openToTrades}</Tag> : null}
             </div>
-            <h1 className={styles.title}>{listing.title}</h1>
-            <p className={styles.price}>{formatTnd(listing.price)}</p>
+            <h1 className={styles.title}>
+              <bdi>{listing.title}</bdi>
+            </h1>
+            <p className={styles.price}>{format.tnd(listing.price)}</p>
             <p className={styles.listed}>
-              Listed <RelativeTime iso={listing.bumpedAt} />
+              {t.listing.listed} <RelativeTime iso={listing.bumpedAt} />
               {listing.region ? (
                 <>
                   {' '}
-                  in <strong>{listing.region}</strong>
+                  {t.listing.listedIn} <strong>{regionName(listing.region, t)}</strong>
                 </>
               ) : null}
             </p>
@@ -100,7 +95,7 @@ export default async function ListingPage(props: PageProps<'/market/item/[id]'>)
           <ListingActions listing={listing} />
 
           <section className={styles.card}>
-            <h2 className={styles.cardTitle}>Details</h2>
+            <h2 className={styles.cardTitle}>{t.listing.details}</h2>
             <dl className={styles.details}>
               {details.map(([label, value]) => (
                 <div key={label}>
@@ -109,24 +104,24 @@ export default async function ListingPage(props: PageProps<'/market/item/[id]'>)
                 </div>
               ))}
             </dl>
-            <p className={styles.description}>{listing.description}</p>
+            <p className={styles.description} dir="auto">{listing.description}</p>
             {listing.region ? (
               <p className={styles.location}>
                 <Icon name="mapPin" size={16} />
-                {[listing.area, listing.region].filter(Boolean).join(', ')}
+                {listing.area ? fill(t.labels.place, { region: listing.area, country: regionName(listing.region, t) }) : regionName(listing.region, t)}
               </p>
             ) : null}
           </section>
 
           <section className={styles.card}>
-            <h2 className={styles.cardTitle}>Seller</h2>
+            <h2 className={styles.cardTitle}>{t.listing.seller}</h2>
             <Link href={`/u/${listing.seller.username}`} className={styles.seller}>
               <Avatar name={listing.seller.displayName} color={listing.seller.avatarColor} src={listing.seller.avatarUrl} size={48} />
               <span className={styles.sellerText}>
                 <span className={styles.sellerName}>{listing.seller.displayName}</span>
                 <span className={styles.sellerMeta}>
-                  Joined {formatDateYear(listing.seller.joinedAt)} · Level {listing.seller.level}
-                  {listing.seller.region ? ` · ${listing.seller.region}` : ''}
+                  {fill(t.listing.joined, { date: format.dateYear(listing.seller.joinedAt) })} · {fill(t.common.level, { level: listing.seller.level })}
+                  {listing.seller.region ? ` · ${regionName(listing.seller.region, t)}` : ''}
                 </span>
               </span>
               <Icon name="chevronRight" size={18} />
@@ -136,17 +131,16 @@ export default async function ListingPage(props: PageProps<'/market/item/[id]'>)
             </p>
             <div className={styles.sellerStats}>
               <span>
-                <strong>{listing.seller.activeListings}</strong> for sale
+                <strong>{format.number(listing.seller.activeListings)}</strong> {t.listing.forSale}
               </span>
               <span>
-                <strong>{listing.seller.soldListings}</strong> sold
+                <strong>{format.number(listing.seller.soldListings)}</strong> {t.listing.sold}
               </span>
-              <Link href={`/market?seller=${encodeURIComponent(listing.seller.username)}`}>See all listings</Link>
+              <Link href={`/market?seller=${encodeURIComponent(listing.seller.username)}`}>{t.listing.seeAllListings}</Link>
             </div>
             <p className={styles.safety}>
               <Icon name="shield" size={16} />
-              Meet in a public place, check the item before paying, and never send money for an item you haven&apos;t seen. TG Hub doesn&apos;t handle
-              payments.
+              {t.listing.safety}
             </p>
           </section>
         </div>
@@ -154,7 +148,10 @@ export default async function ListingPage(props: PageProps<'/market/item/[id]'>)
 
       {sellerOthers.length > 0 ? (
         <section className={styles.more}>
-          <SectionHeader title={`More from ${listing.seller.displayName}`} action={{ href: `/market?seller=${encodeURIComponent(listing.seller.username)}`, label: 'See all' }} />
+          <SectionHeader
+            title={fill(t.listing.moreFrom, { name: listing.seller.displayName })}
+            action={{ href: `/market?seller=${encodeURIComponent(listing.seller.username)}`, label: t.common.seeAll }}
+          />
           <ListingGrid listings={sellerOthers} dense />
         </section>
       ) : null}
@@ -162,8 +159,8 @@ export default async function ListingPage(props: PageProps<'/market/item/[id]'>)
       {similarOthers.length > 0 ? (
         <section className={styles.more}>
           <SectionHeader
-            title="Similar listings"
-            action={{ href: `/market?category=${listing.category}${listing.subcategory ? `&sub=${listing.subcategory}` : ''}`, label: 'Browse category' }}
+            title={t.listing.similar}
+            action={{ href: `/market?category=${listing.category}${listing.subcategory ? `&sub=${listing.subcategory}` : ''}`, label: t.listing.browseCategory }}
           />
           <ListingGrid listings={similarOthers} dense />
         </section>

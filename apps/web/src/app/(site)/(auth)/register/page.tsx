@@ -3,13 +3,18 @@ import { AuthForm } from '@/features/auth/AuthForm';
 import { getT } from '@/i18n/server';
 import { AuthLayout } from '../AuthLayout';
 
-export const metadata: Metadata = { title: 'Create account' };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t.meta.register };
+}
 
 export default async function RegisterPage(props: PageProps<'/register'>) {
   const { next, auth_error: authError } = await props.searchParams;
   const t = await getT();
   return (
     <AuthLayout
+      mode="register"
+      next={typeof next === 'string' ? next : undefined}
       kicker={t.auth.registerKicker}
       title={
         <>

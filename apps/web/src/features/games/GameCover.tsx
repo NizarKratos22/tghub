@@ -1,6 +1,9 @@
+'use client';
+
 import Link from 'next/link';
-import { GENRE_LABELS, type GameSummary, type Platform } from '@tgh/shared';
+import type { GameSummary, Platform } from '@tgh/shared';
 import type { CSSProperties } from 'react';
+import { useT } from '@/i18n/I18nProvider';
 import { cx } from '@/lib/cx';
 import styles from './GameCover.module.css';
 
@@ -15,10 +18,11 @@ const PLATFORM_SHORT: Record<Platform, string> = {
 type CoverGame = Pick<GameSummary, 'slug' | 'title' | 'monogram' | 'accent' | 'genres' | 'platforms' | 'freeToPlay' | 'coverUrl'>;
 
 /**
- * Typographic key art on the game's own colour: monogram, genre and platforms —
- * consistent across the catalogue and independent of licensed artwork.
+ * The game's IGDB box art; without one, typographic key art on the game's own
+ * colour (monogram, genre and platforms) keeps the catalogue consistent.
  */
-export function GameCover({ game, link = true, size = 'md', className }: { game: CoverGame; link?: boolean; size?: 'md' | 'lg'; className?: string }) {
+export function GameCover({ game, link = true, size = 'md', className }: { game: CoverGame; link?: boolean; size?: 'sm' | 'md' | 'lg'; className?: string }) {
+  const t = useT();
   const length = game.monogram.replace(/\s/g, '').length;
   const monogramSize = length <= 2 ? styles.mono2 : length === 3 ? styles.mono3 : styles.mono4;
   const genre = game.genres[0];
@@ -26,13 +30,17 @@ export function GameCover({ game, link = true, size = 'md', className }: { game:
   const content = (
     <>
       <span className={styles.art}>
-        {game.coverUrl ? <span className={styles.image} style={{ backgroundImage: `url(${game.coverUrl})` }} aria-hidden /> : null}
-        <span className={cx(styles.monogram, monogramSize)} aria-hidden>
-          {game.monogram}
-        </span>
+        {game.coverUrl ? (
+          // Box art from IGDB's CDN: already sized, cached for a year.
+          <img src={game.coverUrl} alt="" className={styles.image} loading="lazy" decoding="async" />
+        ) : (
+          <span className={cx(styles.monogram, monogramSize)} aria-hidden>
+            {game.monogram}
+          </span>
+        )}
         <span className={styles.chips}>
-          <span className={styles.chip}>{genre ? GENRE_LABELS[genre] : 'Game'}</span>
-          {game.freeToPlay ? <span className={cx(styles.chip, styles.f2p)}>Free</span> : null}
+          <span className={styles.chip}>{genre ? t.labels.genre[genre] : t.games.game}</span>
+          {game.freeToPlay ? <span className={cx(styles.chip, styles.f2p)}>{t.games.free}</span> : null}
         </span>
       </span>
       <span className={styles.body}>
@@ -43,7 +51,7 @@ export function GameCover({ game, link = true, size = 'md', className }: { game:
   );
 
   const props = {
-    className: cx(styles.cover, size === 'lg' && styles.large, className),
+    className: cx(styles.cover, size === 'lg' && styles.large, size === 'sm' && styles.small, className),
     style: { '--accent': game.accent } as CSSProperties,
   };
 
@@ -56,9 +64,10 @@ export function GameCover({ game, link = true, size = 'md', className }: { game:
   );
 }
 
-export function GameGrid({ games, columns = 5 }: { games: GameSummary[]; columns?: 4 | 5 }) {
+/** `columns="auto"` fits as many ~200 px covers as the width allows (the catalogue); 4 or 5 is a fixed count. */
+export function GameGrid({ games, columns = 5 }: { games: GameSummary[]; columns?: 4 | 5 | 'auto' }) {
   return (
-    <ul className={cx(styles.grid, columns === 4 && styles.grid4)}>
+    <ul className={cx(styles.grid, columns === 4 && styles.grid4, columns === 'auto' && styles.gridAuto)}>
       {games.map((game) => (
         <li key={game.id}>
           <GameCover game={game} />

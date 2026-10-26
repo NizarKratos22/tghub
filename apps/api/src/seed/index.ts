@@ -22,6 +22,7 @@ import { ensurePreferences, updatePreferences } from '../modules/alerts/preferen
 import { runSource } from '../modules/alerts/sources/sources.service';
 import '../modules/auth/session.model';
 import { Game, type RequirementTierDoc } from '../modules/games/game.model';
+import { Guide } from '../modules/guides/guide.model';
 import { HardwareComponent } from '../modules/hardware/hardware.model';
 import '../modules/library/library.model';
 import { messageSeller, sendMessage } from '../modules/market/conversations.service';
@@ -45,13 +46,15 @@ import {
 } from '../modules/tournaments/tournaments.sync';
 import { User } from '../modules/users/user.model';
 import { CPUS, GPUS, type ComponentSeed } from './data/components';
-import { ACHIEVEMENTS, MISSIONS, PLAYERS, RESOURCES, SEASON, STEAM_SOURCES } from './data/content';
+import { ACHIEVEMENTS, MISSIONS, PLAYERS, RESOURCES, SEASON } from './data/content';
 import { GAMES, type TierSeed } from './data/games';
+import { GUIDES } from './data/guides';
 import { CONVERSATIONS, LISTINGS } from './data/market';
 import { seedSquads } from './squads';
 import { registerSocialListeners } from '../modules/social/social.listeners';
 import { follow } from '../modules/social/social.service';
 import { registerSquadListeners } from '../modules/squads/squads.listeners';
+import { syncIgdbCatalogue } from '../modules/games/games.igdb';
 import { listingArt } from './data/market-art';
 import { SAMPLE_TOURNAMENTS } from './data/tournaments';
 
@@ -123,6 +126,7 @@ async function seed() {
   await mongoose.connection.dropDatabase();
   // Uploaded files belong to the documents we just dropped.
   await rm(env.MEDIA_DIR, { recursive: true, force: true });
+  if (env.r2) console.warn(`Seed images go to the R2 bucket "${env.r2.bucket}"; images from earlier seeds stay there until you empty it.`);
   await Promise.all(mongoose.modelNames().map((name) => mongoose.model(name).createIndexes()));
   logger.info('Database reset');
 
@@ -152,6 +156,7 @@ async function seed() {
       tags: game.tags,
       languages: game.languages,
       steamAppId: game.steamAppId,
+      igdb: { id: game.igdbId },
       links: game.links,
       requirements: {
         minimum: resolveTier(game.minimum, scores, game.slug),
@@ -367,20 +372,28 @@ async function seed() {
     );
   }
 
-  /* Alert sources: official Steam announcements */
-  const sources = await AlertSource.insertMany(
-    STEAM_SOURCES.map((slug) => {
-      const game = games.find((g) => g.slug === slug)!;
-      return {
-        name: `${game.title} — Steam announcements`,
+  /* Competitive guides with their Overwolf apps */
+  await Guide.insertMany(
+    GUIDES.flatMap(({ slug, ...guide }) => {
+      const game = games.find((g) => g.slug === slug);
+      return game ? [{ ...guide, gameId: game._id }] : [];
+    }),
+  );
+
+  /* Alert sources: official announcements for every game on Steam, and Steam's free-to-keep giveaways */
+  const sources = await AlertSource.insertMany([
+    ...games
+      .filter((game) => game.steamAppId)
+      .map((game) => ({
+        name: `${game.title} — Steam announcements`.slice(0, 60),
         adapter: 'steam_news',
         config: { appId: game.steamAppId! },
         gameId: game._id,
         category: 'game_update',
         intervalMinutes: 60,
-      };
-    }),
-  );
+      })),
+    { name: 'Steam — free to keep', adapter: 'steam_free', config: { appId: null }, gameId: null, category: 'deal', intervalMinutes: 180 },
+  ]);
 
   if (FETCH_FEEDS && tournamentSources.length > 0) {
     for (const source of tournamentSources) await runTournamentSource(String(source._id));
@@ -392,11 +405,15 @@ async function seed() {
   await sendTournamentReminders();
 
   if (FETCH_FEEDS) {
-    logger.info('Fetching live Steam announcements (set SEED_FETCH_FEEDS=false to skip)…');
+    logger.info('Fetching live Steam announcements and giveaways (set SEED_FETCH_FEEDS=false to skip)…');
     const results = await Promise.all(sources.map((source) => runSource(String(source._id))));
     const ingested = results.reduce((sum, r) => sum + r.newResources, 0);
     const failed = results.filter((r) => r.source.health === 'failing').map((r) => r.source.name);
     logger.info({ ingested, failed }, 'Steam sources fetched');
+    if (env.igdb) {
+      logger.info('Filling the catalogue from IGDB…');
+      logger.info(await syncIgdbCatalogue({ force: true }), 'IGDB data applied');
+    }
   }
   await bus.drain();
 

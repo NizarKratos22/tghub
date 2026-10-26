@@ -1,17 +1,20 @@
+'use client';
+
 import Link from 'next/link';
 import type { TournamentSummary } from '@tgh/shared';
 import type { CSSProperties } from 'react';
 import { ButtonLink } from '@/components/ui/Button';
 import { Countdown } from '@/components/ui/time';
+import { useFormat, useT } from '@/i18n/I18nProvider';
 import { cx } from '@/lib/cx';
-import { dateTile, isUrgent } from '@/lib/format';
+import { isUrgent } from '@/lib/format';
 import { ProviderBadge, TournamentStatusBadge } from './badges';
 import { entrantsLabel, externalCta, teamSizeLabel, whereLabel } from './display';
 import { FollowButton } from './FollowButton';
 import styles from './TournamentRow.module.css';
 
 function DateBlock({ iso }: { iso: string }) {
-  const tile = dateTile(iso);
+  const tile = useFormat().dateTile(iso);
   return (
     <time dateTime={iso} className={styles.date}>
       <span className={styles.weekday}>{tile.weekday}</span>
@@ -23,21 +26,24 @@ function DateBlock({ iso }: { iso: string }) {
 }
 
 function RegistrationLine({ tournament }: { tournament: TournamentSummary }) {
+  const t = useT();
   const closesAt = tournament.registration.closesAt;
   if (tournament.status === 'registration_open' && closesAt) {
-    return <Countdown iso={closesAt} prefix="Sign-ups close in" className={cx(styles.reg, isUrgent(closesAt) && styles.urgent)} />;
+    return <Countdown iso={closesAt} label={t.tournaments.signupsCloseIn} className={cx(styles.reg, isUrgent(closesAt) && styles.urgent)} />;
   }
-  if (tournament.status === 'registration_open') return <span className={styles.reg}>Sign-ups open</span>;
+  if (tournament.status === 'registration_open') return <span className={styles.reg}>{t.tournaments.signupsOpen}</span>;
   if (tournament.status === 'upcoming') {
-    return <Countdown iso={tournament.startsAt} prefix="Starts in" className={styles.reg} />;
+    return <Countdown iso={tournament.startsAt} label={t.tournaments.startsIn} className={styles.reg} />;
   }
   return null;
 }
 
 /** One line of the schedule. Sign-up always links out to the organizer's platform. */
 export function TournamentRow({ tournament }: { tournament: TournamentSummary }) {
-  const cta = externalCta(tournament);
-  const facts = [teamSizeLabel(tournament.teamSize), whereLabel(tournament), entrantsLabel(tournament.participants), tournament.prize].filter(
+  const t = useT();
+  const format = useFormat();
+  const cta = externalCta(tournament, t);
+  const facts = [teamSizeLabel(tournament.teamSize, t, format), whereLabel(tournament, t), entrantsLabel(tournament.participants, t, format), tournament.prize].filter(
     Boolean,
   );
 
@@ -84,7 +90,9 @@ export function TournamentRow({ tournament }: { tournament: TournamentSummary })
 
 /** Compact line for rails (home, game pages). */
 export function TournamentLine({ tournament }: { tournament: TournamentSummary }) {
-  const tile = dateTile(tournament.startsAt);
+  const t = useT();
+  const format = useFormat();
+  const tile = format.dateTile(tournament.startsAt);
   return (
     <Link href={`/tournaments/${tournament.slug}`} className={styles.line}>
       <span className={styles.lineTile}>
@@ -94,7 +102,7 @@ export function TournamentLine({ tournament }: { tournament: TournamentSummary }
       <span className={styles.lineMain}>
         <span className={styles.lineName}>{tournament.name}</span>
         <span className={styles.lineSub}>
-          {[tournament.game?.title ?? tournament.gameName, whereLabel(tournament), teamSizeLabel(tournament.teamSize)].filter(Boolean).join(' · ')}
+          {[tournament.game?.title ?? tournament.gameName, whereLabel(tournament, t), teamSizeLabel(tournament.teamSize, t, format)].filter(Boolean).join(' · ')}
         </span>
       </span>
       {tournament.status === 'registration_open' || tournament.status === 'live' ? <TournamentStatusBadge status={tournament.status} /> : null}

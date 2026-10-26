@@ -2,32 +2,28 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
-import { LISTING_STATUS_LABELS, type ConversationSummary, type CursorPage, type MarketMessage } from '@tgh/shared';
+import { useCallback, useEffect, useEffectEvent, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import type { ConversationSummary, CursorPage, MarketMessage } from '@tgh/shared';
 import { Icon } from '@/components/ui/Icon';
 import { Avatar, EmptyState, Skeleton, Tag } from '@/components/ui/primitives';
 import { RelativeTime } from '@/components/ui/time';
 import { SESSION_KEY, SignedIn } from '@/features/auth/session';
 import { useRealtimeConnected, useRealtimeEvent } from '@/features/realtime/RealtimeProvider';
+import { fill } from '@/i18n/config';
+import { useFormat, useT } from '@/i18n/I18nProvider';
+import type { Format } from '@/lib/format';
 import { api, ApiError } from '@/lib/api/client';
 import { cx } from '@/lib/cx';
-import { formatDate, formatTime, formatTnd } from '@/lib/format';
 import { LISTING_KEYS } from './meta';
 import styles from './Inbox.module.css';
 
 type Role = 'all' | 'buying' | 'selling';
-const TABS: Array<{ value: Role; label: string }> = [
-  { value: 'all', label: 'All' },
-  { value: 'buying', label: 'Buying' },
-  { value: 'selling', label: 'Selling' },
-];
+const ROLES: Role[] = ['all', 'buying', 'selling'];
 
 /** Send "typing…" at most this often; the other side shows it for a little longer. */
 const TYPING_PING_MS = 3_000;
 const TYPING_SHOW_MS = 6_000;
 
-const SELLER_REPLIES = ["Yes, it's still available", 'Where would you like to meet?', "Sorry, it's been sold"];
-const BUYER_REPLIES = ['Is the price negotiable?', 'Can you send more photos?', 'When can we meet?'];
 
 function ListingThumb({ conversation, size = 52 }: { conversation: ConversationSummary; size?: number }) {
   return (
@@ -41,7 +37,9 @@ function ListingThumb({ conversation, size = 52 }: { conversation: ConversationS
 }
 
 function ConversationList({ activeId }: { activeId?: string }) {
+  const t = useT();
   const [role, setRole] = useState<Role>('all');
+  const roleLabel: Record<Role, string> = { all: t.common.all, buying: t.chat.buying, selling: t.chat.selling };
   const live = useRealtimeConnected();
   const conversations = useQuery({
     queryKey: LISTING_KEYS.conversations(role),
@@ -53,11 +51,11 @@ function ConversationList({ activeId }: { activeId?: string }) {
   return (
     <div className={styles.listPane}>
       <div className={styles.listHead}>
-        <h2>Chats</h2>
-        <div className={styles.tabs} role="tablist" aria-label="Filter chats">
-          {TABS.map((tab) => (
-            <button key={tab.value} type="button" role="tab" aria-selected={role === tab.value} className={cx(styles.tab, role === tab.value && styles.tabOn)} onClick={() => setRole(tab.value)}>
-              {tab.label}
+        <h2>{t.chat.chats}</h2>
+        <div className={styles.tabs} role="tablist" aria-label={t.chat.filter}>
+          {ROLES.map((value) => (
+            <button key={value} type="button" role="tab" aria-selected={role === value} className={cx(styles.tab, role === value && styles.tabOn)} onClick={() => setRole(value)}>
+              {roleLabel[value]}
             </button>
           ))}
         </div>
@@ -69,7 +67,7 @@ function ConversationList({ activeId }: { activeId?: string }) {
           ))}
         </div>
       ) : (conversations.data ?? []).length === 0 ? (
-        <p className={styles.listEmpty}>{role === 'selling' ? 'No buyers have messaged you yet.' : role === 'buying' ? "You haven't messaged any sellers yet." : 'No chats yet.'}</p>
+        <p className={styles.listEmpty}>{role === 'selling' ? t.chat.noBuyers : role === 'buying' ? t.chat.noSellers : t.chat.noChats}</p>
       ) : (
         <ul className={styles.listBody}>
           {conversations.data!.map((conversation) => (
@@ -82,15 +80,19 @@ function ConversationList({ activeId }: { activeId?: string }) {
                       {conversation.counterpart.displayName} · {conversation.listing.title}
                     </span>
                   </span>
-                  <span className={styles.itemPreview}>
-                    {conversation.lastMessage ? `${conversation.lastMessage.mine ? 'You: ' : ''}${conversation.lastMessage.body}` : 'No messages yet'}
+                  <span className={styles.itemPreview} dir="auto">
+                    {conversation.lastMessage
+                      ? conversation.lastMessage.mine
+                        ? fill(t.chat.you, { message: conversation.lastMessage.body })
+                        : conversation.lastMessage.body
+                      : t.chat.noMessages}
                   </span>
                   <span className={styles.itemMeta}>
-                    <span className={cx(styles.roleTag, conversation.role === 'seller' && styles.roleSeller)}>{conversation.role === 'seller' ? 'Selling' : 'Buying'}</span>
+                    <span className={cx(styles.roleTag, conversation.role === 'seller' && styles.roleSeller)}>{conversation.role === 'seller' ? t.chat.selling : t.chat.buying}</span>
                     <RelativeTime iso={conversation.updatedAt} />
                   </span>
                 </span>
-                {conversation.unread > 0 ? <span className={styles.unreadDot} aria-label={`${conversation.unread} unread`}>{conversation.unread}</span> : null}
+                {conversation.unread > 0 ? <span className={styles.unreadDot} aria-label={fill(t.chat.unread, { count: conversation.unread })}>{conversation.unread}</span> : null}
               </Link>
             </li>
           ))}
@@ -101,10 +103,10 @@ function ConversationList({ activeId }: { activeId?: string }) {
 }
 
 /** Groups consecutive messages by day for the separators. */
-function withDays(messages: MarketMessage[]) {
+function withDays(messages: MarketMessage[], format: Format) {
   let lastDay = '';
   return messages.map((message) => {
-    const day = formatDate(message.createdAt);
+    const day = format.date(message.createdAt);
     const showDay = day !== lastDay;
     lastDay = day;
     return { message, showDay, day };
@@ -129,6 +131,8 @@ function useCounterpartTyping(id: string) {
 }
 
 function Thread({ id }: { id: string }) {
+  const t = useT();
+  const format = useFormat();
   const queryClient = useQueryClient();
   const [older, setOlder] = useState<MarketMessage[]>([]);
   const [olderCursor, setOlderCursor] = useState<string | null | undefined>(undefined);
@@ -158,22 +162,23 @@ function Thread({ id }: { id: string }) {
     },
   });
   const lastMessageId = messages.at(-1)?.id;
+  const lastIsMine = messages.at(-1)?.mine ?? false;
+  const markSeen = useEffectEvent(() => markRead.mutate());
   const unread = conversation.data?.unread ?? 0;
   // "Seen" must mean seen: a thread open in a background tab isn't read until the tab is looked at.
   useEffect(() => {
-    const needsRead = unread > 0 || (lastMessageId && !messages.at(-1)?.mine);
+    const needsRead = unread > 0 || (lastMessageId && !lastIsMine);
     if (!needsRead) return;
     if (document.visibilityState === 'visible') {
-      markRead.mutate();
+      markSeen();
       return;
     }
     const onVisible = () => {
-      if (document.visibilityState === 'visible') markRead.mutate();
+      if (document.visibilityState === 'visible') markSeen();
     };
     document.addEventListener('visibilitychange', onVisible);
     return () => document.removeEventListener('visibilitychange', onVisible);
-    // Only re-run when something new arrives, not on every render of the mutation object.
-  }, [lastMessageId, unread]);
+  }, [lastMessageId, lastIsMine, unread]);
 
   useRealtimeEvent((event) => {
     if (event.type === 'market.typing' && event.data.conversationId === id) {
@@ -238,8 +243,8 @@ function Thread({ id }: { id: string }) {
   if (conversation.isError) {
     return (
       <div className={styles.threadEmpty}>
-        <EmptyState icon="message" title="Conversation not found">
-          It may have been removed, or it belongs to another account.
+        <EmptyState icon="message" title={t.chat.notFound}>
+          {t.chat.notFoundText}
         </EmptyState>
       </div>
     );
@@ -247,7 +252,7 @@ function Thread({ id }: { id: string }) {
 
   const data = conversation.data;
   const closed = data ? data.listing.status === 'removed' || data.listing.status === 'deleted' : false;
-  const replies = data?.role === 'seller' ? SELLER_REPLIES : BUYER_REPLIES;
+  const replies = data?.role === 'seller' ? t.chat.sellerReplies : t.chat.buyerReplies;
   // Messenger-style receipt under your latest message only.
   const lastOwn = messages.at(-1)?.mine ? messages.at(-1) : undefined;
   const seen = Boolean(lastOwn && data?.counterpartReadAt && data.counterpartReadAt >= lastOwn.createdAt);
@@ -255,7 +260,7 @@ function Thread({ id }: { id: string }) {
   return (
     <div className={styles.thread}>
       <header className={styles.threadHead}>
-        <Link href="/market/inbox" className={styles.back} aria-label="Back to chats">
+        <Link href="/market/inbox" className={styles.back} aria-label={t.chat.back}>
           <Icon name="arrowLeft" size={20} />
         </Link>
         {data ? (
@@ -265,11 +270,11 @@ function Thread({ id }: { id: string }) {
               <span className={styles.threadText}>
                 <span className={styles.threadTitle}>{data.listing.title}</span>
                 <span className={styles.threadSub}>
-                  {formatTnd(data.listing.price)} · {data.role === 'seller' ? 'Buyer' : 'Seller'}: <strong>{data.counterpart.displayName}</strong>
+                  {format.tnd(data.listing.price)} · {data.role === 'seller' ? t.chat.buyer : t.chat.seller}: <strong>{data.counterpart.displayName}</strong>
                 </span>
               </span>
             </Link>
-            {data.listing.status !== 'active' ? <Tag tone={data.listing.status === 'sold' ? 'solid' : 'gold'}>{LISTING_STATUS_LABELS[data.listing.status]}</Tag> : null}
+            {data.listing.status !== 'active' ? <Tag tone={data.listing.status === 'sold' ? 'solid' : 'gold'}>{t.labels.listingStatus[data.listing.status]}</Tag> : null}
           </>
         ) : (
           <Skeleton height={44} />
@@ -287,28 +292,28 @@ function Thread({ id }: { id: string }) {
       >
         {cursor ? (
           <button type="button" className={styles.older} onClick={() => loadOlder.mutate()} disabled={loadOlder.isPending}>
-            {loadOlder.isPending ? 'Loading…' : 'Load earlier messages'}
+            {loadOlder.isPending ? t.chat.loading : t.chat.loadEarlier}
           </button>
         ) : null}
         {latest.isPending ? <Skeleton height={120} /> : null}
-        {withDays(messages).map(({ message, showDay, day }) => (
+        {withDays(messages, format).map(({ message, showDay, day }) => (
           <div key={message.id} className={styles.messageRow}>
             {showDay ? <p className={styles.day}>{day}</p> : null}
             <div className={cx(styles.bubbleWrap, message.mine && styles.mine)}>
-              <p className={styles.bubble}>{message.body}</p>
+              <p className={styles.bubble} dir="auto">{message.body}</p>
               <time className={styles.time} dateTime={message.createdAt}>
-                {formatTime(message.createdAt)}
+                {format.time(message.createdAt)}
               </time>
             </div>
             {message === lastOwn ? (
               <p className={cx(styles.receipt, seen && styles.receiptSeen)}>
                 {seen ? (
                   <>
-                    <Icon name="eye" size={12} /> Seen {formatTime(data!.counterpartReadAt!)}
+                    <Icon name="eye" size={12} /> {fill(t.chat.seen, { time: format.time(data!.counterpartReadAt!) })}
                   </>
                 ) : (
                   <>
-                    <Icon name="check" size={12} /> Sent
+                    <Icon name="check" size={12} /> {t.chat.sent}
                   </>
                 )}
               </p>
@@ -316,7 +321,7 @@ function Thread({ id }: { id: string }) {
           </div>
         ))}
         {counterpartTyping.typing && data ? (
-          <div className={styles.typing} aria-label={`${data.counterpart.displayName} is typing`}>
+          <div className={styles.typing} aria-label={fill(t.chat.typing, { name: data.counterpart.displayName })}>
             <Avatar name={data.counterpart.displayName} color={data.counterpart.avatarColor} src={data.counterpart.avatarUrl} size={26} />
             <span className={styles.typingBubble} aria-hidden>
               <span />
@@ -328,7 +333,7 @@ function Thread({ id }: { id: string }) {
       </div>
 
       {closed ? (
-        <p className={styles.closed}>This listing is no longer available, so the conversation is closed.</p>
+        <p className={styles.closed}>{t.chat.closed}</p>
       ) : (
         <div className={styles.composer}>
           {messages.length <= 3 ? (
@@ -345,16 +350,16 @@ function Thread({ id }: { id: string }) {
               value={draft}
               onChange={(event) => onDraftChange(event.target.value)}
               onKeyDown={onKey}
-              placeholder="Write a message…"
+              placeholder={t.chat.placeholder}
               rows={1}
               maxLength={2000}
-              aria-label="Message"
+              aria-label={t.chat.message}
             />
-            <button type="button" className={styles.send} onClick={submit} disabled={!draft.trim() || send.isPending} aria-label="Send message">
+            <button type="button" className={styles.send} onClick={submit} disabled={!draft.trim() || send.isPending} aria-label={t.chat.sendMessage}>
               <Icon name="send" size={19} />
             </button>
           </div>
-          {send.error ? <p className={styles.sendError}>{send.error instanceof ApiError ? send.error.message : 'Message not sent — try again'}</p> : null}
+          {send.error ? <p className={styles.sendError}>{send.error instanceof ApiError ? send.error.message : t.chat.notSent}</p> : null}
         </div>
       )}
     </div>
@@ -362,8 +367,9 @@ function Thread({ id }: { id: string }) {
 }
 
 export function MarketInbox({ activeId }: { activeId?: string }) {
+  const t = useT();
   return (
-    <SignedIn prompt="Sign in to see your messages" promptText="Chats with buyers and sellers live here." loading={<Skeleton height={480} />}>
+    <SignedIn prompt={t.chat.signInPrompt} promptText={t.chat.signInText} loading={<Skeleton height={480} />}>
       {() => (
         <div className={cx(styles.inbox, activeId && styles.hasThread)}>
           <ConversationList activeId={activeId} />
@@ -372,8 +378,8 @@ export function MarketInbox({ activeId }: { activeId?: string }) {
           ) : (
             <div className={styles.threadEmpty}>
               <Icon name="message" size={36} />
-              <p>Select a chat to read it</p>
-              <span>Messages about your listings and the items you asked about.</span>
+              <p>{t.chat.selectChat}</p>
+              <span>{t.chat.selectChatText}</span>
             </div>
           )}
         </div>

@@ -101,3 +101,7 @@
 .how strong {
   color: var(--text);
 }
+
+.adminImport:not(:empty) {
+  margin-bottom: 16px;
+}

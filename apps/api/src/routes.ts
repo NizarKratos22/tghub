@@ -20,6 +20,7 @@ import { universeRouter } from './modules/progression/progression.routes';
 import { radarRouter } from './modules/radar/radar.routes';
 import { adminTournamentsRouter, tournamentsRouter } from './modules/tournaments/tournaments.routes';
 import { meRouter, usersRouter } from './modules/users/users.routes';
+import { adminGuidesRouter, guidesRouter } from './modules/guides/guides.routes';
 
 export const apiRouter = Router();
 
@@ -31,6 +32,7 @@ apiRouter.use('/errors', errorReportRouter);
 apiRouter.use('/admin/errors', adminErrorsRouter);
 apiRouter.use('/home', homeRouter);
 apiRouter.use('/games', gamesRouter);
+apiRouter.use('/guides', guidesRouter);
 apiRouter.use('/radar', radarRouter);
 apiRouter.use('/tournaments', tournamentsRouter);
 apiRouter.use('/market', marketRouter);
@@ -49,5 +51,6 @@ apiRouter.use('/users', followRouter);
 apiRouter.use('/users', usersRouter);
 apiRouter.use('/feed', feedRouter);
 apiRouter.use('/admin/tournaments', adminTournamentsRouter);
+apiRouter.use('/admin/guides', adminGuidesRouter);
 apiRouter.use('/admin/market', adminMarketRouter);
 apiRouter.use('/admin', adminRouter);

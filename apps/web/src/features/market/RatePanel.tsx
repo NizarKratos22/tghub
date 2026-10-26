@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/Button';
 import { FormError } from '@/components/ui/Field';
+import { fill } from '@/i18n/config';
+import { useT } from '@/i18n/I18nProvider';
 import { api, ApiError } from '@/lib/api/client';
 import { LISTING_KEYS } from './meta';
 import { StarPicker, Stars } from './reputation';
@@ -14,6 +16,7 @@ import styles from './RatePanel.module.css';
 
 /** For the buyer the seller picked: rate the sale, and adjust it for a couple of weeks. */
 export function RatePanel({ listing, state }: { listing: ListingDetail; state: ListingViewerState }) {
+  const t = useT();
   const router = useRouter();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(!state.myRating);
@@ -36,12 +39,12 @@ export function RatePanel({ listing, state }: { listing: ListingDetail; state: L
   if (state.myRating && !editing) {
     return (
       <div className={styles.panel} id="rate">
-        <p className={styles.title}>Your rating</p>
+        <p className={styles.title}>{t.listing.yourRating}</p>
         <Stars value={state.myRating.stars} size={20} />
         {state.myRating.comment ? <p className={styles.comment}>&ldquo;{state.myRating.comment}&rdquo;</p> : null}
         {state.canRate ? (
           <button type="button" className={styles.edit} onClick={() => setEditing(true)}>
-            Change rating
+            {t.listing.changeRating}
           </button>
         ) : null}
       </div>
@@ -50,13 +53,13 @@ export function RatePanel({ listing, state }: { listing: ListingDetail; state: L
 
   return (
     <form className={styles.panel} id="rate" onSubmit={submit}>
-      <p className={styles.title}>You bought this from {listing.seller.displayName}</p>
-      <p className={styles.text}>How did it go? Your rating shows on their profile. You can change it for {RATING_EDIT_DAYS} days.</p>
+      <p className={styles.title}>{fill(t.listing.boughtFrom, { name: listing.seller.displayName })}</p>
+      <p className={styles.text}>{fill(t.listing.rateText, { days: RATING_EDIT_DAYS })}</p>
       <StarPicker value={stars} onChange={setStars} />
-      <textarea className={styles.textarea} value={comment} onChange={(e) => setComment(e.target.value)} maxLength={500} rows={3} placeholder="Item as described? Easy to meet? (optional)" aria-label="Comment" />
+      <textarea className={styles.textarea} value={comment} onChange={(e) => setComment(e.target.value)} maxLength={500} rows={3} placeholder={t.listing.ratePlaceholder} aria-label={t.listing.comment} />
       <FormError message={save.error instanceof ApiError ? save.error.message : null} />
       <Button type="submit" block disabled={stars === 0} loading={save.isPending} icon="star">
-        {state.myRating ? 'Update rating' : 'Rate the seller'}
+        {state.myRating ? t.listing.updateRating : t.listing.rateSeller}
       </Button>
     </form>
   );

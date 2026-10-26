@@ -17,7 +17,8 @@ homeRouter.get(
   '/',
   handle({}, async (): Promise<HomeFeed> => {
     const [featured, latest, deals, tournaments, pulse, leaders, ticker, listings] = await Promise.all([
-      featuredGames(10),
+      // Enough for the home page's scrolling rail to have somewhere to go on wide screens.
+      featuredGames(20),
       latestNews(6),
       dealsEndingSoon(4),
       tournamentsForHome(5),

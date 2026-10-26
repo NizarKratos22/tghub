@@ -4,6 +4,7 @@ import {
   type CompatCheckInput,
   type CompatibleGames,
   type CompatResult,
+  type ComponentMatchQuery,
   type ComponentQuery,
   type ComponentType,
   type HardwareComponent as ComponentDto,
@@ -21,6 +22,7 @@ import { Game, type GameDoc } from '../games/game.model';
 import { GAME_SUMMARY_FIELDS, toGameDetail, toGameSummary } from '../games/games.mapper';
 import { findGameBySlug } from '../games/games.service';
 import { evaluate, type HardwareProfile } from './compatibility';
+import { bestComponentMatch } from './component-match';
 import { HardwareComponent, PcSpec, type ComponentDoc, type PcSpecDoc } from './hardware.model';
 
 export function toComponent(doc: ComponentDoc): ComponentDto {
@@ -57,6 +59,13 @@ export async function searchComponents({ type, q, brand, segment, limit }: Compo
   }
   const docs = await HardwareComponent.find(filter).sort({ score: -1 }).limit(limit).lean<ComponentDoc[]>();
   return docs.map(toComponent);
+}
+
+/** The index entry for a part name a computer reported, or null when we can't tell which one it is. */
+export async function matchComponent({ type, name }: ComponentMatchQuery): Promise<ComponentDto | null> {
+  const docs = await HardwareComponent.find({ type }).lean<ComponentDoc[]>();
+  const match = bestComponentMatch(name, docs);
+  return match ? toComponent(match) : null;
 }
 
 async function loadPair(cpuId: string, gpuId: string): Promise<{ cpu: ComponentDoc; gpu: ComponentDoc }> {
@@ -213,19 +222,17 @@ export async function checkCompatibility(input: CompatCheckInput, auth: AuthCont
 
   const ram = evaluation.dimensions.find((d) => d.key === 'ram');
   const recRam = detail.requirements.recommended?.ramGb;
-  const ramAdvice =
-    ram && (ram.status === 'below' || ram.status === 'minimum') && recRam && recRam > rig.profile.ramGb
-      ? `Going to ${recRam} GB matches the recommended spec.`
-      : null;
+  const ramTargetGb = ram && (ram.status === 'below' || ram.status === 'minimum') && recRam && recRam > rig.profile.ramGb ? recRam : null;
+  const ramAdvice = ramTargetGb ? `Going to ${ramTargetGb} GB matches the recommended spec.` : null;
 
   const short = evaluation.dimensions.some((d) => (d.key === 'cpu' || d.key === 'gpu') && (d.status === 'below' || d.status === 'minimum'));
-  const upgradeNote = laptop
-    ? short
+  const upgradeNoteKind = laptop ? (short ? 'laptop' : null) : upgrades.some((u) => u.key === 'cpu') ? 'socket' : null;
+  const upgradeNote =
+    upgradeNoteKind === 'laptop'
       ? "This is a laptop: its processor and graphics can't be swapped. Memory, and sometimes storage, are the parts you can upgrade."
-      : null
-    : upgrades.some((u) => u.key === 'cpu')
-      ? 'Processor upgrades depend on your motherboard socket — check compatibility before buying.'
-      : null;
+      : upgradeNoteKind === 'socket'
+        ? 'Processor upgrades depend on your motherboard socket — check compatibility before buying.'
+        : null;
 
   if (auth && (await firstTime(`compat:${auth.userId}:${detail.id}:${dayKey()}`))) {
     bus.emit('pc.compat_checked', { userId: auth.userId, gameId: detail.id });
@@ -239,9 +246,12 @@ export async function checkCompatibility(input: CompatCheckInput, auth: AuthCont
     detail: evaluation.detail,
     dimensions: evaluation.dimensions,
     bottleneck: evaluation.bottleneck,
+    singleTier: evaluation.singleTier,
     upgrades,
     upgradeNote,
+    upgradeNoteKind,
     ramAdvice,
+    ramTargetGb,
   };
 }
 

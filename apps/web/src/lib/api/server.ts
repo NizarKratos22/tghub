@@ -1,7 +1,10 @@
+import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { toQueryString, type QueryParams } from './query';
 
 const API_URL = process.env.API_INTERNAL_URL ?? 'http://localhost:4000';
+/** The API's httpOnly access-token cookie (apps/api/src/core/auth/context.ts). */
+const ACCESS_COOKIE = 'tgh_at';
 
 interface ServerFetchOptions {
   query?: QueryParams;
@@ -31,5 +34,26 @@ export async function serverApiOr<T>(path: string, fallback: T, options: ServerF
     return await serverApi<T>(path, options);
   } catch {
     return fallback;
+  }
+}
+
+/**
+ * The signed-in viewer's own data, for a page that renders it on the server
+ * instead of waiting for the browser: forwards their access token. Null for
+ * guests, an expired token or any failure — the page then loads it in the
+ * browser as before. Never cached.
+ */
+export async function viewerApi<T>(path: string): Promise<T | null> {
+  const token = (await cookies()).get(ACCESS_COOKIE)?.value;
+  if (!token) return null;
+  try {
+    const response = await fetch(`${API_URL}/api/v1${path}`, {
+      cache: 'no-store',
+      headers: { accept: 'application/json', authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) return null;
+    return ((await response.json()) as { data: T }).data;
+  } catch {
+    return null;
   }
 }

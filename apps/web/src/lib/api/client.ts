@@ -4,9 +4,15 @@ import type {
   AdminAlert,
   AdminListing,
   AdminListingReport,
+  AdminAchievement,
+  AdminGuideRow,
   AdminMission,
+  AdminSeason,
+  AdminXpAdjustment,
   AdminOverview,
   AdminErrorEvent,
+  AdminGames,
+  GameDetail,
   AdminPayments,
   AdminStats,
   AdminUser,
@@ -89,10 +95,17 @@ import type {
   TournamentSummary,
   UpdateProfileInput,
   XpEntry,
+  IgdbSearchResult,
+  IgdbSyncResult,
 } from '@tgh/shared';
+import { isLocale } from '@/i18n/config';
+import { DICTIONARIES } from '@/i18n/dictionaries';
 import { toQueryString, type QueryParams } from './query';
 
 const BASE = '/api/v1';
+
+/** The page's language (the root layout sets <html lang>), for the few words written outside React. */
+const pageWords = () => DICTIONARIES[typeof document !== 'undefined' && isLocale(document.documentElement.lang) ? document.documentElement.lang : 'en'];
 
 export class ApiError extends Error {
   constructor(
@@ -156,7 +169,7 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}, re
     throw new ApiError(
       response.status,
       error?.code ?? 'NETWORK_ERROR',
-      error?.message ?? 'Could not reach TG Hub. Check your connection and try again.',
+      error?.message ?? pageWords().errors.offline,
       error?.details?.fields ?? {},
     );
   }
@@ -187,6 +200,7 @@ export const api = {
     login: (body: LoginInput) => apiFetch<AuthResult>('/auth/login', { method: 'POST', body }),
     register: (body: RegisterInput) => apiFetch<AuthResult>('/auth/register', { method: 'POST', body }),
     logout: () => apiFetch<void>('/auth/logout', { method: 'POST', body: {} }),
+    usernameAvailable: (username: string) => apiFetch<{ available: boolean }>('/auth/username-available', { query: { username } }),
     verification: () => apiFetch<EmailVerificationStatus | { verified: true }>('/auth/verify-email'),
     verifyEmail: (code: string) => apiFetch<Me>('/auth/verify-email', { method: 'POST', body: { code } }),
     providers: () => apiFetch<AuthProviders>('/auth/providers'),
@@ -223,7 +237,8 @@ export const api = {
   },
   radar: {
     list: (query: QueryParams) => apiFetch<Page<Resource>>('/radar', { query }),
-    search: (q: string) => apiFetch<RadarSearchResult>('/radar/search', { query: { q } }),
+    search: (q: string, options: { track?: boolean } = {}) =>
+      apiFetch<RadarSearchResult>('/radar/search', { query: { q, track: options.track === false ? 'false' : undefined } }),
   },
   tournaments: {
     following: () => apiFetch<TournamentSummary[]>('/tournaments/following'),
@@ -267,6 +282,7 @@ export const api = {
   pc: {
     components: (type: ComponentType, filters: { q?: string; brand?: ComponentBrand; segment?: ComponentSegment; limit?: number }) =>
       apiFetch<HardwareComponent[]>('/pc/components', { query: { type, limit: 24, ...filters } }),
+    matchComponent: (type: ComponentType, name: string) => apiFetch<HardwareComponent | null>('/pc/components/match', { query: { type, name } }),
     presets: () => apiFetch<RigPreset[]>('/pc/presets'),
     specs: () => apiFetch<PcSpec[]>('/pc/specs'),
     createSpec: (body: unknown) => apiFetch<PcSpec>('/pc/specs', { method: 'POST', body }),
@@ -367,12 +383,31 @@ export const api = {
     updateUser: (id: string, body: unknown) => apiFetch<AdminUser>(`/admin/users/${id}`, { method: 'PATCH', body }),
     clearUserImages: (id: string) => apiFetch<AdminUser>(`/admin/users/${id}/images`, { method: 'DELETE' }),
     payments: () => apiFetch<AdminPayments>('/admin/payments'),
+    games: () => apiFetch<AdminGames>('/admin/games'),
+    igdbSearch: (q: string) => apiFetch<IgdbSearchResult[]>('/admin/igdb/search', { query: { q } }),
+    igdbImport: (igdbId: number) => apiFetch<GameDetail>('/admin/igdb/import', { method: 'POST', body: { igdbId } }),
+    igdbSync: () => apiFetch<IgdbSyncResult>('/admin/igdb/sync', { method: 'POST' }),
+    linkIgdb: (gameId: string, igdbId: number) => apiFetch<GameDetail>(`/admin/games/${gameId}/igdb`, { method: 'PUT', body: { igdbId } }),
     errors: (status: 'open' | 'resolved') => apiFetch<AdminErrorEvent[]>('/admin/errors', { query: { status } }),
     resolveError: (id: string, resolved: boolean) => apiFetch<AdminErrorEvent>(`/admin/errors/${id}/resolve`, { method: 'POST', body: { resolved } }),
     setSellerVerification: (id: string, override: AdminUser['sellerOverride']) =>
       apiFetch<void>(`/admin/users/${id}/seller-verification`, { method: 'PUT', body: { override } }),
     missions: () => apiFetch<AdminMission[]>('/admin/missions'),
     updateMission: (id: string, body: unknown) => apiFetch<AdminMission>(`/admin/missions/${id}`, { method: 'PATCH', body }),
+    createMission: (body: unknown) => apiFetch<AdminMission>('/admin/missions', { method: 'POST', body }),
+    deleteMission: (id: string) => apiFetch<void>(`/admin/missions/${id}`, { method: 'DELETE' }),
+    achievements: () => apiFetch<AdminAchievement[]>('/admin/achievements'),
+    createAchievement: (body: unknown) => apiFetch<AdminAchievement>('/admin/achievements', { method: 'POST', body }),
+    updateAchievement: (id: string, body: unknown) => apiFetch<AdminAchievement>(`/admin/achievements/${id}`, { method: 'PUT', body }),
+    deleteAchievement: (id: string) => apiFetch<void>(`/admin/achievements/${id}`, { method: 'DELETE' }),
+    seasons: () => apiFetch<AdminSeason[]>('/admin/seasons'),
+    createSeason: (body: unknown) => apiFetch<AdminSeason>('/admin/seasons', { method: 'POST', body }),
+    updateSeason: (key: string, body: unknown) => apiFetch<AdminSeason>(`/admin/seasons/${encodeURIComponent(key)}`, { method: 'PUT', body }),
+    xpAdjustments: () => apiFetch<AdminXpAdjustment[]>('/admin/xp'),
+    guides: () => apiFetch<AdminGuideRow[]>('/admin/guides'),
+    saveGuide: (gameId: string, body: unknown) => apiFetch<void>(`/admin/guides/${gameId}`, { method: 'PUT', body }),
+    deleteGuide: (gameId: string) => apiFetch<void>(`/admin/guides/${gameId}`, { method: 'DELETE' }),
+    adjustXp: (body: unknown) => apiFetch<AdminXpAdjustment>('/admin/xp', { method: 'POST', body }),
     createResource: (body: unknown) => apiFetch<Resource>('/admin/resources', { method: 'POST', body }),
     deleteResource: (id: string) => apiFetch<void>(`/admin/resources/${id}`, { method: 'DELETE' }),
     market: {

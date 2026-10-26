@@ -66,6 +66,9 @@ export const changeEmailSchema = z.object({
   password: z.string().min(1, 'Enter your password to confirm').max(128),
 });
 
+/** Sign-up's live "is this username free?" check. Usernames are public; there is deliberately no email check. */
+export const usernameAvailableQuerySchema = z.object({ username: usernameSchema });
+
 export const loginSchema = z.object({
   /** Email or username. */
   identifier: z.string().trim().min(3, 'Enter your email or username').max(254),

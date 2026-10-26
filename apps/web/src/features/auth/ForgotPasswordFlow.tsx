@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/Button';
 import { CODE_LENGTH, CodeInput } from '@/components/ui/CodeInput';
 import { FormError, TextField } from '@/components/ui/Field';
 import { Icon } from '@/components/ui/Icon';
+import { fill } from '@/i18n/config';
+import { useT } from '@/i18n/I18nProvider';
 import { api, ApiError } from '@/lib/api/client';
 import { SESSION_KEY } from './session';
 import { useSecondsUntil } from './useSecondsUntil';
@@ -20,6 +22,7 @@ const RESEND_SECONDS = 60;
  * password. Success signs the player in on this device.
  */
 export function ForgotPasswordFlow({ initialEmail = '' }: { initialEmail?: string }) {
+  const t = useT();
   const router = useRouter();
   const queryClient = useQueryClient();
   const [email, setEmail] = useState(initialEmail);
@@ -66,16 +69,16 @@ export function ForgotPasswordFlow({ initialEmail = '' }: { initialEmail?: strin
           <Icon name="lock" size={26} />
         </span>
         <div className={styles.copy}>
-          <h2>Reset your password</h2>
-          <p>Enter the email on your account and we&apos;ll send you a 6-digit code.</p>
+          <h2>{t.recover.title}</h2>
+          <p>{t.recover.text}</p>
         </div>
-        <TextField label="Email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} error={requestFields.email} required autoFocus />
+        <TextField label={t.auth.email} type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} error={requestFields.email} required autoFocus />
         <FormError message={request.error && !requestFields.email ? request.error.message : null} />
         <Button type="submit" size="lg" block loading={request.isPending} disabled={!email.includes('@')}>
-          Send code
+          {t.recover.sendCode}
         </Button>
         <p className={styles.resend}>
-          <span>Remembered it?</span> <Link href="/login">Back to sign in</Link>
+          <span>{t.recover.remembered}</span> <Link href="/login">{t.recover.backToSignIn}</Link>
         </p>
       </form>
     );
@@ -94,16 +97,14 @@ export function ForgotPasswordFlow({ initialEmail = '' }: { initialEmail?: strin
         <Icon name="message" size={26} />
       </span>
       <div className={styles.copy}>
-        <h2>Check your inbox</h2>
-        <p>
-          If <strong>{email}</strong> has a TG Hub account, a code is on its way. It expires in 15 minutes.
-        </p>
+        <h2>{t.recover.checkInbox}</h2>
+        <p>{fill(t.recover.codeSent, { email })}</p>
       </div>
       {devCode ? (
         <p className={styles.dev}>
           <Icon name="code" size={16} />
           <span>
-            Development mode — no email server is configured, so here is your code: <strong>{devCode}</strong>
+            {t.recover.devCode} <strong>{devCode}</strong>
           </span>
         </p>
       ) : null}
@@ -113,21 +114,21 @@ export function ForgotPasswordFlow({ initialEmail = '' }: { initialEmail?: strin
           {resetFields.code}
         </p>
       ) : null}
-      <TextField label="New password" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} error={resetFields.password} hint="At least 8 characters." />
-      <TextField label="Repeat new password" type="password" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} error={mismatch ? "The passwords don't match" : undefined} />
+      <TextField label={t.security.newPassword} type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} error={resetFields.password} hint={t.security.passwordHint} />
+      <TextField label={t.security.repeatPassword} type="password" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} error={mismatch ? t.security.mismatch : undefined} />
       <FormError message={reset.error && Object.keys(resetFields).length === 0 ? reset.error.message : null} />
       <Button type="submit" size="lg" block loading={reset.isPending} disabled={code.length !== CODE_LENGTH || password.length < 8 || mismatch}>
-        Set new password
+        {t.recover.setPassword}
       </Button>
       <div className={styles.resend}>
-        <span>No email? Check spam, or</span>
+        <span>{t.recover.noEmail}</span>
         <button type="button" onClick={() => request.mutate()} disabled={wait > 0 || request.isPending}>
-          {request.isPending ? 'Sending…' : wait > 0 ? `send a new code in ${wait}s` : 'send a new code'}
+          {request.isPending ? t.recover.sending : wait > 0 ? fill(t.recover.resendIn, { seconds: wait }) : t.recover.resend}
         </button>
       </div>
       <p className={styles.resend}>
         <button type="button" onClick={() => setStep('email')}>
-          Use a different email
+          {t.recover.differentEmail}
         </button>
       </p>
     </form>

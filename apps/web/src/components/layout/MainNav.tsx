@@ -2,30 +2,23 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ButtonLink } from '@/components/ui/Button';
-import { Icon, type IconName } from '@/components/ui/Icon';
+import { Icon } from '@/components/ui/Icon';
 import { Avatar } from '@/components/ui/primitives';
 import { NotificationsMenu } from '@/features/alerts/NotificationsMenu';
 import { useSession, useSignInHref, useSignOut } from '@/features/auth/session';
 import { fill } from '@/i18n/config';
 import { useT } from '@/i18n/I18nProvider';
-import type { Dictionary } from '@/i18n/dictionaries';
+import { titleName } from '@/i18n/places';
 import { cx } from '@/lib/cx';
+import { useOpenForRoute } from '@/lib/useOpenForRoute';
+import { QuickSearch } from '@/features/search/QuickSearch';
 import { LanguageSwitch } from './LanguageSwitch';
+import { NAV_LINKS } from './nav-links';
 import { ThemeToggle } from './ThemeToggle';
 import styles from './MainNav.module.css';
-
-const LINKS: Array<{ href: string; label: keyof Dictionary['nav']; icon: IconName; also?: string[] }> = [
-  { href: '/radar', label: 'radar', icon: 'radar' },
-  { href: '/games', label: 'games', icon: 'gamepad' },
-  { href: '/tournaments', label: 'tournaments', icon: 'trophy' },
-  { href: '/squads', label: 'squads', icon: 'users', also: ['/clans'] },
-  { href: '/market', label: 'market', icon: 'store' },
-  { href: '/pc', label: 'pc', icon: 'cpu' },
-  { href: '/universe', label: 'universe', icon: 'star' },
-];
 
 function countLabel(count: number) {
   return count > 99 ? '99+' : String(count);
@@ -35,11 +28,9 @@ function AccountMenu() {
   const t = useT();
   const { data: me } = useSession();
   const signOut = useSignOut();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useOpenForRoute();
   const ref = useRef<HTMLDivElement>(null);
-  const pathname = usePathname();
 
-  useEffect(() => setOpen(false), [pathname]);
   useEffect(() => {
     if (!open) return;
     const close = (event: MouseEvent) => {
@@ -52,7 +43,7 @@ function AccountMenu() {
       document.removeEventListener('mousedown', close);
       document.removeEventListener('keydown', escape);
     };
-  }, [open]);
+  }, [open, setOpen]);
 
   if (!me) return null;
 
@@ -73,7 +64,7 @@ function AccountMenu() {
             <div>
               <p className={styles.menuName}>{me.displayName}</p>
               <p className={styles.menuMeta}>
-                {fill(t.common.levelShort, { level: me.level })} · {me.title}
+                {fill(t.common.levelShort, { level: me.level })} · {titleName(me.title, t)}
               </p>
             </div>
           </div>
@@ -129,8 +120,8 @@ function MobileDrawer({
   const t = useT();
   return createPortal(
     <div className={styles.drawer} style={{ top }}>
-      <nav aria-label="Mobile" className={styles.drawerNav}>
-        {LINKS.map((link) => (
+      <nav aria-label={t.nav.mobileNav} className={styles.drawerNav}>
+        {NAV_LINKS.map((link) => (
           <Link key={link.href} href={link.href} className={cx(styles.drawerLink, isActive(link.href, link.also) && styles.drawerActive)}>
             <span className={styles.drawerIcon}>
               <Icon name={link.icon} size={20} />
@@ -195,10 +186,8 @@ export function MainNav() {
   const pathname = usePathname();
   const { data: me, isPending } = useSession();
   const signInHref = useSignInHref();
-  const [drawer, setDrawer] = useState(false);
+  const [drawer, setDrawer] = useOpenForRoute();
   const [drawerTop, setDrawerTop] = useState(0);
-
-  useEffect(() => setDrawer(false), [pathname]);
 
   const toggleDrawer = () => {
     // The sticky header sits lower while the ticker is still on screen.
@@ -214,10 +203,44 @@ export function MainNav() {
 
   const isActive = (href: string, also: string[] = []) => [href, ...also].some((path) => pathname === path || pathname.startsWith(`${path}/`));
 
+  const navRef = useRef<HTMLElement>(null);
+  const [pointed, setPointed] = useState<HTMLElement | null>(null);
+  const [bar, setBar] = useState<{ x: number; width: number; resting: boolean } | null>(null);
+  const placeBar = useCallback(() => {
+    const target = pointed ?? navRef.current?.querySelector<HTMLElement>('[aria-current="page"]') ?? null;
+    if (!target) return setBar((current) => (current ? { ...current, width: 0 } : null));
+    // offsetLeft is measured from the nav's left edge in both reading directions; the bar spans the text, inside the link's padding.
+    const pad = parseFloat(getComputedStyle(target).paddingLeft) || 12;
+    setBar({ x: target.offsetLeft + pad, width: target.offsetWidth - pad * 2, resting: target.getAttribute('aria-current') === 'page' });
+  }, [pointed]);
+  useLayoutEffect(placeBar, [placeBar, pathname]);
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const observer = new ResizeObserver(placeBar);
+    observer.observe(nav);
+    void document.fonts?.ready.then(placeBar);
+    return () => observer.disconnect();
+  }, [placeBar]);
+  const pointAt = (event: { target: EventTarget }) => setPointed((event.target as HTMLElement).closest('a'));
+
   return (
     <>
-      <nav className={styles.primary} aria-label="Main">
-        {LINKS.map((link) => (
+      <nav
+        ref={navRef}
+        className={cx(styles.primary, bar && styles.barReady)}
+        aria-label={t.nav.mainNav}
+        onMouseOver={pointAt}
+        onFocus={pointAt}
+        onMouseLeave={() => setPointed(null)}
+        onBlur={() => setPointed(null)}
+      >
+        <span
+          className={cx(styles.bar, bar?.resting === false && styles.barPointing)}
+          style={bar ? { transform: `translateX(${bar.x}px)`, width: bar.width } : undefined}
+          aria-hidden
+        />
+        {NAV_LINKS.map((link) => (
           <Link
             key={link.href}
             href={link.href}
@@ -230,9 +253,7 @@ export function MainNav() {
       </nav>
 
       <div className={styles.tools}>
-        <Link href="/radar" className={cx(styles.iconButton, styles.wideOnly)} aria-label={t.nav.searchRadar}>
-          <Icon name="search" size={19} />
-        </Link>
+        <QuickSearch />
         <ThemeToggle className={styles.wideOnly} />
         {me ? (
           <>
@@ -241,7 +262,7 @@ export function MainNav() {
             </Link>
             <Link
               href="/market/inbox"
-              className={cx(styles.iconButton, isActive('/market/inbox') && styles.iconActive)}
+              className={cx(styles.iconButton, styles.narrowHide, isActive('/market/inbox') && styles.iconActive)}
               aria-label={fill(t.nav.messagesUnread, { count: me.marketUnread })}
             >
               <Icon name="message" size={19} />
@@ -264,6 +285,7 @@ export function MainNav() {
         )}
         <button type="button" className={cx(styles.iconButton, styles.menuToggle)} aria-label={drawer ? t.common.closeMenu : t.common.openMenu} aria-expanded={drawer} onClick={toggleDrawer}>
           <Icon name={drawer ? 'close' : 'menu'} size={22} />
+          {me && me.marketUnread > 0 && !drawer ? <span className={styles.menuDot} aria-hidden /> : null}
         </button>
       </div>
 

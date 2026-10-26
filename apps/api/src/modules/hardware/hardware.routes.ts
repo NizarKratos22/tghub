@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   compatCheckSchema,
   compatibleGamesQuerySchema,
+  componentMatchQuerySchema,
   componentQuerySchema,
   idParamsSchema,
   pcSpecInputSchema,
@@ -16,6 +17,7 @@ import {
   createSpec,
   deleteSpec,
   listSpecs,
+  matchComponent,
   searchComponents,
   updateSpec,
 } from './hardware.service';
@@ -23,6 +25,9 @@ import {
 export const pcRouter = Router();
 
 pcRouter.get('/components', handle({ query: componentQuerySchema }, ({ query }) => searchComponents(query)));
+
+/** PC Lab's "Detect my PC": a reported part name → our index entry, or null. */
+pcRouter.get('/components/match', handle({ query: componentMatchQuerySchema }, ({ query }) => matchComponent(query)));
 
 pcRouter.get('/presets', handle({}, () => listPresets()));
 

@@ -3,7 +3,10 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { getT } from '@/i18n/server';
 import { FeedPage } from '@/features/social/FeedPage';
 
-export const metadata: Metadata = { title: 'Your feed' };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t.feed.title };
+}
 
 export default async function Feed() {
   const t = await getT();

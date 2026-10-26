@@ -66,20 +66,22 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       };
     };
 
+    const reopen = async () => {
+      timer = undefined;
+      // The stream ends when the access token expires; renew it before reopening.
+      const renewed = await refreshSession();
+      if (!renewed && failures > 2) {
+        // Signed out elsewhere: let the session query notice and unmount us.
+        void queryClient.invalidateQueries({ queryKey: SESSION_KEY });
+      }
+      open();
+    };
+
     const reconnect = () => {
       if (stopped || timer) return;
       const delay = Math.min(MAX_BACKOFF_MS, 1_000 * 2 ** failures) * (0.75 + Math.random() * 0.5);
       failures += 1;
-      timer = setTimeout(async () => {
-        timer = undefined;
-        // The stream ends when the access token expires; renew it before reopening.
-        const renewed = await refreshSession();
-        if (!renewed && failures > 2) {
-          // Signed out elsewhere: let the session query notice and unmount us.
-          void queryClient.invalidateQueries({ queryKey: SESSION_KEY });
-        }
-        open();
-      }, delay);
+      timer = setTimeout(() => void reopen(), delay);
     };
 
     const onOnline = () => {

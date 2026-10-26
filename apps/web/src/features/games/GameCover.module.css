@@ -24,7 +24,8 @@ a.cover:hover {
 .art {
   position: relative;
   display: block;
-  aspect-ratio: 4 / 4.4;
+  /* Box-art shape: IGDB covers are 3:4. */
+  aspect-ratio: 3 / 4;
   overflow: hidden;
   background:
     radial-gradient(circle at 85% 12%, rgb(255 255 255 / 0.22), transparent 45%),
@@ -40,15 +41,18 @@ a.cover:hover {
   pointer-events: none;
 }
 
-.large .art {
-  aspect-ratio: 4 / 4.6;
-}
-
 .image {
   position: absolute;
   inset: 0;
-  background-size: cover;
-  background-position: center;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 320ms var(--ease);
+}
+
+a.cover:hover .image {
+  transform: scale(1.03);
 }
 
 .monogram {
@@ -93,8 +97,47 @@ a.cover:hover .monogram {
   font-size: clamp(66px, 8vw, 104px);
 }
 
+/* Small cards (the home page rail): fixed sizes instead of viewport-based ones. */
+.small .mono2 {
+  font-size: 64px;
+}
+
+.small .mono3 {
+  font-size: 50px;
+}
+
+.small .mono4 {
+  font-size: 38px;
+}
+
+.small .chips {
+  top: 7px;
+  inset-inline: 7px;
+}
+
+.small .chip {
+  padding: 2px 7px;
+  font-size: 10px;
+}
+
+.small .body {
+  padding: 9px 11px 11px;
+}
+
+.small .title {
+  font-size: 13.5px;
+}
+
+.small .platforms {
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .chips {
   position: absolute;
+  z-index: 2;
   top: 10px;
   inset-inline-start: 10px;
   inset-inline-end: 10px;
@@ -157,6 +200,12 @@ a.cover:hover .monogram {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+/* Catalogue: covers a little bigger than the home page rail's, as many per row as fit. */
+.gridAuto,
+.gridAuto.grid {
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+}
+
 @media (max-width: 1100px) {
   .grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -172,7 +221,8 @@ a.cover:hover .monogram {
 
 @media (max-width: 560px) {
   .grid,
-  .grid4 {
+  .grid4,
+  .gridAuto.grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
   }

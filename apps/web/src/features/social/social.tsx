@@ -11,7 +11,8 @@ import { RelativeTime } from '@/components/ui/time';
 import { useSession, useSignInHref } from '@/features/auth/session';
 import { Flag } from '@/features/squads/shared';
 import { api } from '@/lib/api/client';
-import { useT } from '@/i18n/I18nProvider';
+import { fill } from '@/i18n/config';
+import { useFormat, useT } from '@/i18n/I18nProvider';
 import { cx } from '@/lib/cx';
 import styles from './social.module.css';
 
@@ -88,7 +89,6 @@ export function FollowButton({ username, size = 'md', onChange }: { username: st
 function ActivityVisual({ activity }: { activity: Activity }) {
   const visual = activity.visual;
   if (visual?.kind === 'image') {
-    // eslint-disable-next-line @next/next/no-img-element -- immutable media URL
     return <img src={visual.url} alt="" className={styles.thumb} width={56} height={56} loading="lazy" />;
   }
   if (visual?.kind === 'mark') {
@@ -106,7 +106,13 @@ function ActivityVisual({ activity }: { activity: Activity }) {
 }
 
 export function ActivityItem({ activity, onGg }: { activity: Activity; onGg?: (update: { gg: number; ggByYou: boolean }) => void }) {
+  const t = useT();
+  const format = useFormat();
   const { data: me } = useSession();
+  // Worded per language from the type; the stored English sentence covers a row with no number to fill in.
+  const template = t.social.activity[activity.type];
+  const sentence = activity.value === null && template.includes('{value') ? activity.text : format.fill(template, { value: activity.value ?? 0 });
+  const detail = activity.type === 'listing' && activity.value !== null ? format.tnd(activity.value) : activity.detail;
   const gg = useMutation({ mutationFn: () => api.social.gg(activity.id), onSuccess: onGg });
   const own = me?.id === activity.actor.id;
   return (
@@ -122,18 +128,18 @@ export function ActivityItem({ activity, onGg }: { activity: Activity; onGg?: (u
           <Link href={`/u/${activity.actor.username}`} className={styles.actor}>
             {activity.actor.displayName}
           </Link>{' '}
-          {activity.text}{' '}
+          {sentence}{' '}
           {activity.target ? (
             <Link href={activity.target.href} className={styles.target}>
               {activity.target.label}
             </Link>
           ) : null}
         </p>
-        {activity.detail ? <p className={styles.detail}>{activity.detail}</p> : null}
+        {detail ? <p className={styles.detail}>{detail}</p> : null}
         <div className={styles.itemMeta}>
           <RelativeTime iso={activity.createdAt} />
           <span aria-hidden>·</span>
-          <span>Lv {activity.actor.level}</span>
+          <span>{fill(t.common.levelShort, { level: activity.actor.level })}</span>
           <Flag country={activity.actor.country} />
           {me && !own ? (
             <button type="button" className={cx(styles.gg, activity.ggByYou && styles.ggOn)} onClick={() => gg.mutate()} disabled={gg.isPending} aria-pressed={activity.ggByYou}>
@@ -195,6 +201,7 @@ export function ActivityList({ queryKey, load, empty }: { queryKey: readonly unk
 /* ───────────── People ───────────── */
 
 export function PlayerRow({ player, action }: { player: PlayerCard; action?: ReactNode }) {
+  const t = useT();
   return (
     <li className={styles.player}>
       <Link href={`/u/${player.username}`} className={styles.playerLink}>
@@ -202,7 +209,7 @@ export function PlayerRow({ player, action }: { player: PlayerCard; action?: Rea
         <span className={styles.playerText}>
           <strong>{player.displayName}</strong>
           <span>
-            Lv {player.level} <Flag country={player.country} />
+            {fill(t.common.levelShort, { level: player.level })} <Flag country={player.country} />
           </span>
         </span>
       </Link>

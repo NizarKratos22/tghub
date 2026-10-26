@@ -1,22 +1,12 @@
+import type { Dictionary } from '@/i18n/dictionaries';
 import { cx } from '@/lib/cx';
 import styles from './oauth.module.css';
 
-/** Messages for the `auth_error` codes the API puts on its redirects. */
-const OAUTH_ERRORS: Record<string, string> = {
-  expired: 'That sign-in took too long — try again.',
-  discord_denied: 'Discord sign-in was cancelled.',
-  discord_email_missing: 'Your Discord account has no verified email. Verify it on Discord, or sign up with email instead.',
-  discord_email_taken: 'An account already uses your Discord email. Sign in with your password, then connect Discord in Settings.',
-  already_linked: 'That account is already linked to another TG Hub account.',
-  suspended: 'This account is suspended.',
-  not_configured: 'Discord sign-in isn’t available yet.',
-  steam_failed: 'Steam couldn’t confirm the sign-in — try again.',
-  failed: 'Something went wrong — try again.',
-};
-
-export function oauthErrorMessage(code: string | null | undefined): string | null {
+/** Words for the `auth_error` codes the API puts on its redirects. */
+export function oauthErrorMessage(code: string | null | undefined, t: Dictionary): string | null {
   if (!code) return null;
-  return OAUTH_ERRORS[code] ?? OAUTH_ERRORS.failed!;
+  const messages = t.recover.oauthErrors;
+  return code in messages ? messages[code as keyof typeof messages] : messages.failed;
 }
 
 export const discordStartUrl = (mode: 'login' | 'link', next: string) => `/api/v1/auth/discord/start?mode=${mode}&next=${encodeURIComponent(next)}`;

@@ -158,7 +158,7 @@ export interface AlertSourceDoc {
   _id: Types.ObjectId;
   name: string;
   adapter: SourceAdapterName;
-  config: { appId: number };
+  config: { appId: number | null; includeDlc: boolean };
   gameId: Types.ObjectId | null;
   category: AlertCategory;
   enabled: boolean;
@@ -176,7 +176,10 @@ const alertSourceSchema = new Schema<AlertSourceDoc>(
   {
     name: { type: String, required: true },
     adapter: { type: String, enum: SOURCE_ADAPTERS, required: true },
-    config: { appId: { type: Number, required: true } },
+    config: {
+      appId: { type: Number, default: null },
+      includeDlc: { type: Boolean, default: false },
+    },
     gameId: { type: Schema.Types.ObjectId, ref: 'Game', default: null },
     category: { type: String, enum: ALERT_CATEGORIES, default: 'game_update' },
     enabled: { type: Boolean, default: true },

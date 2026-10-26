@@ -7,7 +7,10 @@ import { LanguageSwitch } from '@/components/layout/LanguageSwitch';
 import { getT } from '@/i18n/server';
 import styles from './settings.module.css';
 
-export const metadata: Metadata = { title: 'Settings' };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t.settings.title };
+}
 
 export default async function SettingsPage() {
   const t = await getT();

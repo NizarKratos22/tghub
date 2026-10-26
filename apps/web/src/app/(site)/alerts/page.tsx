@@ -1,13 +1,18 @@
 import type { Metadata } from 'next';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Inbox } from '@/features/alerts/Inbox';
+import { getT } from '@/i18n/server';
 
-export const metadata: Metadata = { title: 'Alerts' };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t.nav.alerts };
+}
 
-export default function AlertsPage() {
+export default async function AlertsPage() {
+  const t = await getT();
   return (
     <>
-      <PageHeader code="Your inbox" title="Alerts" lede="Patch notes for the games you follow, deals before they expire, tournaments and your own milestones. Each announcement arrives once." />
+      <PageHeader code={t.alerts.code} title={t.nav.alerts} lede={t.alerts.lede} />
       <div className="container page">
         <Inbox />
       </div>

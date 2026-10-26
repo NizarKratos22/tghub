@@ -4,7 +4,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import {
-  MARKET_REPORT_REASON_LABELS,
   MARKET_REPORT_REASONS,
   type ListingDetail,
   type ListingViewerState,
@@ -17,6 +16,7 @@ import { Icon } from '@/components/ui/Icon';
 import { Countdown } from '@/components/ui/time';
 import { SESSION_KEY, useSession, useSignInHref } from '@/features/auth/session';
 import { VerifyEmailNotice } from '@/features/auth/VerifyEmailBanner';
+import { useFormat, useT } from '@/i18n/I18nProvider';
 import { api, ApiError } from '@/lib/api/client';
 import { cx } from '@/lib/cx';
 import { LISTING_KEYS } from './meta';
@@ -50,11 +50,12 @@ function ViewPing({ listingId }: { listingId: string }) {
 }
 
 function MessageBox({ listing, state }: { listing: ListingDetail; state: ListingViewerState }) {
+  const t = useT();
   const router = useRouter();
   const signInHref = useSignInHref();
   const { data: me } = useSession();
   const queryClient = useQueryClient();
-  const [body, setBody] = useState('Hi, is this still available?');
+  const [body, setBody] = useState(t.listing.defaultMessage);
 
   const send = useMutation({
     mutationFn: () => api.market.messageSeller(listing.id, body.trim()),
@@ -68,10 +69,10 @@ function MessageBox({ listing, state }: { listing: ListingDetail; state: Listing
     return (
       <div className={styles.box}>
         <p className={styles.boxTitle}>
-          <Icon name="message" size={18} /> You&apos;re talking with the seller
+          <Icon name="message" size={18} /> {t.listing.talking}
         </p>
         <ButtonLink href={`/market/inbox/${state.conversationId}`} block icon="message">
-          Open conversation
+          {t.listing.openConversation}
         </ButtonLink>
       </div>
     );
@@ -80,8 +81,8 @@ function MessageBox({ listing, state }: { listing: ListingDetail; state: Listing
   if (listing.status === 'sold') {
     return (
       <div className={styles.box}>
-        <p className={styles.boxTitle}>This item has been sold</p>
-        <p className={styles.boxText}>Browse similar listings or save a search by category.</p>
+        <p className={styles.boxTitle}>{t.listing.soldTitle}</p>
+        <p className={styles.boxText}>{t.listing.soldText}</p>
       </div>
     );
   }
@@ -90,16 +91,16 @@ function MessageBox({ listing, state }: { listing: ListingDetail; state: Listing
     return (
       <div className={styles.box}>
         <p className={styles.boxTitle}>
-          <Icon name="message" size={18} /> Send seller a message
+          <Icon name="message" size={18} /> {t.listing.messageSeller}
         </p>
         <ButtonLink href={signInHref} block>
-          Log in to message
+          {t.listing.logInToMessage}
         </ButtonLink>
       </div>
     );
   }
 
-  if (!me.emailVerified) return <VerifyEmailNotice action="message the seller" />;
+  if (!me.emailVerified) return <VerifyEmailNotice text={t.listing.verifyToMessage} />;
 
   return (
     <form
@@ -110,19 +111,20 @@ function MessageBox({ listing, state }: { listing: ListingDetail; state: Listing
       }}
     >
       <label htmlFor="seller-message" className={styles.boxTitle}>
-        <Icon name="message" size={18} /> Send seller a message
+        <Icon name="message" size={18} /> {t.listing.messageSeller}
       </label>
       <textarea id="seller-message" className={styles.textarea} value={body} onChange={(e) => setBody(e.target.value)} rows={3} maxLength={2000} />
-      <FormError message={send.error instanceof ApiError ? send.error.message : send.error ? 'Could not send — try again' : null} />
+      <FormError message={send.error instanceof ApiError ? send.error.message : send.error ? t.listing.sendFailed : null} />
       <Button type="submit" block loading={send.isPending} disabled={!body.trim()}>
-        Send
+        {t.listing.send}
       </Button>
-      {listing.status === 'pending' ? <p className={styles.boxText}>The seller marked this as pending — it may already be promised to someone.</p> : null}
+      {listing.status === 'pending' ? <p className={styles.boxText}>{t.listing.pendingNote}</p> : null}
     </form>
   );
 }
 
 function SaveButton({ listingId, saved }: { listingId: string; saved: boolean }) {
+  const t = useT();
   const { data: me } = useSession();
   const router = useRouter();
   const signInHref = useSignInHref();
@@ -145,12 +147,13 @@ function SaveButton({ listingId, saved }: { listingId: string; saved: boolean })
       onClick={() => (me ? toggle.mutate() : router.push(signInHref))}
     >
       <Icon name="heart" size={18} filled={saved} />
-      {saved ? 'Saved' : 'Save'}
+      {saved ? t.listing.saved : t.listing.save}
     </button>
   );
 }
 
 function ShareButton({ title }: { title: string }) {
+  const t = useT();
   const [copied, setCopied] = useState(false);
   return (
     <button
@@ -168,12 +171,13 @@ function ShareButton({ title }: { title: string }) {
       }}
     >
       <Icon name={copied ? 'check' : 'link'} size={18} />
-      {copied ? 'Copied' : 'Share'}
+      {copied ? t.listing.copied : t.listing.share}
     </button>
   );
 }
 
 function ReportPanel({ listingId, onDone }: { listingId: string; onDone: () => void }) {
+  const t = useT();
   const queryClient = useQueryClient();
   const [reason, setReason] = useState<MarketReportReason | null>(null);
   const [details, setDetails] = useState('');
@@ -192,18 +196,18 @@ function ReportPanel({ listingId, onDone }: { listingId: string; onDone: () => v
         if (reason) report.mutate();
       }}
     >
-      <p className={styles.boxTitle}>What&apos;s wrong with this listing?</p>
-      <div className={styles.reasons} role="radiogroup" aria-label="Report reason">
+      <p className={styles.boxTitle}>{t.listing.reportTitle}</p>
+      <div className={styles.reasons} role="radiogroup" aria-label={t.listing.reportReason}>
         {MARKET_REPORT_REASONS.map((value) => (
           <label key={value} className={cx(styles.reason, reason === value && styles.reasonOn)}>
             <input type="radio" name="reason" value={value} checked={reason === value} onChange={() => setReason(value)} />
-            {MARKET_REPORT_REASON_LABELS[value]}
+            {t.labels.reportReason[value]}
           </label>
         ))}
       </div>
       <textarea
         className={styles.textarea}
-        placeholder="Anything moderators should know (optional)"
+        placeholder={t.listing.reportDetails}
         value={details}
         onChange={(e) => setDetails(e.target.value)}
         maxLength={500}
@@ -212,10 +216,10 @@ function ReportPanel({ listingId, onDone }: { listingId: string; onDone: () => v
       <FormError message={report.error instanceof ApiError ? report.error.message : null} />
       <div className={styles.row}>
         <Button type="submit" variant="danger" size="sm" disabled={!reason} loading={report.isPending}>
-          Send report
+          {t.listing.sendReport}
         </Button>
         <Button type="button" variant="ghost" size="sm" onClick={onDone}>
-          Cancel
+          {t.common.cancel}
         </Button>
       </div>
     </form>
@@ -223,6 +227,8 @@ function ReportPanel({ listingId, onDone }: { listingId: string; onDone: () => v
 }
 
 function OwnerPanel({ listing, state }: { listing: ListingDetail; state: ListingViewerState }) {
+  const t = useT();
+  const format = useFormat();
   const router = useRouter();
   const queryClient = useQueryClient();
   const refresh = () => {
@@ -247,17 +253,15 @@ function OwnerPanel({ listing, state }: { listing: ListingDetail; state: Listing
   return (
     <div className={styles.box}>
       <p className={styles.boxTitle}>
-        <Icon name="tag" size={18} /> Your listing
+        <Icon name="tag" size={18} /> {t.listing.yourListing}
       </p>
-      <p className={styles.boxText}>
-        {listing.views} views · {listing.saves} saves
-      </p>
+      <p className={styles.boxText}>{format.fill(t.listing.stats, { views: listing.views, saves: listing.saves })}</p>
       {listing.status === 'active' ? (
         <button type="button" className={styles.featureCta} onClick={() => setFeaturing(true)}>
           <Icon name="bolt" size={16} />
           <span>
-            <strong>{listing.featured ? 'Featured — add more days' : 'Feature this listing'}</strong>
-            <span>Top of the marketplace with a Featured badge, from 5 TND</span>
+            <strong>{listing.featured ? t.listing.featureMore : t.listing.featureThis}</strong>
+            <span>{t.listing.featurePitch}</span>
           </span>
           <Icon name="chevronRight" size={16} />
         </button>
@@ -265,29 +269,29 @@ function OwnerPanel({ listing, state }: { listing: ListingDetail; state: Listing
       <div className={styles.ownerGrid}>
         {listing.status !== 'sold' ? (
           <Button size="sm" variant="primary" icon="check" onClick={() => setSelling(true)}>
-            Mark as sold
+            {t.listing.markSold}
           </Button>
         ) : null}
         {listing.status === 'active' ? (
           <Button size="sm" variant="secondary" onClick={() => status.mutate('pending')} loading={status.isPending && status.variables === 'pending'}>
-            Mark as pending
+            {t.listing.markPending}
           </Button>
         ) : (
           <Button size="sm" variant="secondary" onClick={() => status.mutate('active')} loading={status.isPending && status.variables === 'active'}>
-            Mark as available
+            {t.listing.markAvailable}
           </Button>
         )}
         <ButtonLink href={`/market/item/${listing.id}/edit`} size="sm" variant="outline" icon="edit">
-          Edit
+          {t.listing.edit}
         </ButtonLink>
         {listing.status === 'active' ? (
           state.renewableAt ? (
             <span className={styles.renewWait}>
-              <Countdown iso={state.renewableAt} prefix="Renew in" endedLabel="Renew available" />
+              <Countdown iso={state.renewableAt} label={t.listing.renewIn} endedLabel={t.listing.renewAvailable} />
             </span>
           ) : (
             <Button size="sm" variant="outline" icon="refresh" onClick={() => renew.mutate()} loading={renew.isPending}>
-              Renew
+              {t.listing.renew}
             </Button>
           )
         ) : null}
@@ -296,11 +300,11 @@ function OwnerPanel({ listing, state }: { listing: ListingDetail; state: Listing
           variant="danger"
           icon="trash"
           onClick={() => {
-            if (window.confirm('Delete this listing? Buyers will no longer see it.')) remove.mutate();
+            if (window.confirm(t.listing.confirmDelete)) remove.mutate();
           }}
           loading={remove.isPending}
         >
-          Delete
+          {t.listing.delete}
         </Button>
       </div>
       <FormError message={error instanceof ApiError ? error.message : null} />
@@ -321,6 +325,7 @@ function OwnerPanel({ listing, state }: { listing: ListingDetail; state: Listing
 }
 
 export function ListingActions({ listing }: { listing: ListingDetail }) {
+  const t = useT();
   const { loading, state } = useViewer(listing.id);
   const [reporting, setReporting] = useState(false);
 
@@ -335,11 +340,11 @@ export function ListingActions({ listing }: { listing: ListingDetail }) {
           <ShareButton title={listing.title} />
           {state.reported ? (
             <span className={cx(styles.tool, styles.toolMuted)}>
-              <Icon name="flag" size={18} /> Reported
+              <Icon name="flag" size={18} /> {t.listing.reported}
             </span>
           ) : (
             <button type="button" className={styles.tool} onClick={() => setReporting((open) => !open)} aria-expanded={reporting}>
-              <Icon name="flag" size={18} /> Report
+              <Icon name="flag" size={18} /> {t.listing.report}
             </button>
           )}
         </div>

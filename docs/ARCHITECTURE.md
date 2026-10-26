@@ -14,7 +14,7 @@ Discord bot plug into the same API, the same contracts and the same alert rules.
                  │ apps/api — Express 5, modular monolith             │
                  │  auth · users · games · radar · library · hardware │
                  │  tournaments (start.gg / FACEIT adapters)          │
-                 │  market (listings, chats, reports) · media         │
+                 │  market (listings, chats, reports) · media · guides│
                  │  progression (XP, missions, achievements, pulse)   │
                  │  alerts (inbox, prefs, sources, channels) · admin  │
                  │            ▲ in-process domain event bus ▲          │
@@ -109,7 +109,7 @@ API scales out.
 
 ```
 POST /media            multipart → sharp (auto-orient, strip EXIF/GPS, 1600px WebP + 480px square thumb)
-                       → ObjectStorage (local disk today; S3/R2 driver later) → Media doc (orphanSince = now)
+                       → ObjectStorage (Cloudflare R2 when configured, else local disk) → Media doc (orphanSince = now)
 POST /market/listings  photoIds must be the seller's own, unattached uploads → attach (orphanSince = null)
 GET  /market/listings  status in {active, pending} + facets (category, sub, governorate, condition,
                        framework, price, delivery) + $text search; indexes lead with status
@@ -118,8 +118,11 @@ conversations          per-side unread counters → header badge is one indexed 
 reports                one per player; 3 distinct reports flag the listing for moderators
 ```
 
-Images are served from `GET /api/v1/media/:file` ahead of the API limiter, with
-immutable caching (ids never repeat). Unreferenced uploads are deleted after 24 h.
+With R2 (`core/storage/r2.ts`, S3 API, path-style), photo URLs point at the
+bucket's public domain and objects carry `Content-Type` and an immutable cache
+header; `GET /api/v1/media/:file` then only redirects old links there. On local
+disk it streams the file itself, ahead of the API limiter, with immutable
+caching (ids never repeat). Unreferenced uploads are deleted after 24 h.
 Digital listings (FiveM, mods) carry framework / delivery / source and a rights
 confirmation; physical ones carry condition, governorate and hand-over options —
 one Zod schema validates both, with field paths the form maps straight onto inputs.
@@ -144,11 +147,57 @@ cookie (`connections/oauth-state.ts`); a Discord identity is never auto-merged
 into an existing account by email. Bot interactions are verified with Ed25519
 over the raw body.
 
+**Progression admin** — `progression.admin.ts` gives admins missions,
+achievements, seasons and manual XP. A manual grant is an ordinary ledger entry
+with `grantedBy` set; a removal is a negative entry that never takes a player
+below 0 XP, recomputes their level and season standing, and leaves the Pulse
+alone (it counts community effort, not one account). Changing an achievement's
+rule unlocks it in the background for players who already qualify.
+
+**Guides** — `modules/guides` stores one guide per game (unique `gameId`):
+sections of short points and a list of Overwolf apps, validated by
+`guideInputSchema` in `packages/shared`. Apps are plain links to their
+Overwolf page; nothing from Overwolf is fetched or embedded.
+
 **Payments** — `modules/payments/gateways.ts` puts Flouci, Konnect and a
 development checkout behind one interface: start a checkout, and ask for the
 real status. Redirects and webhooks only trigger a status check; an order flips
 `pending → paid` with a conditional update (so a webhook and a redirect can't
 both apply it) and only when the provider confirms the exact amount.
+
+**Game data (IGDB)** — `modules/igdb` holds the client (one request at a
+time, 260 ms apart, under IGDB's 4/s limit; client-credentials tokens renewed
+on 401) and a Zod-validated mapper to catalogue terms. `games.igdb.ts` links
+catalogue games (Steam app id via `external_games`, then exact title), copies
+IGDB's facts onto them daily, and imports new ones with a monogram, an accent
+taken from the cover's dominant colour and a one-line summary. IGDB owns the
+facts and art; TG Hub owns title, slug, genres (IGDB's are too broad for the
+filters), nicknames, PC requirements and ranking. Images are hot-linked from
+IGDB's CDN as WebP.
+
+**Radar pictures** — the Steam news source stores a picture per story: the
+header Steam shows for the post, read from the store's event list (an
+undocumented endpoint, so a failure only means no picture) and matched by
+title within three days, else the first image in the post. Later runs fill in
+pictures for stories that had none. When a story has no picture, the mapper
+picks one of its game's IGDB screenshots, chosen from the story's id so it
+never changes between visits. Admin-added items can carry an https picture.
+
+**Radar sources** — `alerts/sources` holds one adapter per upstream:
+`steam_news` (a game's official Steam announcements) and `steam_free`
+(Steam's free-to-keep giveaways, read from the store's search, app details
+and store page — no API exists — and stored as deals with their end time).
+When a catalogue game gains a Steam app id (IGDB import, re-link or sync) the
+`game.on_steam` event gives it a news feed and runs it once; a feed an admin
+deletes isn't recreated. Games that aren't on Steam have no automatic feed
+yet; admins add their news by hand.
+
+**PC detection** — the browser reports the graphics card (WebGL renderer) and
+a rounded-down memory figure; no browser exposes the processor, so people
+paste Windows' device specifications, which are parsed client-side.
+`GET /pc/components/match` maps a reported name to the hardware index
+(`hardware/component-match.ts`: the entry's model number must appear, extra
+words count against it) and returns null rather than guess.
 
 **Monitoring** — 5xx errors, unhandled rejections and browser crashes are
 grouped by fingerprint (normalised message + first own stack frame) in
@@ -162,10 +211,16 @@ grouped by fingerprint (normalised message + first own stack frame) in
 - Dashboard charts are hand-drawn SVG (`features/admin/charts.tsx`): one axis per chart, 2px lines, capped columns with rounded data-ends, a crosshair tooltip, keyboard stepping and a table view. Series colours are validated per theme for colour-blind separation and contrast. Daily series come from `GET /admin/stats?days=7|30|90`, aggregated in Tunis time and compared with the previous window.
 - Filters live in the URL (`/games?genre=fps&platform=pc`) so every view is shareable.
 - Visual identity: tournament-platform styling — Montserrat headings and UI, Roboto body, Teko scoreboard numerals; white (light) or charcoal (dark) cards on a grey ground; one bright blue for every action, gold for prizes/XP/levels, green for good news, Tunisian red only for the brand mark, live states and destructive actions. Typographic game tiles on each game's own colour; marketplace grids lead with square photos and the price.
-- Languages: `src/i18n` holds one typed dictionary per language (French and Arabic must match the English shape, so a missing string is a build error). The root layout reads the `tgh_locale` cookie (or `Accept-Language`), sets `<html lang dir>`, and server components call `getT()` while client components use `useT()`. Stylesheets use logical properties (`margin-inline-start`, `inset-inline-end`…) and directional icons flip under `dir="rtl"`.
+- Languages: `src/i18n` holds one typed dictionary per language (French and Arabic must match the English shape, so a missing string is a build error). The root layout reads the `tgh_locale` cookie (or `Accept-Language`), sets `<html lang dir>`, and server components call `getT()` / `getFormat()` while client components use `useT()` / `useFormat()`. Enum labels (`t.labels.*`) mirror the maps in `@tgh/shared`; the English dictionary reuses those maps directly.
+  - Counted words use ICU plural blocks — `fill(t.x, { count }, locale)` or `format.fill(...)` — so Arabic gets its six forms: `'{count, plural, one {…} two {…} few {# …} other {# …}}'`.
+  - `lib/format.ts` `createFormat(locale)` owns every date, number, price, relative time and countdown (Tunis time, 24-hour clock, Latin digits). `i18n/places.ts` names governorates, countries (`Intl.DisplayNames`) and level titles.
+  - Where the API sends English sentences, it also sends the facts behind them so the site words them itself: activities carry `value`, compatibility checks carry `singleTier`, `ramTargetGb` and `upgradeNoteKind`.
+  - Stylesheets use logical properties (`margin-inline-start`, `inset-inline-end`…) and directional icons flip under `dir="rtl"`. User-written text gets `dir="auto"` (or `<bdi>` in one-line titles) so English inside an Arabic page keeps its punctuation in place.
 - Theming: all colours are role tokens in `app/globals.css` (`--surface`, `--text-2`, `--primary`, `--gold-text`…) redefined under `[data-theme='dark']`. A `beforeInteractive` script applies the stored choice (or the OS preference) before first paint; components never reference raw colours.
 
 ## Testing
+
+Code rules and what the linter enforces: [CODE_RULES.md](CODE_RULES.md).
 
 `npm test` runs `node:test` suites for the pure logic that decides outcomes: the
 compatibility engine (`modules/hardware/compatibility.ts`), the level curve

@@ -23,12 +23,14 @@ export const ADMIN_NAV: Array<{ title: string | null; items: AdminNavItem[] }> =
       { href: '/admin/marketplace', label: 'Marketplace', icon: 'store', description: 'Reported listings and moderation decisions.', roles: ['admin', 'moderator'], badge: 'flaggedListings' },
       { href: '/admin/users', label: 'Players', icon: 'users', description: 'Search accounts, change roles, suspend.', roles: ['admin'] },
       { href: '/admin/payments', label: 'Payments', icon: 'tag', description: 'Featured-listing orders and revenue.', roles: ['admin'] },
-      { href: '/admin/missions', label: 'Missions & XP', icon: 'star', description: 'Turn missions on or off and tune their rewards.', roles: ['admin'] },
+      { href: '/admin/missions', label: 'Missions & XP', icon: 'star', description: 'Missions, achievements, seasons and manual XP.', roles: ['admin'] },
     ],
   },
   {
     title: 'Content',
     items: [
+      { href: '/admin/games', label: 'Games', icon: 'gamepad', description: 'The catalogue, filled from IGDB.', roles: ['admin'] },
+      { href: '/admin/guides', label: 'Guides', icon: 'map', description: 'Competitive guides and the Overwolf apps for each game.', roles: ['admin'] },
       { href: '/admin/content', label: 'Radar content', icon: 'radar', description: 'Add news, deals, guides and events by hand.', roles: ['admin'] },
       { href: '/admin/tournaments', label: 'Tournaments', icon: 'trophy', description: 'Platforms, discovery sources, imports and moderation.', roles: ['admin'] },
     ],

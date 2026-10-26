@@ -1,5 +1,6 @@
 #!/bin/sh
 # One backup: the MongoDB database and the uploaded media, in a dated folder.
+# (With Cloudflare R2 the media volume is nearly empty: images live in the bucket.)
 # Old folders past KEEP_DAYS are removed. Restore steps are in DEPLOY.md.
 set -eu
 

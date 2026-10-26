@@ -2,7 +2,6 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { Notification } from '@tgh/shared';
 import { Icon } from '@/components/ui/Icon';
@@ -13,6 +12,7 @@ import { api } from '@/lib/api/client';
 import { fill } from '@/i18n/config';
 import { useT } from '@/i18n/I18nProvider';
 import { cx } from '@/lib/cx';
+import { useOpenForRoute } from '@/lib/useOpenForRoute';
 import { ALERTS_KEY, NotificationRow, useOpenNotification } from './NotificationRow';
 import styles from './NotificationsMenu.module.css';
 
@@ -58,7 +58,7 @@ function Panel({ onClose, top }: { onClose: () => void; top: number }) {
         </Link>
       </div>
       <div className={styles.bar}>
-        <div className={styles.tabs} role="tablist" aria-label="Show">
+        <div className={styles.tabs} role="tablist" aria-label={t.notifications.show}>
           {(['all', 'unread'] as const).map((value) => (
             <button key={value} type="button" role="tab" aria-selected={tab === value} className={cx(styles.tab, tab === value && styles.tabOn)} onClick={() => setTab(value)}>
               {value === 'all' ? t.common.all : t.notifications.unread}
@@ -110,13 +110,11 @@ function Panel({ onClose, top }: { onClose: () => void; top: number }) {
 /** The header bell: a red unread count and a dropdown panel instead of a page jump. */
 export function NotificationsMenu({ unread, className, activeClassName, badgeClassName }: { unread: number; className?: string; activeClassName?: string; badgeClassName?: string }) {
   const t = useT();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useOpenForRoute();
   // On phones the panel is a fixed sheet under the header, which sits lower while the ticker shows.
   const [top, setTop] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
-  const pathname = usePathname();
 
-  useEffect(() => setOpen(false), [pathname]);
   useEffect(() => {
     if (!open) return;
     const close = (event: MouseEvent) => {
@@ -129,7 +127,7 @@ export function NotificationsMenu({ unread, className, activeClassName, badgeCla
       document.removeEventListener('mousedown', close);
       document.removeEventListener('keydown', escape);
     };
-  }, [open]);
+  }, [open, setOpen]);
 
   return (
     <div className={styles.wrap} ref={ref}>

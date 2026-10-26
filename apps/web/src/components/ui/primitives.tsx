@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import type { CheckStatus } from '@tgh/shared';
 import type { CSSProperties, ReactNode } from 'react';
 import { cx } from '@/lib/cx';
 import { Icon, type IconName } from './Icon';
+import { PaginationNav } from './PaginationNav';
 import styles from './primitives.module.css';
 
 /* ── Panel: the basic card surface. "inverse" flips to the opposite theme. ── */
@@ -43,7 +43,6 @@ export function Avatar({ name, color, src, size = 40 }: { name: string; color: s
   if (src) {
     return (
       <span className={cx(styles.avatar, styles.avatarPhoto)} style={{ width: size, height: size, background: color }} aria-hidden>
-        {/* eslint-disable-next-line @next/next/no-img-element -- immutable media URL, already sized by the API */}
         <img src={src} alt="" width={size} height={size} loading="lazy" decoding="async" />
       </span>
     );
@@ -98,18 +97,9 @@ export function Meter({
   );
 }
 
-/* ── StatusBadge: compatibility verdicts. ── */
+/* ── StatusBadge: compatibility verdicts (a client component, for its words). ── */
 
-const STATUS_LABEL: Record<CheckStatus, string> = {
-  recommended: 'Recommended',
-  minimum: 'Minimum',
-  below: 'Below minimum',
-  unknown: 'No data',
-};
-
-export function StatusBadge({ status, size = 'md' }: { status: CheckStatus; size?: 'sm' | 'md' }) {
-  return <span className={cx(styles.status, styles[`status_${status}`], size === 'sm' && styles.statusSm)}>{STATUS_LABEL[status]}</span>;
-}
+export { StatusBadge } from './StatusBadge';
 
 /* ── EmptyState ── */
 
@@ -172,31 +162,15 @@ export function SegmentedNav({ items, label }: { items: SegmentItem[]; label: st
 
 /* ── Pagination ── */
 
+/** Links are built here, so Server Components can pass `hrefFor`; the words render on the client. */
 export function Pagination({ page, totalPages, hrefFor }: { page: number; totalPages: number; hrefFor: (page: number) => string }) {
   if (totalPages <= 1) return null;
   return (
-    <nav className={styles.pagination} aria-label="Pagination">
-      {page > 1 ? (
-        <Link href={hrefFor(page - 1)} className={styles.pageLink} rel="prev">
-          <Icon name="chevronLeft" size={14} /> Prev
-        </Link>
-      ) : (
-        <span className={cx(styles.pageLink, styles.pageDisabled)}>
-          <Icon name="chevronLeft" size={14} /> Prev
-        </span>
-      )}
-      <span className={styles.pageStatus}>
-        Page {page} of {totalPages}
-      </span>
-      {page < totalPages ? (
-        <Link href={hrefFor(page + 1)} className={styles.pageLink} rel="next">
-          Next <Icon name="chevronRight" size={14} />
-        </Link>
-      ) : (
-        <span className={cx(styles.pageLink, styles.pageDisabled)}>
-          Next <Icon name="chevronRight" size={14} />
-        </span>
-      )}
-    </nav>
+    <PaginationNav
+      page={page}
+      totalPages={totalPages}
+      prevHref={page > 1 ? hrefFor(page - 1) : null}
+      nextHref={page < totalPages ? hrefFor(page + 1) : null}
+    />
   );
 }

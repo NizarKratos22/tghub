@@ -33,18 +33,29 @@ function FieldShell({ label, hint, error, id, children, className }: FieldShellP
 
 type Shared = { label: string; hint?: ReactNode; error?: string; wrapperClassName?: string };
 
-export function TextField({ label, hint, error, wrapperClassName, className, id, ...rest }: Shared & InputHTMLAttributes<HTMLInputElement>) {
+/** `end` puts a small control inside the field's trailing edge (e.g. show password). */
+export function TextField({ label, hint, error, wrapperClassName, className, id, end, ...rest }: Shared & { end?: ReactNode } & InputHTMLAttributes<HTMLInputElement>) {
   const autoId = useId();
   const fieldId = id ?? autoId;
+  const input = (
+    <input
+      id={fieldId}
+      className={cx(styles.control, end ? styles.hasEnd : undefined, className)}
+      aria-invalid={error ? true : undefined}
+      aria-describedby={error ? `${fieldId}-error` : hint ? `${fieldId}-hint` : undefined}
+      {...rest}
+    />
+  );
   return (
     <FieldShell label={label} hint={hint} error={error} id={fieldId} className={wrapperClassName}>
-      <input
-        id={fieldId}
-        className={cx(styles.control, className)}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={error ? `${fieldId}-error` : hint ? `${fieldId}-hint` : undefined}
-        {...rest}
-      />
+      {end ? (
+        <div className={styles.withEnd}>
+          {input}
+          <span className={styles.end}>{end}</span>
+        </div>
+      ) : (
+        input
+      )}
     </FieldShell>
   );
 }

@@ -7,6 +7,7 @@ import { recordError } from './core/monitoring/error-log';
 import { realtime } from './core/realtime/hub';
 import { registerJob, startJobs, stopJobs } from './core/ingest/jobs';
 import { registerAlertListeners } from './modules/alerts/alerts.listeners';
+import { syncIgdbCatalogue } from './modules/games/games.igdb';
 import { deleteOrphanedMedia } from './modules/media/media.service';
 import { runDueAlertSources } from './modules/alerts/sources/sources.service';
 import { registerProgressionListeners } from './modules/progression/progression.listeners';
@@ -33,6 +34,8 @@ async function main() {
   registerJob({ name: 'clan-xp', everyMs: 15 * MINUTE, run: () => refreshClanXp() });
   registerJob({ name: 'seller-badges', everyMs: 6 * 60 * MINUTE, run: refreshAllSellerBadges });
   registerJob({ name: 'payments-reconcile', everyMs: 5 * MINUTE, run: reconcilePendingOrders });
+  // Game data comes from IGDB as soon as its keys are set (the keys are the opt-in).
+  if (env.igdb) registerJob({ name: 'igdb-sync', everyMs: 6 * 60 * MINUTE, run: () => syncIgdbCatalogue() });
   if (env.INGESTION_ENABLED) {
     registerJob({ name: 'alert-sources', everyMs: 5 * MINUTE, run: runDueAlertSources });
     registerJob({ name: 'tournament-sources', everyMs: 10 * MINUTE, run: runDueTournamentSources });
@@ -42,6 +45,7 @@ async function main() {
 
   const server = createApp().listen(env.PORT, () => {
     logger.info(`TG Hub API listening on http://localhost:${env.PORT}`);
+    logger.info(env.r2 ? `Uploads go to Cloudflare R2 "${env.r2.bucket}/${env.r2.prefix}"` : `Uploads go to ${env.MEDIA_DIR}`);
   });
 
   const shutdown = async (signal: string) => {

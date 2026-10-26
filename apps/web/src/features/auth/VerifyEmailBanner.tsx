@@ -27,14 +27,14 @@ export function VerifyEmailBanner() {
   );
 }
 
-/** Inline gate for marketplace actions that need a confirmed email. */
-export function VerifyEmailNotice({ action }: { action: string }) {
+/** Inline gate for actions that need a confirmed email; `text` says what confirming unlocks. */
+export function VerifyEmailNotice({ text }: { text?: string }) {
   const t = useT();
   const pathname = usePathname();
   return (
     <div className={styles.notice}>
       <Icon name="lock" size={18} />
-      <span>{fill(t.auth.verifyNotice, { action })}</span>
+      <span>{text ?? t.auth.verifyNotice}</span>
       <Link href={`/verify-email?next=${encodeURIComponent(pathname)}`} className={styles.action}>
         {t.auth.enterCode}
       </Link>

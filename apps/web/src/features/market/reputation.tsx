@@ -3,14 +3,17 @@
 import type { SellerReputation } from '@tgh/shared';
 import { useState } from 'react';
 import { Icon } from '@/components/ui/Icon';
+import { fill } from '@/i18n/config';
+import { useFormat, useT } from '@/i18n/I18nProvider';
 import { cx } from '@/lib/cx';
 import styles from './reputation.module.css';
 
 /** Read-only stars; halves round to the nearest half star. */
 export function Stars({ value, size = 14, className }: { value: number; size?: number; className?: string }) {
+  const t = useT();
   const rounded = Math.round(value * 2) / 2;
   return (
-    <span className={cx(styles.stars, className)} role="img" aria-label={`${value} out of 5 stars`} style={{ fontSize: size }}>
+    <span className={cx(styles.stars, className)} role="img" aria-label={fill(t.reputation.outOf5, { value })} style={{ fontSize: size }}>
       {[1, 2, 3, 4, 5].map((n) => (
         <span key={n} className={cx(styles.star, rounded >= n ? styles.full : rounded >= n - 0.5 ? styles.half : null)} aria-hidden>
           ★
@@ -20,21 +23,22 @@ export function Stars({ value, size = 14, className }: { value: number; size?: n
   );
 }
 
-const STAR_WORDS = ['Terrible', 'Poor', 'Okay', 'Good', 'Excellent'];
-
 export function StarPicker({ value, onChange }: { value: number; onChange: (stars: number) => void }) {
+  const t = useT();
+  const format = useFormat();
+  const words = t.reputation.words;
   const [hover, setHover] = useState(0);
   const shown = hover || value;
   return (
     <div className={styles.picker}>
-      <div className={styles.pickerStars} role="radiogroup" aria-label="Rating" onMouseLeave={() => setHover(0)}>
+      <div className={styles.pickerStars} role="radiogroup" aria-label={t.reputation.rating} onMouseLeave={() => setHover(0)}>
         {[1, 2, 3, 4, 5].map((n) => (
           <button
             key={n}
             type="button"
             role="radio"
             aria-checked={value === n}
-            aria-label={`${n} star${n === 1 ? '' : 's'} — ${STAR_WORDS[n - 1]}`}
+            aria-label={format.fill(t.reputation.starOption, { n, word: words[n - 1]! })}
             className={cx(styles.pick, shown >= n && styles.pickOn)}
             onMouseEnter={() => setHover(n)}
             onClick={() => onChange(n)}
@@ -43,38 +47,37 @@ export function StarPicker({ value, onChange }: { value: number; onChange: (star
           </button>
         ))}
       </div>
-      <span className={styles.pickerWord}>{shown ? STAR_WORDS[shown - 1] : 'Tap a star'}</span>
+      <span className={styles.pickerWord}>{shown ? words[shown - 1] : t.reputation.tapStar}</span>
     </div>
   );
 }
 
 export function VerifiedSeller({ compact = false }: { compact?: boolean }) {
+  const t = useT();
   return (
-    <span className={cx(styles.verified, compact && styles.verifiedCompact)} title="Verified seller: confirmed sales, strong ratings, clean record">
-      <Icon name="check" size={compact ? 11 : 12} /> {compact ? 'Verified' : 'Verified seller'}
+    <span className={cx(styles.verified, compact && styles.verifiedCompact)} title={t.reputation.verifiedTitle}>
+      <Icon name="check" size={compact ? 11 : 12} /> {compact ? t.reputation.verified : t.reputation.verifiedSeller}
     </span>
   );
 }
 
 /** "★★★★★ 4.8 · 12 ratings · 9 sales" with the badge when earned. */
 export function ReputationLine({ reputation }: { reputation: SellerReputation }) {
+  const t = useT();
+  const format = useFormat();
   return (
     <span className={styles.line}>
       {reputation.average !== null ? (
         <>
           <Stars value={reputation.average} />
           <strong>{reputation.average.toFixed(1)}</strong>
-          <span>
-            · {reputation.count} rating{reputation.count === 1 ? '' : 's'}
-          </span>
+          <span>· {format.fill(t.reputation.ratings, { count: reputation.count })}</span>
         </>
       ) : (
-        <span>No ratings yet</span>
+        <span>{t.reputation.noRatings}</span>
       )}
       {reputation.sales > 0 ? (
-        <span>
-          · {reputation.sales} sale{reputation.sales === 1 ? '' : 's'} on TG Hub
-        </span>
+        <span>· {format.fill(t.reputation.salesOnHub, { count: reputation.sales })}</span>
       ) : null}
       {reputation.verified ? <VerifiedSeller compact /> : null}
     </span>

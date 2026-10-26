@@ -3,11 +3,14 @@
 import type { MarketPhoto } from '@tgh/shared';
 import { useState } from 'react';
 import { Icon } from '@/components/ui/Icon';
+import { fill } from '@/i18n/config';
+import { useT } from '@/i18n/I18nProvider';
 import { cx } from '@/lib/cx';
 import styles from './Gallery.module.css';
 
 /** Photo viewer: blurred backdrop of the current shot, arrows and keyboard, thumbnail strip. */
 export function Gallery({ photos, title }: { photos: MarketPhoto[]; title: string }) {
+  const t = useT();
   const [index, setIndex] = useState(0);
   const photo = photos[index];
   const many = photos.length > 1;
@@ -17,7 +20,7 @@ export function Gallery({ photos, title }: { photos: MarketPhoto[]; title: strin
     return (
       <div className={cx(styles.stage, styles.empty)}>
         <Icon name="image" size={40} />
-        <span>No photos</span>
+        <span>{t.listing.noPhotos}</span>
       </div>
     );
   }
@@ -28,7 +31,7 @@ export function Gallery({ photos, title }: { photos: MarketPhoto[]; title: strin
         className={styles.stage}
         tabIndex={many ? 0 : -1}
         aria-roledescription="carousel"
-        aria-label={`${title} photos`}
+        aria-label={fill(t.listing.photos, { title })}
         onKeyDown={(event) => {
           if (event.key === 'ArrowLeft') go(-1);
           if (event.key === 'ArrowRight') go(1);
@@ -38,17 +41,17 @@ export function Gallery({ photos, title }: { photos: MarketPhoto[]; title: strin
         <img
           key={photo.id}
           src={photo.url}
-          alt={`${title} — photo ${index + 1} of ${photos.length}`}
+          alt={fill(t.listing.photoOf, { title, n: index + 1, total: photos.length })}
           width={photo.width}
           height={photo.height}
           className={styles.image}
         />
         {many ? (
           <>
-            <button type="button" className={cx(styles.arrow, styles.prev)} onClick={() => go(-1)} aria-label="Previous photo">
+            <button type="button" className={cx(styles.arrow, styles.prev)} onClick={() => go(-1)} aria-label={t.listing.previousPhoto}>
               <Icon name="chevronLeft" size={22} />
             </button>
-            <button type="button" className={cx(styles.arrow, styles.next)} onClick={() => go(1)} aria-label="Next photo">
+            <button type="button" className={cx(styles.arrow, styles.next)} onClick={() => go(1)} aria-label={t.listing.nextPhoto}>
               <Icon name="chevronRight" size={22} />
             </button>
             <span className={styles.counter}>
@@ -58,14 +61,14 @@ export function Gallery({ photos, title }: { photos: MarketPhoto[]; title: strin
         ) : null}
       </div>
       {many ? (
-        <div className={styles.thumbs} role="tablist" aria-label="Choose a photo">
+        <div className={styles.thumbs} role="tablist" aria-label={t.listing.choosePhoto}>
           {photos.map((item, i) => (
             <button
               key={item.id}
               type="button"
               role="tab"
               aria-selected={i === index}
-              aria-label={`Photo ${i + 1}`}
+              aria-label={fill(t.listing.photo, { n: i + 1 })}
               className={cx(styles.thumb, i === index && styles.thumbOn)}
               onClick={() => setIndex(i)}
             >

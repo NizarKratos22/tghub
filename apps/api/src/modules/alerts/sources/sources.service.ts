@@ -15,10 +15,12 @@ import { toSourceDto } from '../alerts.mapper';
 import { AlertSource, type AlertSourceDoc } from '../alerts.model';
 import { publishAlert } from '../alerts.service';
 import type { SourceAdapter } from './adapter';
+import { steamFreeAdapter } from './steam-free.adapter';
 import { steamNewsAdapter } from './steam-news.adapter';
 
 const adapters: Record<SourceAdapterName, SourceAdapter> = {
   steam_news: steamNewsAdapter,
+  steam_free: steamFreeAdapter,
 };
 
 /** On a source's first run, only very recent items become alerts — the rest just fill the Radar. */
@@ -63,7 +65,12 @@ async function run(source: AlertSourceDoc): Promise<SourceRunResult> {
   try {
     const items = await adapter.fetch(source);
     const game = source.gameId ? await Game.findById(source.gameId).select('title').lean() : null;
-    const sourceName = `${game?.title ?? source.name} · Steam`;
+    const sourceName = game ? `${game.title} · ${adapter.label}` : adapter.label;
+    // Items about a specific Steam app (free games) join that game's Radar when it's in the catalogue.
+    const appIds = items.flatMap((item) => (item.steamAppId ? [item.steamAppId] : []));
+    const catalogue = appIds.length
+      ? new Map((await Game.find({ steamAppId: { $in: appIds } }).select('_id steamAppId').lean()).map((g) => [g.steamAppId, g._id]))
+      : new Map();
     const alertAfter = source.lastSuccessAt
       ? source.lastSuccessAt.getTime() - 6 * 60 * 60 * 1000
       : startedAt.getTime() - FIRST_RUN_ALERT_WINDOW_MS;
@@ -72,15 +79,19 @@ async function run(source: AlertSourceDoc): Promise<SourceRunResult> {
     let alertsPublished = 0;
 
     for (const item of items) {
+      const gameId = (item.steamAppId ? catalogue.get(item.steamAppId) : undefined) ?? source.gameId;
       const created = await upsertIngestedResource({
         externalId: item.externalId,
-        kind: item.isPatchNotes ? 'patch' : 'news',
+        kind: item.kind,
         title: item.title,
         summary: item.summary,
         url: item.url,
         sourceName,
-        gameId: source.gameId,
+        gameId,
         publishedAt: item.publishedAt,
+        imageUrl: item.imageUrl,
+        deal: item.deal ?? null,
+        expiresAt: item.expiresAt ?? null,
       });
       if (!created) continue;
       newResources += 1;
@@ -90,12 +101,11 @@ async function run(source: AlertSourceDoc): Promise<SourceRunResult> {
           {
             category: source.category,
             title:
-              game && !item.title.toLowerCase().includes(game.title.toLowerCase())
-                ? `${game.title} — ${item.title}`
-                : item.title,
+              item.alertTitle ??
+              (game && !item.title.toLowerCase().includes(game.title.toLowerCase()) ? `${game.title} — ${item.title}` : item.title),
             summary: item.summary,
             url: item.url,
-            gameId: source.gameId ? String(source.gameId) : null,
+            gameId: gameId ? String(gameId) : null,
             sourceName,
             dedupKey: item.externalId,
           },
@@ -121,6 +131,28 @@ async function run(source: AlertSourceDoc): Promise<SourceRunResult> {
     const [dto] = await toDtos([updated!]);
     return { source: dto!, fetched: 0, newResources: 0, alertsPublished: 0 };
   }
+}
+
+/**
+ * Gives a catalogue game on Steam its own news feed and runs it once, so its
+ * Radar fills straight away. Called when a game gains a Steam app id; a game
+ * that already has a feed for that app (even a disabled one) is left alone.
+ */
+export async function ensureSteamNewsSource(gameId: string): Promise<SourceRunResult | null> {
+  const game = await Game.findById(gameId).select('title steamAppId').lean();
+  if (!game?.steamAppId) return null;
+  const exists = await AlertSource.exists({ adapter: 'steam_news', $or: [{ gameId: game._id }, { 'config.appId': game.steamAppId }] });
+  if (exists) return null;
+  const source = await AlertSource.create({
+    name: `${game.title} — Steam announcements`.slice(0, 60),
+    adapter: 'steam_news',
+    config: { appId: game.steamAppId },
+    gameId: game._id,
+    category: 'game_update',
+    intervalMinutes: 60,
+  });
+  logger.info({ game: game.title, appId: game.steamAppId }, 'Steam news feed added for game');
+  return run(source.toObject());
 }
 
 export async function runSource(id: string): Promise<SourceRunResult> {

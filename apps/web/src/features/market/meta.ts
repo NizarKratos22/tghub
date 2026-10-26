@@ -1,11 +1,7 @@
-import {
-  FIVEM_FRAMEWORK_LABELS,
-  MARKET_CATEGORY_META,
-  MARKET_CONDITION_LABELS,
-  MARKET_SUBCATEGORY_LABELS,
-  type ListingCard,
-  type MarketCategory,
-} from '@tgh/shared';
+import type { ListingCard, MarketCategory } from '@tgh/shared';
+import { fill } from '@/i18n/config';
+import type { Dictionary } from '@/i18n/dictionaries';
+import { regionName } from '@/i18n/places';
 import type { IconName } from '@/components/ui/Icon';
 
 export const CATEGORY_ICONS: Record<MarketCategory, IconName> = {
@@ -21,16 +17,19 @@ export const CATEGORY_ICONS: Record<MarketCategory, IconName> = {
 };
 
 /** Shown under the title on cards: where it is, or what it runs on. */
-export function listingSubline(listing: Pick<ListingCard, 'digital' | 'region' | 'framework' | 'subcategory' | 'category' | 'condition'>): string {
+export function listingSubline(
+  listing: Pick<ListingCard, 'digital' | 'region' | 'framework' | 'subcategory' | 'category' | 'condition'>,
+  t: Dictionary,
+): string {
   if (listing.digital) {
-    const kind = listing.subcategory ? MARKET_SUBCATEGORY_LABELS[listing.subcategory] : MARKET_CATEGORY_META[listing.category].label;
-    return listing.framework ? `${FIVEM_FRAMEWORK_LABELS[listing.framework]} · ${kind}` : `Digital · ${kind}`;
+    const kind = categoryLabel(listing, t);
+    return listing.framework ? `${t.labels.framework[listing.framework]} · ${kind}` : fill(t.marketBrowse.digitalKind, { kind });
   }
-  return [listing.region, listing.condition ? MARKET_CONDITION_LABELS[listing.condition] : null].filter(Boolean).join(' · ');
+  return [listing.region ? regionName(listing.region, t) : null, listing.condition ? t.labels.condition[listing.condition] : null].filter(Boolean).join(' · ');
 }
 
-export function categoryLabel(listing: Pick<ListingCard, 'category' | 'subcategory'>): string {
-  return listing.subcategory ? MARKET_SUBCATEGORY_LABELS[listing.subcategory] : MARKET_CATEGORY_META[listing.category].label;
+export function categoryLabel(listing: Pick<ListingCard, 'category' | 'subcategory'>, t: Dictionary): string {
+  return listing.subcategory ? t.labels.subcategory[listing.subcategory] : t.market.categoryNames[listing.category];
 }
 
 export const LISTING_KEYS = {
