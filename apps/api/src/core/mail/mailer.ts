@@ -25,7 +25,7 @@ class SmtpMailer implements Mailer {
   }
 }
 
-/** Development without SMTP: the email lands in the API log instead of an inbox. */
+/** No SMTP_URL (development, or production before email is set up): the email lands in the API log instead of an inbox. */
 class LogMailer implements Mailer {
   readonly delivers = false;
 

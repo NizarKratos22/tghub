@@ -82,8 +82,8 @@ const envSchema = z.object({
 const parsed = envSchema.safeParse(process.env);
 
 if (parsed.success && parsed.data.NODE_ENV === 'production' && !parsed.data.SMTP_URL) {
-  console.error('SMTP_URL is required in production — verification emails cannot be delivered without it.');
-  process.exit(1);
+  // Players can't receive sign-up or reset codes until it's set; the codes only reach this log, never the browser.
+  console.warn('SMTP_URL is not set: emails are written to the log instead of being sent. Set it before opening sign-ups.');
 }
 
 if (!parsed.success) {

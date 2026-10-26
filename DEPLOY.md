@@ -27,7 +27,7 @@ Edit `.env.production`. Required:
 | --- | --- |
 | `DOMAIN` | `tghub.tn` — used by Compose and Caddy |
 | `JWT_ACCESS_SECRET` | 64 random characters: `openssl rand -base64 48` |
-| `SMTP_URL` | `smtps://user:password@smtp.provider.com:465` — sign-up codes and password resets can't work without it (the API refuses to start in production without it) |
+| `SMTP_URL` | `smtps://user:password@smtp.provider.com:465` — sign-up codes and password resets can't work without it (without it the emails only reach the API log) |
 | `MAIL_FROM` | `TG Hub <no-reply@tghub.tn>` — the domain must be verified with your mail provider (SPF/DKIM) |
 
 Compose sets `NODE_ENV`, `MONGO_URI`, `PUBLIC_WEB_URL`, `CORS_ORIGINS`, `COOKIE_SECURE` and `TRUST_PROXY` for you.

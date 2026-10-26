@@ -108,7 +108,7 @@ See [DEPLOY.md](DEPLOY.md) for the server, Docker, HTTPS, backups and monitoring
 - **Tournament platforms:** set `START_GG_TOKEN` (start.gg developer token) and `FACEIT_API_KEY` (FACEIT server-side Data API key). Until then only the clearly-labelled sample tournaments show. The adapters follow each platform's published schema and are unit-tested against fixtures, but haven't been run against the live APIs yet — do one import per platform in Admin → Tournaments after adding the keys. Challonge is not supported yet (its v1 docs now redirect to v2.1 and free apps are capped at 500 requests/month).
 - **Images** go to Cloudflare R2 once its keys are set (see DEPLOY.md); until then they're on the server's disk. Create the bucket, custom domain and API token before launch, and run `media-to-r2` once if anything was uploaded before the switch.
 - **Marketplace rules:** publish terms (prohibited items, no account selling, no leaked FiveM assets) before opening it publicly.
-- **Email:** set `SMTP_URL` (any SMTP provider — Brevo, Mailgun, SES…) and `MAIL_FROM`. Without SMTP in development the code is written to the API log and shown on the verify page; the API refuses to start in production without it.
+- **Email:** set `SMTP_URL` (any SMTP provider — Brevo, Mailgun, SES…) and `MAIL_FROM`. Without SMTP the email is written to the API log instead (in development the code is also shown on the verify page); in production players can't receive codes until it's set.
 - Set `COOKIE_SECURE=true`, a strong `JWT_ACCESS_SECRET`, `CORS_ORIGINS`, and `INGESTION_ENABLED=true` in production; serve both apps behind HTTPS.
 
 ## License
