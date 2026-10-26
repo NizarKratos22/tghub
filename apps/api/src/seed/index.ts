@@ -4,6 +4,12 @@
  *
  *   npm run seed                       # includes a live fetch of Steam news
  *   SEED_FETCH_FEEDS=false npm run seed # offline
+ *
+ * Live mode fills a new, empty production database from a developer machine: the
+ * catalogue, hardware index, guides, missions, achievements, Season 1, Steam sources
+ * and one admin. No demo players, listings, chats, clans or sample tournaments.
+ *
+ *   SEED_LIVE=true SEED_ADMIN_PASSWORD=<strong> MONGO_URI=<atlas uri> npm run seed
  */
 import { rm } from 'node:fs/promises';
 import mongoose from 'mongoose';
@@ -66,6 +72,7 @@ const DEV_ADMIN = {
 };
 const DEMO_PLAYER_PASSWORD = process.env.SEED_PLAYER_PASSWORD ?? 'tghub-player-dev';
 const FETCH_FEEDS = process.env.SEED_FETCH_FEEDS !== 'false';
+const LIVE = process.env.SEED_LIVE === 'true';
 
 function componentDocs(type: 'cpu' | 'gpu', seeds: ComponentSeed[]) {
   return seeds.map((seed) => ({
@@ -122,7 +129,18 @@ async function seed() {
     process.exit(1);
   }
 
+  if (LIVE && (process.env.SEED_ADMIN_PASSWORD ?? '').length < 16) {
+    logger.error('Live mode needs SEED_ADMIN_PASSWORD with at least 16 characters');
+    process.exit(1);
+  }
+
   await connectMongo();
+  // The reset below drops everything: a live database with real accounts is never touched.
+  if (LIVE && (await User.estimatedDocumentCount()) > 0) {
+    logger.error('Live mode only fills an empty database, and this one already has accounts');
+    await disconnectMongo();
+    process.exit(1);
+  }
   await mongoose.connection.dropDatabase();
   // Uploaded files belong to the documents we just dropped.
   await rm(env.MEDIA_DIR, { recursive: true, force: true });
@@ -171,7 +189,7 @@ async function seed() {
 
   /* Radar */
   await Resource.insertMany(
-    RESOURCES.map((resource) => ({
+    (LIVE ? [] : RESOURCES).map((resource) => ({
       ...resource,
       titleLower: resource.title.toLowerCase(),
       gameId: resource.game ? gameIds.get(resource.game) : null,
@@ -187,7 +205,7 @@ async function seed() {
   await Mission.insertMany(MISSIONS.map((mission) => ({ ...mission, startsAt: mission.startsAt ?? null, endsAt: mission.endsAt ?? null })));
   await Achievement.insertMany(ACHIEVEMENTS);
   await Pulse.create({ ...SEASON, current: 0 });
-  logger.info({ components: components.length, games: games.length, resources: RESOURCES.length }, 'Catalogue seeded');
+  logger.info({ components: components.length, games: games.length, resources: LIVE ? 0 : RESOURCES.length }, 'Catalogue seeded');
 
   /* Accounts — events flow through the real listeners, so XP, levels and alerts stay consistent. */
   registerProgressionListeners();
@@ -212,7 +230,7 @@ async function seed() {
   await ensurePreferences(String(admin._id));
 
   const players = await User.insertMany(
-    PLAYERS.map((player, index) => ({
+    (LIVE ? [] : PLAYERS).map((player, index) => ({
       email: `${player.username.replace(/\./g, '-')}@demo.tghub.test`,
       username: player.username,
       usernameLower: player.username.toLowerCase(),
@@ -238,110 +256,112 @@ async function seed() {
     await updatePreferences(String(user._id), { followedGameIds: followed });
   }
 
-  // Give the demo a history: players joined over the past weeks and earned their
-  // warm-up XP in several sessions, so dashboards and leaderboards have a shape.
-  const HISTORY_DAY = 86_400_000;
-  const XP_SESSIONS = 6;
-  await User.collection.updateOne({ _id: admin._id }, { $set: { createdAt: new Date(Date.now() - 70 * HISTORY_DAY) } });
-  for (const [index, player] of PLAYERS.entries()) {
-    const userId = players[index]!._id;
-    const daysAgo = 52 - index * 4;
-    const joined = Date.now() - daysAgo * HISTORY_DAY;
-    await User.collection.updateOne({ _id: userId }, { $set: { createdAt: new Date(joined) } });
-    const chunk = Math.floor(player.xp / XP_SESSIONS);
-    for (let session = 0; session < XP_SESSIONS; session += 1) {
-      const amount = session === XP_SESSIONS - 1 ? player.xp - chunk * (XP_SESSIONS - 1) : chunk;
-      const key = `seed:${player.username}:${session}`;
-      await awardXp(String(userId), amount, 'Season 1 warm-up', key);
-      const earnedAt = joined + ((session + 1) * (daysAgo - 1) * HISTORY_DAY) / XP_SESSIONS;
-      await XpLedger.collection.updateOne({ idempotencyKey: key }, { $set: { createdAt: new Date(earnedAt) } });
+  if (!LIVE) {
+    // Give the demo a history: players joined over the past weeks and earned their
+    // warm-up XP in several sessions, so dashboards and leaderboards have a shape.
+    const HISTORY_DAY = 86_400_000;
+    const XP_SESSIONS = 6;
+    await User.collection.updateOne({ _id: admin._id }, { $set: { createdAt: new Date(Date.now() - 70 * HISTORY_DAY) } });
+    for (const [index, player] of PLAYERS.entries()) {
+      const userId = players[index]!._id;
+      const daysAgo = 52 - index * 4;
+      const joined = Date.now() - daysAgo * HISTORY_DAY;
+      await User.collection.updateOne({ _id: userId }, { $set: { createdAt: new Date(joined) } });
+      const chunk = Math.floor(player.xp / XP_SESSIONS);
+      for (let session = 0; session < XP_SESSIONS; session += 1) {
+        const amount = session === XP_SESSIONS - 1 ? player.xp - chunk * (XP_SESSIONS - 1) : chunk;
+        const key = `seed:${player.username}:${session}`;
+        await awardXp(String(userId), amount, 'Season 1 warm-up', key);
+        const earnedAt = joined + ((session + 1) * (daysAgo - 1) * HISTORY_DAY) / XP_SESSIONS;
+        await XpLedger.collection.updateOne({ idempotencyKey: key }, { $set: { createdAt: new Date(earnedAt) } });
+      }
     }
-  }
-  await bus.drain();
+    await bus.drain();
 
-  await publishAlert({
-    category: 'announcement',
-    title: 'Welcome to TG Hub Alerts',
-    summary: 'Pick the games and categories you care about in Alert preferences. Patch notes for games you favourite land here automatically.',
-    url: '/alerts/preferences',
-    gameId: null,
-    sourceName: 'TG Hub',
-    dedupKey: 'seed:welcome',
-  });
+    await publishAlert({
+      category: 'announcement',
+      title: 'Welcome to TG Hub Alerts',
+      summary: 'Pick the games and categories you care about in Alert preferences. Patch notes for games you favourite land here automatically.',
+      url: '/alerts/preferences',
+      gameId: null,
+      sourceName: 'TG Hub',
+      dedupKey: 'seed:welcome',
+    });
 
-  /* Marketplace: photos go through the real upload pipeline, listings through the real service. */
-  const DAY_MS = 86_400_000;
-  const listingIds: string[] = [];
-  for (const seedListing of LISTINGS) {
-    const sellerId = String(players[seedListing.seller]!._id);
-    const photoIds: string[] = [];
-    for (let variant = 0; variant < seedListing.art.photos; variant += 1) {
-      const svg = listingArt(seedListing.art.kind, seedListing.art.palette, variant);
-      const jpeg = await sharp(Buffer.from(svg)).jpeg({ quality: 90 }).toBuffer();
-      photoIds.push((await storeImage(sellerId, 'listing', jpeg)).id);
-    }
-    const listing = await createListing(sellerId, listingInputSchema.parse({ ...seedListing.input, photoIds }));
-    const listedAt = new Date(Date.now() - seedListing.daysAgo * DAY_MS - Math.floor(Math.random() * 8) * 3_600_000);
-    // Raw driver update: Mongoose treats createdAt as immutable, but the demo needs history.
-    await Listing.collection.updateOne(
-      { _id: new mongoose.Types.ObjectId(listing.id) },
-      {
-        $set: {
-          status: seedListing.status ?? 'active',
-          soldAt: seedListing.status === 'sold' ? new Date() : null,
-          views: seedListing.views,
-          bumpedAt: listedAt,
-          createdAt: listedAt,
+    /* Marketplace: photos go through the real upload pipeline, listings through the real service. */
+    const DAY_MS = 86_400_000;
+    const listingIds: string[] = [];
+    for (const seedListing of LISTINGS) {
+      const sellerId = String(players[seedListing.seller]!._id);
+      const photoIds: string[] = [];
+      for (let variant = 0; variant < seedListing.art.photos; variant += 1) {
+        const svg = listingArt(seedListing.art.kind, seedListing.art.palette, variant);
+        const jpeg = await sharp(Buffer.from(svg)).jpeg({ quality: 90 }).toBuffer();
+        photoIds.push((await storeImage(sellerId, 'listing', jpeg)).id);
+      }
+      const listing = await createListing(sellerId, listingInputSchema.parse({ ...seedListing.input, photoIds }));
+      const listedAt = new Date(Date.now() - seedListing.daysAgo * DAY_MS - Math.floor(Math.random() * 8) * 3_600_000);
+      // Raw driver update: Mongoose treats createdAt as immutable, but the demo needs history.
+      await Listing.collection.updateOne(
+        { _id: new mongoose.Types.ObjectId(listing.id) },
+        {
+          $set: {
+            status: seedListing.status ?? 'active',
+            soldAt: seedListing.status === 'sold' ? new Date() : null,
+            views: seedListing.views,
+            bumpedAt: listedAt,
+            createdAt: listedAt,
+          },
         },
-      },
-    );
-    listingIds.push(listing.id);
-  }
-  for (const thread of CONVERSATIONS) {
-    const buyerId = String(players[thread.buyer]!._id);
-    const sellerId = String(players[LISTINGS[thread.listing]!.seller]!._id);
-    const [[, first], ...rest] = thread.messages as [[boolean, string], ...Array<[boolean, string]>];
-    const { conversationId } = await messageSeller(buyerId, listingIds[thread.listing]!, first);
-    for (const [fromBuyer, body] of rest) await sendMessage(fromBuyer ? buyerId : sellerId, conversationId, body);
-  }
-  // Three reports flag the ped pack so the moderation queue has something in it.
-  for (const reporter of [0, 3, 5]) {
-    await reportListing(String(players[reporter]!._id), listingIds[6]!, { reason: 'leaked', details: 'Looks like the same pack that leaked on a forum last month.' });
-  }
-  await bus.drain();
-  logger.info({ listings: LISTINGS.length, conversations: CONVERSATIONS.length }, 'Marketplace seeded');
-
-  /* Social: demo players follow the ones near them in the standings, the admin follows the top. */
-  for (const [index, player] of players.entries()) {
-    for (const offset of [1, 2, 5]) {
-      const other = players[(index + offset) % players.length]!;
-      await follow(String(player._id), other.username);
+      );
+      listingIds.push(listing.id);
     }
-  }
-  for (const player of players.slice(0, 6)) await follow(String(admin._id), player.username);
-  await bus.drain();
+    for (const thread of CONVERSATIONS) {
+      const buyerId = String(players[thread.buyer]!._id);
+      const sellerId = String(players[LISTINGS[thread.listing]!.seller]!._id);
+      const [[, first], ...rest] = thread.messages as [[boolean, string], ...Array<[boolean, string]>];
+      const { conversationId } = await messageSeller(buyerId, listingIds[thread.listing]!, first);
+      for (const [fromBuyer, body] of rest) await sendMessage(fromBuyer ? buyerId : sellerId, conversationId, body);
+    }
+    // Three reports flag the ped pack so the moderation queue has something in it.
+    for (const reporter of [0, 3, 5]) {
+      await reportListing(String(players[reporter]!._id), listingIds[6]!, { reason: 'leaked', details: 'Looks like the same pack that leaked on a forum last month.' });
+    }
+    await bus.drain();
+    logger.info({ listings: LISTINGS.length, conversations: CONVERSATIONS.length }, 'Marketplace seeded');
 
-  /* Squads: clans and teammate posts from the demo players. */
-  await seedSquads(new Map(players.map((player) => [player.username, String(player._id)])), new Map([...gameIds].map(([slug, gameId]) => [slug, String(gameId)])));
-  await bus.drain();
+    /* Social: demo players follow the ones near them in the standings, the admin follows the top. */
+    for (const [index, player] of players.entries()) {
+      for (const offset of [1, 2, 5]) {
+        const other = players[(index + offset) % players.length]!;
+        await follow(String(player._id), other.username);
+      }
+    }
+    for (const player of players.slice(0, 6)) await follow(String(admin._id), player.username);
+    await bus.drain();
 
-  /* Tournaments: consumed from start.gg / FACEIT. Samples go through the same upsert + announce path. */
-  const matchGame = await loadGameMatcher();
-  const sampleIds = new Map<string, string>();
-  for (const sample of SAMPLE_TOURNAMENTS) {
-    const { doc, created } = await upsertTournament('sample', sample.tournament, { matchGame, gameId: gameIds.get(sample.game) ?? null });
-    sampleIds.set(sample.tournament.externalId, String(doc._id));
-    if (created) await announceTournament(doc);
+    /* Squads: clans and teammate posts from the demo players. */
+    await seedSquads(new Map(players.map((player) => [player.username, String(player._id)])), new Map([...gameIds].map(([slug, gameId]) => [slug, String(gameId)])));
+    await bus.drain();
+
+    /* Tournaments: consumed from start.gg / FACEIT. Samples go through the same upsert + announce path. */
+    const matchGame = await loadGameMatcher();
+    const sampleIds = new Map<string, string>();
+    for (const sample of SAMPLE_TOURNAMENTS) {
+      const { doc, created } = await upsertTournament('sample', sample.tournament, { matchGame, gameId: gameIds.get(sample.game) ?? null });
+      sampleIds.set(sample.tournament.externalId, String(doc._id));
+      if (created) await announceTournament(doc);
+    }
+    // A couple of follows so reminders and the "Following" strip have something to show.
+    const follows: Array<[number, string]> = [
+      [0, 'sample-sfax-efootball-cup'],
+      [0, 'sample-tunis-tekken-monthly-14'],
+      [3, 'sample-sfax-efootball-cup'],
+    ];
+    await TournamentFollow.insertMany(
+      follows.map(([playerIndex, externalId]) => ({ userId: players[playerIndex]!._id, tournamentId: sampleIds.get(externalId) })),
+    );
   }
-  // A couple of follows so reminders and the "Following" strip have something to show.
-  const follows: Array<[number, string]> = [
-    [0, 'sample-sfax-efootball-cup'],
-    [0, 'sample-tunis-tekken-monthly-14'],
-    [3, 'sample-sfax-efootball-cup'],
-  ];
-  await TournamentFollow.insertMany(
-    follows.map(([playerIndex, externalId]) => ({ userId: players[playerIndex]!._id, tournamentId: sampleIds.get(externalId) })),
-  );
 
   const tournamentSources = [];
   if (startggProvider.configured()) {
@@ -417,7 +437,11 @@ async function seed() {
   }
   await bus.drain();
 
-  logger.info(`Seed complete. Admin sign-in: ${DEV_ADMIN.username} — password from SEED_ADMIN_PASSWORD or the default in src/seed/index.ts`);
+  logger.info(
+    LIVE
+      ? `Live seed complete. Admin sign-in: ${DEV_ADMIN.username} with the SEED_ADMIN_PASSWORD you gave`
+      : `Seed complete. Admin sign-in: ${DEV_ADMIN.username} — password from SEED_ADMIN_PASSWORD or the default in src/seed/index.ts`,
+  );
   await disconnectMongo();
 }
 
