@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { EmailVerificationStatus, Me } from '@tgh/shared';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { CODE_LENGTH, CodeInput } from '@/components/ui/CodeInput';
@@ -24,6 +24,10 @@ function Verify({ me, next }: { me: Me; next: string }) {
   const [code, setCode] = useState('');
   const [status, setStatus] = useState<EmailVerificationStatus | null>(() => recallVerification());
   const [done, setDone] = useState(me.emailVerified);
+  // Confirmed elsewhere (an admin did it by hand): refresh the session so every "verify first" gate opens.
+  useEffect(() => {
+    if (done && !me.emailVerified) void queryClient.invalidateQueries({ queryKey: SESSION_KEY });
+  }, [done, me.emailVerified, queryClient]);
 
   const remote = useQuery({ queryKey: ['auth', 'verification'], queryFn: api.auth.verification, enabled: !me.emailVerified });
   // Follow the server's answer each time a new one arrives.

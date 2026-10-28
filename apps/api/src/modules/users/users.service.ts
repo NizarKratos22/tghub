@@ -2,6 +2,8 @@ import type { QueryFilter } from 'mongoose';
 import type { AdminUser, Me, Page, PublicProfile, Role, UpdateProfileInput, UserStatus } from '@tgh/shared';
 import { AppError } from '../../core/http/errors';
 import { escapeRegex, paginate, skipFor } from '../../core/http/utils';
+import { logger } from '../../core/logger';
+import { OneTimeCode } from '../auth/codes.model';
 import { unreadCount } from '../alerts/inbox.service';
 import { marketUnreadCount } from '../market/conversations.service';
 import { Session } from '../auth/session.model';
@@ -102,17 +104,38 @@ export async function getPublicProfile(username: string): Promise<PublicProfile>
 
 /* ───────────── Admin ───────────── */
 
-export async function adminListUsers(query: { q?: string; page: number; pageSize: number }): Promise<Page<AdminUser>> {
-  const filter: QueryFilter<UserDoc> = {};
+/** Only an explicit null means "waiting for the code"; a missing field is a pre-verification account (verified). */
+const UNVERIFIED: QueryFilter<UserDoc> = { emailVerifiedAt: { $type: 'null' } };
+
+export async function adminListUsers(query: { q?: string; verification?: 'verified' | 'unverified'; page: number; pageSize: number }): Promise<Page<AdminUser>> {
+  const conditions: Array<QueryFilter<UserDoc>> = [];
   if (query.q) {
     const term = escapeRegex(query.q.toLowerCase());
-    filter.$or = [{ usernameLower: { $regex: term } }, { email: { $regex: term } }];
+    conditions.push({ $or: [{ usernameLower: { $regex: term } }, { email: { $regex: term } }] });
   }
+  if (query.verification === 'unverified') conditions.push(UNVERIFIED);
+  if (query.verification === 'verified') conditions.push({ $nor: [UNVERIFIED] });
+  const filter: QueryFilter<UserDoc> = conditions.length > 0 ? { $and: conditions } : {};
   const [users, total] = await Promise.all([
     User.find(filter).sort({ createdAt: -1 }).skip(skipFor(query.page, query.pageSize)).limit(query.pageSize).lean<UserDoc[]>(),
     User.countDocuments(filter),
   ]);
   return paginate(users.map(toAdminUser), total, query.page, query.pageSize);
+}
+
+/**
+ * Confirms a player's email by hand, for when the code can't reach them (mail outage, a
+ * provider dropping it). Idempotent; the pending sign-up code is discarded.
+ */
+export async function adminVerifyEmail(actorId: string, userId: string): Promise<AdminUser> {
+  const verified = await User.findOneAndUpdate({ _id: userId, ...UNVERIFIED }, { $set: { emailVerifiedAt: new Date() } }, { returnDocument: 'after' }).lean<UserDoc>();
+  const user = verified ?? (await User.findById(userId).lean<UserDoc>());
+  if (!user) throw AppError.notFound('Player');
+  if (verified) {
+    await OneTimeCode.deleteMany({ userId: user._id, purpose: 'signup' });
+    logger.info({ actorId, userId }, 'Email verified by an admin');
+  }
+  return toAdminUser(user);
 }
 
 /** Moderation: takes down a player's avatar and banner (the monogram shows again). */

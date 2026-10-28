@@ -382,6 +382,7 @@ export const api = {
     users: (query: QueryParams) => apiFetch<Page<AdminUser>>('/admin/users', { query }),
     updateUser: (id: string, body: unknown) => apiFetch<AdminUser>(`/admin/users/${id}`, { method: 'PATCH', body }),
     clearUserImages: (id: string) => apiFetch<AdminUser>(`/admin/users/${id}/images`, { method: 'DELETE' }),
+    verifyUserEmail: (id: string) => apiFetch<AdminUser>(`/admin/users/${id}/verify-email`, { method: 'POST', body: {} }),
     payments: () => apiFetch<AdminPayments>('/admin/payments'),
     games: () => apiFetch<AdminGames>('/admin/games'),
     igdbSearch: (q: string) => apiFetch<IgdbSearchResult[]>('/admin/igdb/search', { query: { q } }),

@@ -71,6 +71,8 @@ export function toAdminUser(user: UserDoc): AdminUser {
     hasBanner: Boolean(user.bannerMediaId),
     sellerVerified: user.sellerVerified === true,
     sellerOverride: user.sellerOverride ?? 'auto',
+    // A missing field means the account predates verification — it counts as verified.
+    emailVerified: user.emailVerifiedAt !== null,
     createdAt: user.createdAt.toISOString(),
   };
 }

@@ -636,6 +636,8 @@ export interface AdminUser {
   hasBanner: boolean;
   sellerVerified: boolean;
   sellerOverride: 'auto' | 'verified' | 'revoked';
+  /** False while the player hasn't confirmed their email (an admin can confirm it for them). */
+  emailVerified: boolean;
   createdAt: string;
 }
 

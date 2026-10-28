@@ -578,7 +578,11 @@ export function UsersAdmin() {
   const selfId = useSession().data?.id ?? '';
   const queryClient = useQueryClient();
   const [q, setQ] = useState('');
-  const users = useQuery({ queryKey: ['admin', 'users', q], queryFn: () => api.admin.users({ q, pageSize: 25 }) });
+  const [unverifiedOnly, setUnverifiedOnly] = useState(false);
+  const users = useQuery({
+    queryKey: ['admin', 'users', q, unverifiedOnly],
+    queryFn: () => api.admin.users({ q, pageSize: 25, ...(unverifiedOnly ? { verification: 'unverified' } : {}) }),
+  });
   const update = useMutation({
     mutationFn: ({ id, body }: { id: string; body: Record<string, string> }) => api.admin.updateUser(id, body),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'users'] }),
@@ -591,16 +595,43 @@ export function UsersAdmin() {
     mutationFn: ({ id, override }: { id: string; override: 'auto' | 'verified' | 'revoked' }) => api.admin.setSellerVerification(id, override),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'users'] }),
   });
+  // For players the code can't reach (a mail outage, a provider dropping it): confirms the address by hand.
+  const verifyEmail = useMutation({
+    mutationFn: (id: string) => api.admin.verifyUserEmail(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'users'] }),
+  });
 
   return (
-    <Panel title="Players" aside={<input className={styles.searchInput} placeholder="Search username or email" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search players" />}>
-      <FormError message={update.error?.message ?? clearImages.error?.message ?? sellerBadge.error?.message} />
-      {users.data ? (
+    <Panel
+      title="Players"
+      aside={
+        <span className={styles.buttons}>
+          <label className={styles.inlineCheck}>
+            <input type="checkbox" checked={unverifiedOnly} onChange={(e) => setUnverifiedOnly(e.target.checked)} />
+            Unverified only
+          </label>
+          <input className={styles.searchInput} placeholder="Search username or email" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search players" />
+        </span>
+      }
+    >
+      <FormError message={update.error?.message ?? clearImages.error?.message ?? sellerBadge.error?.message ?? verifyEmail.error?.message} />
+      {users.data && users.data.items.length === 0 ? (
+        unverifiedOnly && !q.trim() ? (
+          <EmptyState icon="check" title="Everyone has confirmed their email">
+            No player is waiting for an email code right now.
+          </EmptyState>
+        ) : (
+          <EmptyState icon="users" title={unverifiedOnly ? 'No unverified players match' : 'No players found'}>
+            {unverifiedOnly ? 'Try another username or email, or untick “Unverified only”.' : 'Try another username or email.'}
+          </EmptyState>
+        )
+      ) : users.data ? (
         <div className={styles.tableWrap}>
           <table className={styles.table}>
             <thead>
               <tr>
                 <th>Player</th>
+                <th>Email</th>
                 <th>Home</th>
                 <th className={styles.num}>LV</th>
                 <th>Role</th>
@@ -620,6 +651,27 @@ export function UsersAdmin() {
                         <span className={styles.dim}> · {user.email}</span>
                       </span>
                     </span>
+                  </td>
+                  <td>
+                    {user.emailVerified ? (
+                      <Tag tone="success">Verified</Tag>
+                    ) : (
+                      <span className={styles.buttons}>
+                        <Tag tone="gold">Unverified</Tag>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          icon="check"
+                          aria-label={`Verify email for ${user.username}`}
+                          loading={verifyEmail.isPending && verifyEmail.variables === user.id}
+                          onClick={() => {
+                            if (window.confirm(`Mark ${user.email} as verified for ${user.username}? Only do this if you're sure the address is theirs.`)) verifyEmail.mutate(user.id);
+                          }}
+                        >
+                          Verify email
+                        </Button>
+                      </span>
+                    )}
                   </td>
                   <td>{homeLabel(user) || '—'}</td>
                   <td className={styles.num}>{user.level}</td>

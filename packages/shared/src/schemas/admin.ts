@@ -68,6 +68,8 @@ export type DiscordTargetUpdateInput = z.infer<typeof discordTargetUpdateSchema>
 
 export const adminUserQuerySchema = z.object({
   q: optionalSearchSchema,
+  /** "unverified" lists the players still waiting to confirm their email. */
+  verification: z.enum(['verified', 'unverified']).optional(),
   page: pageSchema,
   pageSize: pageSizeSchema,
 });

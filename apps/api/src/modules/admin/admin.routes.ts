@@ -55,7 +55,7 @@ import {
 } from '../progression/progression.admin';
 import { adminListMissions, adminUpdateMission } from '../progression/progression.service';
 import { createResource, deleteResource } from '../radar/radar.service';
-import { adminClearProfileImages, adminListUsers, adminUpdateUser } from '../users/users.service';
+import { adminClearProfileImages, adminListUsers, adminUpdateUser, adminVerifyEmail } from '../users/users.service';
 import { setSellerOverride } from '../market/reputation.service';
 import { adminPayments } from '../payments/payments.service';
 import { overview, stats } from './admin.service';
@@ -76,6 +76,7 @@ adminRouter.put(
   }),
 );
 adminRouter.delete('/users/:id/images', handle({ params: idParamsSchema }, ({ params }) => adminClearProfileImages(params.id)));
+adminRouter.post('/users/:id/verify-email', handle({ params: idParamsSchema }, ({ params, user }) => adminVerifyEmail(user().userId, params.id)));
 adminRouter.patch(
   '/users/:id',
   handle({ params: idParamsSchema, body: adminUserUpdateSchema }, ({ params, body, user }) =>

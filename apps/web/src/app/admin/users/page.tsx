@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: 'Players' };
 export default function UsersPage() {
   return (
     <>
-      <AdminPageHeader title="Players" description="Search accounts, change roles and suspend players." />
+      <AdminPageHeader title="Players" description="Search accounts, confirm emails by hand, change roles and suspend players." />
       <UsersAdmin />
     </>
   );
