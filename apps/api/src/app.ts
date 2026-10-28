@@ -9,6 +9,7 @@ import { CLIENT_TYPE_HEADER, CSRF_HEADER } from './core/auth/context';
 import { authenticate, csrfGuard } from './core/auth/middleware';
 import { errorHandler, notFoundHandler } from './core/http/middleware';
 import { apiLimiter } from './core/http/rate-limit';
+import { requestContext } from './core/http/request-context';
 import { logger } from './core/logger';
 import { serveMediaFile } from './modules/media/media.routes';
 import { apiRouter } from './routes';
@@ -39,6 +40,7 @@ export function createApp() {
     }),
   );
   app.use(cookieParser());
+  app.use(requestContext);
   app.use(
     pinoHttp({
       logger,

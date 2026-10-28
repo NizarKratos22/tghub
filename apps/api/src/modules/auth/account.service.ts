@@ -1,21 +1,25 @@
 import type { EmailVerificationStatus, SessionInfo } from '@tgh/shared';
+import { env } from '../../config/env';
 import { hashPassword, verifyPassword } from '../../core/auth/password';
 import { AppError } from '../../core/http/errors';
+import { currentLocale } from '../../core/http/request-context';
 import { logger } from '../../core/logger';
+import type { NoticeKind } from '../../core/mail/copy';
 import { mailer } from '../../core/mail/mailer';
-import { noticeEmail } from '../../core/mail/templates';
+import { codeEmail, noticeEmail } from '../../core/mail/templates';
 import { User, type UserDoc } from '../users/user.model';
 import { startSession, type ClientMeta, type IssuedSession } from './auth.service';
-import { checkCode, consumeCode } from './codes';
+import { checkCode, consumeCode, issueCode, maskEmail } from './codes';
 import { Session, type SessionDoc } from './session.model';
-import { sendCode } from './verification.service';
+import { greetingName, sendCode } from './verification.service';
 
 type AccountUser = Pick<UserDoc, '_id' | 'email' | 'displayName' | 'role' | 'status' | 'lastActiveDay' | 'emailVerifiedAt'>;
 const ACCOUNT_FIELDS = 'email displayName role status lastActiveDay emailVerifiedAt';
 
 /** Fire-and-forget security notice; a mail outage must not undo a password change. */
-function notify(to: string, name: string, heading: string, body: string) {
-  mailer.send({ to, ...noticeEmail(name, heading, body) }).catch((error: unknown) => logger.error({ err: error }, 'Security notice failed'));
+function notify(to: string, name: string, kind: NoticeKind, newEmail?: string) {
+  const email = noticeEmail(kind, { name, at: new Date(), maskedNewEmail: newEmail ? maskEmail(newEmail) : undefined }, currentLocale());
+  mailer.send({ to, ...email }).catch((error: unknown) => logger.error({ err: error, kind }, 'Security notice failed'));
 }
 
 /* ───────────── Forgot / reset password ───────────── */
@@ -28,8 +32,11 @@ export async function forgotPassword(email: string): Promise<{ devCode?: string 
   const user = await User.findOne({ email, status: 'active' }).select(ACCOUNT_FIELDS).lean<AccountUser>();
   if (!user) return {};
   try {
-    const status = await sendCode(user, 'password_reset', user.email);
-    return status.devCode ? { devCode: status.devCode } : {};
+    const issued = await issueCode(user._id, 'password_reset', user.email);
+    const message = codeEmail('password_reset', greetingName(user, 'password_reset'), issued.code, currentLocale());
+    // Not awaited: neither the SMTP round trip's time nor its errors may reveal that the account exists.
+    mailer.send({ to: user.email, ...message }).catch((error: unknown) => logger.error({ err: error, userId: String(user._id) }, 'Password reset email failed'));
+    return !mailer.delivers && !env.isProduction ? { devCode: issued.code } : {};
   } catch (error) {
     // Cooldowns and caps stay silent here too — the response must not differ.
     if (error instanceof AppError && error.status === 429) return {};
@@ -56,7 +63,7 @@ export async function resetPassword(input: { email: string; code: string; passwo
   await consumeCode(record);
   // Anyone holding an old session is signed out — the usual reason for a reset.
   await Session.updateMany({ userId: user._id, revokedAt: null }, { $set: { revokedAt: new Date() } });
-  notify(user.email, user.displayName, 'Your password was changed', 'Your TG Hub password was just reset and every device was signed out.');
+  notify(user.email, user.displayName, 'password_reset');
   return startSession(user, meta);
 }
 
@@ -76,7 +83,8 @@ export async function changePassword(userId: string, sessionId: string, currentP
   await User.updateOne({ _id: user._id }, { $set: { passwordHash: await hashPassword(newPassword) } });
   // Keep this device signed in, sign out the rest.
   await Session.updateMany({ userId: user._id, revokedAt: null, _id: { $ne: sessionId } }, { $set: { revokedAt: new Date() } });
-  notify(user.email, user.displayName, 'Your password was changed', 'Your TG Hub password was changed and other devices were signed out.');
+  // An unproven address may belong to someone else: no notices (with the player's chosen name) go there.
+  if (user.emailVerifiedAt !== null) notify(user.email, user.displayName, 'password_changed');
 }
 
 /** Step 1: the code goes to the new address; nothing changes until it is confirmed. */
@@ -99,7 +107,7 @@ export async function confirmEmailChange(userId: string, code: string): Promise<
   }
   await User.updateOne({ _id: user._id }, { $set: { email: record.target, emailVerifiedAt: new Date() } });
   await consumeCode(record);
-  notify(user.email, user.displayName, 'Your email was changed', `Your TG Hub account now uses ${record.target}. This address will no longer receive account emails.`);
+  if (user.emailVerifiedAt !== null) notify(user.email, user.displayName, 'email_changed', record.target);
 }
 
 /* ───────────── Devices ───────────── */

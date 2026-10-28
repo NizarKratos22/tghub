@@ -2,8 +2,10 @@ import type { Types } from 'mongoose';
 import type { EmailVerificationStatus } from '@tgh/shared';
 import { env } from '../../config/env';
 import { AppError } from '../../core/http/errors';
+import { currentLocale } from '../../core/http/request-context';
+import { logger } from '../../core/logger';
 import { mailer } from '../../core/mail/mailer';
-import { codeEmail } from '../../core/mail/templates';
+import { codeEmail, welcomeEmail } from '../../core/mail/templates';
 import { User, type UserDoc } from '../users/user.model';
 import { checkCode, consumeCode, issueCode, maskEmail, pendingCode, resendAtFor } from './codes';
 import type { CodePurpose } from './codes.model';
@@ -18,10 +20,23 @@ export function codeStatus(target: string, sentAt: Date, expiresAt: Date, code?:
   };
 }
 
+/**
+ * The display name to greet with, or '' when the address isn't proven yet: a sign-up or a new
+ * email can be anyone's, and a name is free text the account holder typed.
+ */
+export function greetingName(user: Pick<UserDoc, 'displayName'> & { emailVerifiedAt?: Date | null }, purpose: CodePurpose): string {
+  // A missing field means the account predates verification — treat it as verified.
+  return purpose === 'password_reset' && user.emailVerifiedAt !== null ? user.displayName : '';
+}
+
 /** Issues a code for `purpose`, emails it to `target` and returns what the UI shows. */
-export async function sendCode(user: Pick<UserDoc, '_id' | 'displayName'>, purpose: CodePurpose, target: string): Promise<EmailVerificationStatus> {
+export async function sendCode(
+  user: Pick<UserDoc, '_id' | 'displayName'> & { emailVerifiedAt?: Date | null },
+  purpose: CodePurpose,
+  target: string,
+): Promise<EmailVerificationStatus> {
   const issued = await issueCode(user._id, purpose, target);
-  await mailer.send({ to: target, ...codeEmail(purpose, user.displayName, issued.code) });
+  await mailer.send({ to: target, ...codeEmail(purpose, greetingName(user, purpose), issued.code, currentLocale()) });
   return codeStatus(target, issued.sentAt, issued.expiresAt, issued.code);
 }
 
@@ -57,8 +72,14 @@ export async function verifyEmailCode(userId: string, code: string): Promise<voi
   if (!user) return; // already verified — idempotent
   // A code sent to an older address is void once the email changes.
   const record = await checkCode(user._id, 'signup', code, user.email);
-  await User.updateOne({ _id: user._id }, { $set: { emailVerifiedAt: new Date() } });
+  // Conditional, so two simultaneous submits of the same code verify (and welcome) only once.
+  const { modifiedCount } = await User.updateOne({ _id: user._id, emailVerifiedAt: null }, { $set: { emailVerifiedAt: new Date() } });
   await consumeCode(record);
+  if (modifiedCount !== 1) return;
+  // A welcome, not a requirement: a mail outage must not fail the verification.
+  mailer
+    .send({ to: user.email, ...welcomeEmail(user.displayName, currentLocale()) })
+    .catch((error: unknown) => logger.error({ err: error, userId: String(user._id) }, 'Welcome email failed'));
 }
 
 /** Lean check used by route guards. */

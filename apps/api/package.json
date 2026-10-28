@@ -12,6 +12,7 @@
     "discord:register": "tsx src/scripts/register-discord-commands.ts",
     "admin:promote": "tsx src/scripts/promote-admin.ts",
     "media:to-r2": "tsx src/scripts/media-to-r2.ts",
+    "mail:preview": "tsx src/scripts/mail-preview.ts",
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test \"src/**/*.test.ts\""
   },

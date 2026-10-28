@@ -14,7 +14,7 @@ import { requireAuth } from '../../core/auth/middleware';
 import { env } from '../../config/env';
 import { ACCESS_COOKIE, CLIENT_TYPE_HEADER, REFRESH_COOKIE, SESSION_HINT_COOKIE } from '../../core/auth/context';
 import { handle } from '../../core/http/handler';
-import { authLimiter, verificationLimiter } from '../../core/http/rate-limit';
+import { authLimiter, mailLimiter, verificationLimiter } from '../../core/http/rate-limit';
 import { getMe } from '../users/users.service';
 import { forgotPassword, resetPassword } from './account.service';
 import { login, logout, refresh, register, usernameAvailable, type ClientMeta, type IssuedSession } from './auth.service';
@@ -60,6 +60,7 @@ authRouter.get(
 authRouter.post(
   '/register',
   authLimiter,
+  mailLimiter,
   handle({ body: registerSchema, status: 201 }, async ({ body, req, res }) => {
     const { verification, ...session } = await register(body, clientMeta(req));
     return { ...(await respond(req, res, session)), ...(verification ? { verification } : {}) };
@@ -90,6 +91,7 @@ authRouter.post(
 authRouter.post(
   '/password/forgot',
   authLimiter,
+  mailLimiter,
   handle({ body: forgotPasswordSchema }, async ({ body }) => ({ sent: true, ...(await forgotPassword(body.email)) })),
 );
 

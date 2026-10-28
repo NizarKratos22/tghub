@@ -22,6 +22,18 @@ export const authLimiter = rateLimit({
   message: rateLimitBody,
 });
 
+/**
+ * Endpoints that email whatever address they're given (sign-up, forgot password): every request
+ * counts, successful or not, with one counter per IP shared by both routes.
+ */
+export const mailLimiter = rateLimit({
+  windowMs: 60 * 60_000,
+  limit: 30, // room for shared IPs (mobile carriers, LAN events)
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: rateLimitBody,
+});
+
 /** Per-player budgets for writes that cost storage or someone else's attention. */
 const byUser = (req: Request) => req.auth?.userId ?? ipKeyGenerator(req.ip ?? '');
 
