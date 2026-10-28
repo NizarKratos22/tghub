@@ -81,10 +81,28 @@ export const refreshSchema = z.object({
   refreshToken: z.string().min(20).max(200).optional(),
 });
 
+/**
+ * A Discord username as Discord shows it today: 2–32 lowercase letters, digits, "_" and ".",
+ * never "..". A pasted "@Name" is cleaned up to "name".
+ */
+export const discordUsernameSchema = z
+  .string()
+  .trim()
+  .transform((value) => value.replace(/^@/, '').toLowerCase())
+  .pipe(
+    z
+      .string()
+      .min(2, 'A Discord username has at least 2 characters')
+      .max(32, 'A Discord username has at most 32 characters')
+      .regex(/^(?!.*\.\.)[a-z0-9_.]+$/, 'Use the username from your Discord profile: letters, numbers, "_" and "."'),
+  );
+
 export const updateProfileSchema = z
   .object({
     displayName: z.string().trim().min(1).max(32),
     bio: z.string().trim().max(280),
+    /** Shown on the public profile so players can add each other; empty clears it. */
+    discordUsername: z.preprocess((value) => (typeof value === 'string' && value.trim() === '' ? null : value), discordUsernameSchema.nullable()),
     country: countrySchema.nullable(),
     region: governorateSchema.nullable(),
     avatarColor: z.enum(AVATAR_COLORS),

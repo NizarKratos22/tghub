@@ -26,6 +26,8 @@ export interface UserDoc {
   bannerMediaId?: Types.ObjectId | null;
   /** Off = level-ups, listings and clan moves stay out of followers' feeds. Missing means on. */
   shareActivity?: boolean;
+  /** Shown on the public profile; normalised by discordUsernameSchema. Missing means not shared. */
+  discordUsername?: string | null;
   /** False for accounts created through Discord until the player sets a password. Missing means set. */
   passwordSet?: boolean;
   /** Verified seller badge, recomputed from sales and ratings; a moderator can pin it either way. */
@@ -61,6 +63,7 @@ const userSchema = new Schema<UserDoc>(
     avatarMediaId: { type: Schema.Types.ObjectId, default: null },
     bannerMediaId: { type: Schema.Types.ObjectId, default: null },
     shareActivity: { type: Boolean, default: true },
+    discordUsername: { type: String, default: null },
     passwordSet: { type: Boolean, default: true },
     sellerVerified: { type: Boolean, default: false },
     sellerOverride: { type: String, enum: ['auto', 'verified', 'revoked'], default: 'auto' },

@@ -89,6 +89,8 @@ export interface Me extends UserPublic {
   marketUnread: number;
   availableTitles: string[];
   shareActivity: boolean;
+  /** Typed by the player in Settings; null when not shared. */
+  discordUsername: string | null;
 }
 
 export interface CountryStanding {
@@ -136,6 +138,8 @@ export interface PublicProfile {
   following: number;
   steam: { profileUrl: string; personaName: string | null } | null;
   discordLinked: boolean;
+  /** The Discord username the player chose to show, so others can add them. */
+  discordUsername: string | null;
   seasonRank: number | null;
   seasonXp: number;
   achievements: Array<{ code: string; title: string; unlockedAt: string }>;

@@ -27,6 +27,7 @@ export async function getMe(userId: string): Promise<Me> {
     marketUnread,
     availableTitles: titles,
     shareActivity: user.shareActivity !== false,
+    discordUsername: user.discordUsername ?? null,
   };
 }
 
@@ -91,6 +92,7 @@ export async function getPublicProfile(username: string): Promise<PublicProfile>
     followers: user.followerCount ?? 0,
     following: user.followingCount ?? 0,
     ...connections,
+    discordUsername: user.discordUsername ?? null,
     seasonRank: progress.seasonRank,
     seasonXp: progress.seasonXp,
     achievements,

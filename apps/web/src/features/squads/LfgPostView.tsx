@@ -14,6 +14,7 @@ import { VerifyEmailNotice } from '@/features/auth/VerifyEmailBanner';
 import { fill } from '@/i18n/config';
 import { useT } from '@/i18n/I18nProvider';
 import { api, ApiError } from '@/lib/api/client';
+import { copyText } from '@/lib/clipboard';
 import { cx } from '@/lib/cx';
 import { Flag, SQUAD_KEYS } from './shared';
 import styles from './LfgPostView.module.css';
@@ -27,7 +28,8 @@ function CopyContact({ contact }: { contact: string }) {
       <button
         type="button"
         onClick={() => {
-          void navigator.clipboard?.writeText(contact).then(() => {
+          void copyText(contact).then((ok) => {
+            if (!ok) return;
             setCopied(true);
             setTimeout(() => setCopied(false), 1800);
           });

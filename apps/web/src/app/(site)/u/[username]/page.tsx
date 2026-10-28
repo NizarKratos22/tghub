@@ -5,6 +5,7 @@ import { SectionHeader } from '@/components/ui/SectionHeader';
 import { GameGrid } from '@/features/games/GameCover';
 import { Icon } from '@/components/ui/Icon';
 import { DiscordLogo } from '@/features/auth/oauth';
+import { DiscordUsername } from '@/features/profile/DiscordUsername';
 import { SellerReviews } from '@/features/market/SellerReviews';
 import { ProfileActivity, ProfileFollow } from '@/features/social/ProfileSocial';
 import { ClanEmblem } from '@/features/squads/shared';
@@ -24,7 +25,7 @@ export async function generateMetadata(props: PageProps<'/u/[username]'>): Promi
 
 export default async function ProfilePage(props: PageProps<'/u/[username]'>) {
   const { username } = await props.params;
-  const { user, clan, followers, following, steam, discordLinked, reputation, seasonRank, seasonXp, achievements, favoriteGames } = await serverApi<PublicProfile>(`/users/${username}`);
+  const { user, clan, followers, following, steam, discordLinked, discordUsername, reputation, seasonRank, seasonXp, achievements, favoriteGames } = await serverApi<PublicProfile>(`/users/${username}`);
   const level = levelFromXp(user.xp);
   const [t, format, locale] = await Promise.all([getT(), getFormat(), getLocale()]);
   const home = placeName(user, t, locale);
@@ -55,14 +56,16 @@ export default async function ProfilePage(props: PageProps<'/u/[username]'>) {
               </Link>
             ) : null}
             {user.bio ? <p className={styles.bio} dir="auto">{user.bio}</p> : null}
-            {steam || discordLinked ? (
+            {steam || discordLinked || discordUsername ? (
               <div className={styles.links}>
                 {steam ? (
                   <a href={steam.profileUrl} target="_blank" rel="noopener noreferrer" className={styles.linkChip}>
                     <Icon name="gamepad" size={14} /> {steam.personaName ?? 'Steam'} <Icon name="arrowUpRight" size={12} />
                   </a>
                 ) : null}
-                {discordLinked ? (
+                {discordUsername ? (
+                  <DiscordUsername username={discordUsername} className={styles.linkChip} />
+                ) : discordLinked ? (
                   <span className={styles.linkChip}>
                     <DiscordLogo size={14} /> {t.profile.discordLinked}
                   </span>

@@ -207,9 +207,25 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  /* Long Discord names shorten with an ellipsis instead of widening the page on phones. */
+  min-width: 0;
+  max-width: 100%;
+}
+
+.linkChip > svg {
+  flex-shrink: 0;
+}
+
+.linkChip bdi {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .linkChip {
+  max-width: 100%;
+  min-width: 0;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -223,7 +239,13 @@
   font-weight: 600;
 }
 
-a.linkChip:hover {
+button.linkChip {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+a.linkChip:hover,
+button.linkChip:hover {
   border-color: var(--line-strong);
   color: var(--text);
 }
